@@ -10,9 +10,14 @@ export type StickyData = { title: string; text: string; color: StickyColor };
 export type TimelineEntry = { id: string; time: string; text: string };
 export type TimelineData = { title: string; entries: TimelineEntry[] };
 
+// リストメモの 1 行。text は空文字を許す（作成直後の空行など）。並び順は登録順のまま
+export type ListEntry = { id: string; text: string };
+export type ListData = { title: string; entries: ListEntry[] };
+
 export type StickyNodeType = Node<StickyData, 'sticky'>;
 export type TimelineNodeType = Node<TimelineData, 'timeline'>;
-export type BoardNode = StickyNodeType | TimelineNodeType;
+export type ListNodeType = Node<ListData, 'list'>;
+export type BoardNode = StickyNodeType | TimelineNodeType | ListNodeType;
 export type BoardNodeKind = NonNullable<BoardNode['type']>;
 export type BoardEdge = Edge;
 

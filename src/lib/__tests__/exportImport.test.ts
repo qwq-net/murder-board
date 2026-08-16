@@ -67,6 +67,25 @@ describe('parseImport', () => {
     expect(timeline.data.entries[0]!).toMatchObject({ time: '21:00', text: '悲鳴が聞こえた' });
   });
 
+  it('list ノードは行 ID を再採番しつつ中身を保ち、壊れた行は捨てる', () => {
+    const s = fixture();
+    s.nodes.push({
+      id: 'n4',
+      type: 'list',
+      position: { x: 300, y: 300 },
+      data: {
+        title: '容疑者',
+        entries: [{ id: 'r1', text: '執事' }, 'broken' as never],
+      },
+    });
+    const imported = parseImport(serializeExport(s));
+    const list = imported.nodes.find((n) => n.type === 'list')!;
+    expect(list.data.title).toBe('容疑者');
+    expect(list.data.entries).toHaveLength(1);
+    expect(list.data.entries[0]!.id).not.toBe('r1');
+    expect(list.data.entries[0]!.text).toBe('執事');
+  });
+
   it('存在しないノードを参照する edge は捨てる', () => {
     const s = fixture();
     s.edges.push({ id: 'e2', source: 'n1', target: 'ghost' });

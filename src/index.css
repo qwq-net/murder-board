@@ -29,8 +29,9 @@
   --color-accent-dim: #8a5e10;
   --color-accent-glow: rgba(200, 137, 26, 0.15);
 
-  /* タイムライン付箋のアイデンティティカラー */
+  /* タイムライン付箋・リスト付箋のアイデンティティカラー */
   --color-panel-timeline-accent: #7a6aa8;
+  --color-panel-list-accent: #4a8fa8;
 
   /* Functional */
   --color-danger: #b04040;
@@ -108,8 +109,9 @@
   --color-accent-dim: #c89a40;
   --color-accent-glow: rgba(176, 120, 24, 0.18);
 
-  /* タイムライン付箋 — ライト背景でのコントラスト調整 */
+  /* タイムライン付箋・リスト付箋 — ライト背景でのコントラスト調整 */
   --color-panel-timeline-accent: #5c4e94;
+  --color-panel-list-accent: #2e7a94;
 
   /* Functional */
   --color-danger: #c43030;
@@ -174,6 +176,12 @@ textarea,
 [contenteditable='true'] {
   user-select: text;
   -webkit-user-select: text;
+}
+
+/* プレースホルダ — 付箋の「ダブルクリックで編集」表示と同等の薄さに揃える */
+::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.6;
 }
 
 /* ─── Scrollbar ─────────────────────────────────────────────────────────────── */

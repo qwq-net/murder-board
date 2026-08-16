@@ -15,6 +15,7 @@ import type {
   BoardEdge,
   BoardNode,
   BoardNodeKind,
+  ListData,
   Session,
   SessionMeta,
   StickyData,
@@ -37,10 +38,11 @@ type Store = {
   onEdgesChange: (changes: EdgeChange<BoardEdge>[]) => void;
   onConnect: (connection: Connection) => void;
   // 指定位置（フロー座標）に空のノードを追加する。sticky は作成直後に編集状態になり、
-  // timeline は空行 1 つ付きで作られる。
+  // timeline / list は空行 1 つ付きで作られる。
   addNode: (kind: BoardNodeKind, position: { x: number; y: number }) => void;
   updateStickyData: (id: string, patch: Partial<StickyData>) => void;
   updateTimelineData: (id: string, patch: Partial<TimelineData>) => void;
+  updateListData: (id: string, patch: Partial<ListData>) => void;
   updateEdgeLabel: (id: string, label: string) => void;
 
   createSession: () => Promise<void>;
@@ -102,12 +104,19 @@ export const useBoardStore = create<Store>()(
         const node: BoardNode =
           kind === 'sticky'
             ? { id: nanoid(), type: 'sticky', position, data: { title: '', text: '', color: 'yellow' } }
-            : {
-                id: nanoid(),
-                type: 'timeline',
-                position,
-                data: { title: '', entries: [{ id: nanoid(), time: '', text: '' }] },
-              };
+            : kind === 'timeline'
+              ? {
+                  id: nanoid(),
+                  type: 'timeline',
+                  position,
+                  data: { title: '', entries: [{ id: nanoid(), time: '', text: '' }] },
+                }
+              : {
+                  id: nanoid(),
+                  type: 'list',
+                  position,
+                  data: { title: '', entries: [{ id: nanoid(), text: '' }] },
+                };
         set({ nodes: [...get().nodes, node] });
       },
 
@@ -122,6 +131,13 @@ export const useBoardStore = create<Store>()(
         set({
           nodes: get().nodes.map((n) =>
             n.id === id && n.type === 'timeline' ? { ...n, data: { ...n.data, ...patch } } : n,
+          ),
+        }),
+
+      updateListData: (id, patch) =>
+        set({
+          nodes: get().nodes.map((n) =>
+            n.id === id && n.type === 'list' ? { ...n, data: { ...n.data, ...patch } } : n,
           ),
         }),
 

@@ -73,6 +73,20 @@ export function parseImport(json: string, now = Date.now()): Session {
       };
     }
 
+    if (n.type === 'list') {
+      const entries = Array.isArray(data.entries)
+        ? data.entries.flatMap((r: unknown) =>
+            isRecord(r) ? [{ id: nanoid(), text: typeof r.text === 'string' ? r.text : '' }] : [],
+          )
+        : [];
+      return {
+        id: newId,
+        type: 'list' as const,
+        position,
+        data: { title: typeof data.title === 'string' ? data.title : '', entries },
+      };
+    }
+
     // 未知の type は付箋として救出する（黙って捨てると edge の参照ごと消えるため）
     return {
       id: newId,
