@@ -1,5 +1,4 @@
-import { useReactFlow } from '@xyflow/react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { parseImport, serializeExport } from '@/lib/exportImport';
 import type { Theme } from '@/lib/theme';
 import { useBoardStore } from '@/store';
@@ -11,17 +10,14 @@ const THEME_LABELS: Record<Theme, string> = { dark: 'ダーク', light: 'ライ�
 export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () => void }) {
   const sessions = useBoardStore((s) => s.sessions);
   const currentId = useBoardStore((s) => s.currentId);
-  const addNode = useBoardStore((s) => s.addNode);
   const createSession = useBoardStore((s) => s.createSession);
   const switchSession = useBoardStore((s) => s.switchSession);
   const renameSession = useBoardStore((s) => s.renameSession);
   const removeSession = useBoardStore((s) => s.removeSession);
   const importSessionData = useBoardStore((s) => s.importSessionData);
-  const { screenToFlowPosition } = useReactFlow();
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const addAtCenter = () =>
-    addNode('sticky', screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }));
+  // セッションメニュー（⋯）の開閉
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const rename = () => {
     const meta = sessions.find((m) => m.id === currentId);
@@ -58,11 +54,19 @@ export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme:
     }
   };
 
+  const MENU_ITEMS: { label: string; danger?: boolean; onClick: () => void }[] = [
+    { label: '新規セッション', onClick: () => void createSession() },
+    { label: '名前変更', onClick: rename },
+    { label: 'エクスポート', onClick: exportJson },
+    { label: 'インポート', onClick: () => fileRef.current?.click() },
+    { label: '削除', danger: true, onClick: remove },
+  ];
+
   return (
     <header className="flex items-center gap-2 border-b border-border-subtle bg-bg-surface px-3 py-2">
-      <h1 className="mr-2 text-sm font-bold text-text-secondary">マダめもくん2</h1>
+      <h1 className="mr-2 text-sm font-bold whitespace-nowrap text-text-secondary">マダめもくん2</h1>
       <select
-        className="input-base text-sm"
+        className="input-base min-w-0 shrink max-w-48 text-sm"
         value={currentId ?? ''}
         onChange={(e) => void switchSession(e.target.value)}
       >
@@ -72,34 +76,40 @@ export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme:
           </option>
         ))}
       </select>
-      <button type="button" className={BUTTON_CLASS} onClick={() => void createSession()}>
-        新規
-      </button>
-      <button type="button" className={BUTTON_CLASS} onClick={rename}>
-        名前変更
-      </button>
-      <button type="button" className={BUTTON_CLASS} onClick={remove}>
-        削除
-      </button>
-      <span className="mx-1 h-5 w-px bg-border-default" />
-      <button type="button" className={BUTTON_CLASS} onClick={addAtCenter}>
-        ＋付箋
-      </button>
-      <span className="ml-auto hidden text-xs text-text-muted sm:inline">
-        右クリックでメモを追加 / Ctrl+Z で元に戻す
-      </span>
-      <button type="button" className={BUTTON_CLASS} onClick={exportJson}>
-        エクスポート
-      </button>
-      <button type="button" className={BUTTON_CLASS} onClick={() => fileRef.current?.click()}>
-        インポート
-      </button>
-      <button
-        type="button"
-        title="テーマ切替"
-        className={BUTTON_CLASS}
-        onClick={onToggleTheme}
-      >
+      <div className="relative">
+        <button
+          type="button"
+          title="セッション操作"
+          aria-label="セッション操作"
+          className={BUTTON_CLASS}
+          onClick={() => setMenuOpen((v) => !v)}
+        >
+          ⋯
+        </button>
+        {menuOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+            <div className="absolute top-full left-0 z-50 mt-1 min-w-40 rounded border border-border-default bg-bg-elevated py-1 shadow-lg">
+              {MENU_ITEMS.map(({ label, danger, onClick }) => (
+                <button
+                  key={label}
+                  type="button"
+                  className={`block w-full cursor-pointer px-3 py-1.5 text-left text-sm whitespace-nowrap hover:bg-bg-hover ${
+                    danger ? 'text-danger' : ''
+                  }`}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onClick();
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      <button type="button" title="テーマ切替" className={`${BUTTON_CLASS} ml-auto`} onClick={onToggleTheme}>
         {THEME_LABELS[theme]}
       </button>
       <input
