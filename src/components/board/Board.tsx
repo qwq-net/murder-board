@@ -10,6 +10,7 @@ import {
 import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { StickyNode } from '@/components/nodes/StickyNode';
 import { TimelineNode } from '@/components/nodes/TimelineNode';
+import type { Theme } from '@/lib/theme';
 import { useBoardStore } from '@/store';
 import type { BoardEdge, BoardNode, BoardNodeKind } from '@/types/board';
 
@@ -20,7 +21,7 @@ const MENU_ITEMS: { kind: BoardNodeKind; label: string }[] = [
   { kind: 'timeline', label: 'タイムラインメモ' },
 ];
 
-export function Board() {
+export function Board({ theme }: { theme: Theme }) {
   const nodes = useBoardStore((s) => s.nodes);
   const edges = useBoardStore((s) => s.edges);
   const onNodesChange = useBoardStore((s) => s.onNodesChange);
@@ -82,6 +83,7 @@ export function Board() {
         onPaneClick={() => setMenu(null)}
         onMoveStart={() => setMenu(null)}
         nodeTypes={nodeTypes}
+        colorMode={theme === 'auto' ? 'system' : theme}
         deleteKeyCode={['Backspace', 'Delete']}
         zoomOnDoubleClick={false}
       >
@@ -91,14 +93,14 @@ export function Board() {
       </ReactFlow>
       {menu && (
         <div
-          className="fixed z-50 min-w-40 rounded border border-zinc-200 bg-white py-1 shadow-lg"
+          className="fixed z-50 min-w-40 rounded border border-border-default bg-bg-elevated py-1 shadow-lg"
           style={{ left: menu.x, top: menu.y }}
         >
           {MENU_ITEMS.map(({ kind, label }) => (
             <button
               key={kind}
               type="button"
-              className="block w-full cursor-pointer px-3 py-1.5 text-left text-sm hover:bg-zinc-100"
+              className="block w-full cursor-pointer px-3 py-1.5 text-left text-sm hover:bg-bg-hover"
               onClick={() => addFromMenu(kind)}
             >
               {label}

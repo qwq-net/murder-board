@@ -3,32 +3,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useBoardStore } from '@/store';
 import { STICKY_COLORS, type StickyColor, type StickyNodeType } from '@/types/board';
 
-const NOTE_CLASSES: Record<StickyColor, string> = {
-  yellow: 'bg-amber-100 border-amber-300',
-  pink: 'bg-pink-100 border-pink-300',
-  blue: 'bg-sky-100 border-sky-300',
-  green: 'bg-emerald-100 border-emerald-300',
-  purple: 'bg-violet-100 border-violet-300',
-  gray: 'bg-zinc-100 border-zinc-300',
-};
-
-const DOT_CLASSES: Record<StickyColor, string> = {
-  yellow: 'bg-amber-300',
-  pink: 'bg-pink-300',
-  blue: 'bg-sky-300',
-  green: 'bg-emerald-300',
-  purple: 'bg-violet-300',
-  gray: 'bg-zinc-300',
-};
-
-const HEADER_CLASSES: Record<StickyColor, string> = {
-  yellow: 'bg-amber-200/70',
-  pink: 'bg-pink-200/70',
-  blue: 'bg-sky-200/70',
-  green: 'bg-emerald-200/70',
-  purple: 'bg-violet-200/70',
-  gray: 'bg-zinc-200/70',
-};
+// 付箋カラーは index.css の --sticky-* 変数で定義され、テーマに応じて値が切り替わる。
+// クラスマップではなく CSS 変数参照にすることで、テーマ切替時のロジック変更を不要にする。
+const noteStyle = (c: StickyColor) => ({
+  background: `var(--sticky-${c}-bg)`,
+  borderColor: `var(--sticky-${c}-border)`,
+});
 
 // 付箋ノード。空テキストで生成された直後は編集状態で始まる。
 // 表示中はダブルクリックで編集、blur / Escape で確定。選択中は色パレットを上部に出す。
@@ -61,26 +41,31 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
 
   return (
     <div
-      className={`relative w-48 rounded-sm border shadow-md ${NOTE_CLASSES[data.color]} ${
-        selected ? 'ring-2 ring-blue-400' : ''
+      className={`relative w-48 rounded-sm border text-text-primary shadow-md ${
+        selected ? 'ring-2 ring-accent' : ''
       }`}
+      style={noteStyle(data.color)}
     >
       {selected && !editing && (
-        <div className="absolute -top-7 left-0 flex gap-1 rounded bg-white/90 p-1 shadow">
+        <div className="absolute -top-7 left-0 flex gap-1 rounded bg-bg-elevated/90 p-1 shadow">
           {STICKY_COLORS.map((c) => (
             <button
               key={c}
               type="button"
               aria-label={`色: ${c}`}
-              className={`h-4 w-4 cursor-pointer rounded-full ${DOT_CLASSES[c]} ${
-                c === data.color ? 'ring-2 ring-blue-500' : ''
+              className={`h-4 w-4 cursor-pointer rounded-full ${
+                c === data.color ? 'ring-2 ring-accent' : ''
               }`}
+              style={{ background: `var(--sticky-${c}-accent)` }}
               onClick={() => updateStickyData(id, { color: c })}
             />
           ))}
         </div>
       )}
-      <div className={`rounded-t-sm px-2 py-1 ${HEADER_CLASSES[data.color]}`}>
+      <div
+        className="rounded-t-sm px-2 py-1"
+        style={{ background: `var(--sticky-${data.color}-header)` }}
+      >
         <input
           className="nodrag w-full bg-transparent text-sm font-bold outline-none"
           defaultValue={data.title}
@@ -113,7 +98,7 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
             setEditing(true);
           }}
         >
-          {data.text || <span className="text-black/30">ダブルクリックで編集</span>}
+          {data.text || <span className="text-text-muted opacity-60">ダブルクリックで編集</span>}
         </div>
       )}
       <Handle type="target" position={Position.Top} id="t" />

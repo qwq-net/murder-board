@@ -1,1 +1,266 @@
 @import 'tailwindcss';
+
+/* ─── Tailwind CSS 4 テーマトークン ────────────────────────────────────────── */
+/* murder-memo から移植したデザイントークン。ダークが既定値。
+   ライトテーマは :root[data-theme='light'] で --color-* を上書きする。
+   Tailwind ユーティリティは var(--color-*) を参照するため上書きだけで切り替わる。 */
+@theme {
+  /* Surface */
+  --color-bg-base: #0d0c0a;
+  --color-bg-surface: #131210;
+  --color-bg-panel: #161513;
+  --color-bg-elevated: #1e1c19;
+  --color-bg-hover: #252320;
+  --color-bg-active: #2a2824;
+
+  /* Borders */
+  --color-border-subtle: #252320;
+  --color-border-default: #302d28;
+  --color-border-strong: #3d3a33;
+
+  /* Text */
+  --color-text-primary: #e8dfc8;
+  --color-text-secondary: #a89f8a;
+  --color-text-muted: #6b6458;
+  --color-text-faint: #3d3a33;
+
+  /* Accent — 琥珀の捜査灯 */
+  --color-accent: #c8891a;
+  --color-accent-dim: #8a5e10;
+  --color-accent-glow: rgba(200, 137, 26, 0.15);
+
+  /* タイムライン付箋のアイデンティティカラー */
+  --color-panel-timeline-accent: #7a6aa8;
+
+  /* Functional */
+  --color-danger: #b04040;
+
+  /* Typography */
+  --font-sans:
+    'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans',
+    'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+  --font-mono: 'Cascadia Mono', 'Cascadia Code', Consolas, Menlo, Monaco, monospace;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+}
+
+/* ─── 付箋カラー（ダーク既定） ──────────────────────────────────────────────── */
+/* コンポーネントから style={{ background: `var(--sticky-${color}-bg)` }} の形で参照する。
+   Tailwind ユーティリティ化は不要なため @theme には入れない。 */
+:root {
+  --sticky-yellow-bg: #322a12;
+  --sticky-yellow-border: #5f5122;
+  --sticky-yellow-header: rgba(95, 81, 34, 0.35);
+  --sticky-yellow-accent: #d4b04a;
+
+  --sticky-pink-bg: #33202a;
+  --sticky-pink-border: #5f3a4a;
+  --sticky-pink-header: rgba(95, 58, 74, 0.35);
+  --sticky-pink-accent: #c76a8a;
+
+  --sticky-blue-bg: #1c2b33;
+  --sticky-blue-border: #35505f;
+  --sticky-blue-header: rgba(53, 80, 95, 0.35);
+  --sticky-blue-accent: #5a9ab8;
+
+  --sticky-green-bg: #1e2e20;
+  --sticky-green-border: #3a5540;
+  --sticky-green-header: rgba(58, 85, 64, 0.35);
+  --sticky-green-accent: #5aa86a;
+
+  --sticky-purple-bg: #272233;
+  --sticky-purple-border: #4a4160;
+  --sticky-purple-header: rgba(74, 65, 96, 0.35);
+  --sticky-purple-accent: #8a7ab8;
+
+  --sticky-gray-bg: #26241f;
+  --sticky-gray-border: #454138;
+  --sticky-gray-header: rgba(69, 65, 56, 0.35);
+  --sticky-gray-accent: #8a857a;
+}
+
+/* ─── ライトテーマ ───────────────────────────────────────────────────────────── */
+:root[data-theme='light'] {
+  /* Surface */
+  --color-bg-base: #f5f2ec;
+  --color-bg-surface: #ece8e0;
+  --color-bg-panel: #f0ece5;
+  --color-bg-elevated: #ffffff;
+  --color-bg-hover: #e2ddd4;
+  --color-bg-active: #d8d2c8;
+
+  /* Borders */
+  --color-border-subtle: #ddd8cf;
+  --color-border-default: #c8c0b4;
+  --color-border-strong: #a89f90;
+
+  /* Text — WCAG AA 4.5:1 コントラスト比を bg-panel (#f0ece5) 基準で確保 */
+  --color-text-primary: #1c1a16;
+  --color-text-secondary: #504838;
+  --color-text-muted: #6b6050;
+  --color-text-faint: #a89a88;
+
+  /* Accent — ブランドカラー維持。ライト背景でもコントラスト確保 */
+  --color-accent: #b07818;
+  --color-accent-dim: #c89a40;
+  --color-accent-glow: rgba(176, 120, 24, 0.18);
+
+  /* タイムライン付箋 — ライト背景でのコントラスト調整 */
+  --color-panel-timeline-accent: #5c4e94;
+
+  /* Functional */
+  --color-danger: #c43030;
+
+  /* 付箋カラー — 従来のパステル調 */
+  --sticky-yellow-bg: #fef3c7;
+  --sticky-yellow-border: #fcd34d;
+  --sticky-yellow-header: rgba(253, 230, 138, 0.7);
+  --sticky-yellow-accent: #fcd34d;
+
+  --sticky-pink-bg: #fce7f3;
+  --sticky-pink-border: #f9a8d4;
+  --sticky-pink-header: rgba(251, 207, 232, 0.7);
+  --sticky-pink-accent: #f9a8d4;
+
+  --sticky-blue-bg: #e0f2fe;
+  --sticky-blue-border: #7dd3fc;
+  --sticky-blue-header: rgba(186, 230, 253, 0.7);
+  --sticky-blue-accent: #7dd3fc;
+
+  --sticky-green-bg: #d1fae5;
+  --sticky-green-border: #6ee7b7;
+  --sticky-green-header: rgba(167, 243, 208, 0.7);
+  --sticky-green-accent: #6ee7b7;
+
+  --sticky-purple-bg: #ede9fe;
+  --sticky-purple-border: #c4b5fd;
+  --sticky-purple-header: rgba(221, 214, 254, 0.7);
+  --sticky-purple-accent: #c4b5fd;
+
+  --sticky-gray-bg: #f4f4f5;
+  --sticky-gray-border: #d4d4d8;
+  --sticky-gray-header: rgba(228, 228, 231, 0.7);
+  --sticky-gray-accent: #d4d4d8;
+}
+
+/* ─── Reset & Base ──────────────────────────────────────────────────────────── */
+/* 常時ホワイトボードアプリのため、ビューポート固定 + テキスト選択禁止を直接指定する */
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 入力要素・編集中テキストのみ選択可能 */
+input,
+textarea,
+[contenteditable='true'] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-strong);
+}
+
+/* ─── Selection ─────────────────────────────────────────────────────────────── */
+::selection {
+  background: var(--color-accent-glow);
+  color: var(--color-text-primary);
+}
+
+/* ─── Focus ─────────────────────────────────────────────────────────────────── */
+/* 入力要素とボタンのみ focus-visible を適用。.outline-none を持つ要素（ノード内の
+   入力欄等）は除外する */
+input:focus-visible:not(.outline-none),
+textarea:focus-visible:not(.outline-none),
+select:focus-visible,
+button:focus-visible {
+  outline: 1.5px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── 共通ユーティリティ ─────────────────────────────────────────────────────── */
+
+/* ゴーストボタン — 枠線のみ、ホバーで色変化 */
+@utility btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+  letter-spacing: 0.02em;
+  &:hover {
+    color: var(--color-text-primary);
+    border-color: var(--color-border-strong);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+    &:hover {
+      color: var(--color-text-secondary);
+      border-color: var(--color-border-default);
+    }
+  }
+}
+
+@utility btn-sm {
+  gap: 6px;
+  padding: 4px 10px;
+}
+
+/* 標準入力フィールド */
+@utility input-base {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  padding: 3px 8px;
+  outline: none;
+  transition: border-color 0.15s;
+  &:focus {
+    border-color: var(--color-border-strong);
+  }
+}
+
+/* ─── React Flow テーマ連動 ─────────────────────────────────────────────────── */
+/* colorMode が制御するのはコントロール・MiniMap 等の配色。キャンバス背景色だけは
+   アプリのトークンに合わせて上書きする */
+.react-flow {
+  --xy-background-color: var(--color-bg-base);
+}

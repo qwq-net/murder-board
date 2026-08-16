@@ -26,13 +26,13 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
 
   return (
     <div
-      className={`w-72 rounded-sm border border-indigo-300 bg-white shadow-md ${
-        selected ? 'ring-2 ring-blue-400' : ''
+      className={`w-72 rounded-sm border border-panel-timeline-accent/40 bg-bg-panel shadow-md ${
+        selected ? 'ring-2 ring-accent' : ''
       }`}
     >
-      <div className="rounded-t-sm bg-indigo-100 px-2 py-1">
+      <div className="rounded-t-sm bg-panel-timeline-accent/15 px-2 py-1">
         <input
-          className="nodrag w-full bg-transparent text-sm font-bold text-indigo-900 outline-none"
+          className="nodrag w-full bg-transparent text-sm font-bold text-text-primary outline-none"
           defaultValue={data.title}
           placeholder="タイムライン"
           onBlur={(e) => {
@@ -46,7 +46,7 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
         ))}
         <button
           type="button"
-          className="nodrag w-full cursor-pointer rounded px-2 py-0.5 text-left text-xs text-indigo-400 hover:bg-indigo-50"
+          className="nodrag w-full cursor-pointer rounded px-2 py-0.5 text-left text-xs text-panel-timeline-accent hover:bg-bg-hover"
           onClick={addRow}
         >
           ＋ 行を追加
@@ -79,9 +79,9 @@ function TimelineRow({
   };
 
   return (
-    <div className="group flex items-center gap-1 rounded px-1 py-0.5 hover:bg-zinc-50">
+    <div className="group flex items-center gap-1 rounded px-1 py-0.5 hover:bg-bg-hover">
       <input
-        className="nodrag w-12 shrink-0 bg-transparent text-center font-mono text-xs text-zinc-600 outline-none"
+        className="nodrag w-12 shrink-0 bg-transparent text-center font-mono text-xs text-text-muted outline-none"
         value={time}
         placeholder="21:00"
         onChange={(e) => setTime(e.target.value)}
@@ -105,7 +105,7 @@ function TimelineRow({
       <button
         type="button"
         aria-label="行を削除"
-        className="nodrag invisible shrink-0 cursor-pointer px-1 text-xs text-zinc-400 group-hover:visible hover:text-red-500"
+        className="nodrag invisible shrink-0 cursor-pointer px-1 text-xs text-text-muted group-hover:visible hover:text-danger"
         onClick={() => onRemove(entry.id)}
       >
         ×

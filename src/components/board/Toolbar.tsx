@@ -1,12 +1,14 @@
 import { useReactFlow } from '@xyflow/react';
 import { useRef } from 'react';
 import { parseImport, serializeExport } from '@/lib/exportImport';
+import type { Theme } from '@/lib/theme';
 import { useBoardStore } from '@/store';
 
-const BUTTON_CLASS =
-  'cursor-pointer rounded border border-zinc-300 bg-white px-2 py-1 text-sm hover:bg-zinc-100';
+const BUTTON_CLASS = 'btn-ghost btn-sm text-sm';
 
-export function Toolbar() {
+const THEME_LABELS: Record<Theme, string> = { dark: 'ダーク', light: 'ライト', auto: '自動' };
+
+export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () => void }) {
   const sessions = useBoardStore((s) => s.sessions);
   const currentId = useBoardStore((s) => s.currentId);
   const addNode = useBoardStore((s) => s.addNode);
@@ -57,10 +59,10 @@ export function Toolbar() {
   };
 
   return (
-    <header className="flex items-center gap-2 border-b border-zinc-200 bg-zinc-50 px-3 py-2">
-      <h1 className="mr-2 text-sm font-bold text-zinc-700">マダめもくん2</h1>
+    <header className="flex items-center gap-2 border-b border-border-subtle bg-bg-surface px-3 py-2">
+      <h1 className="mr-2 text-sm font-bold text-text-secondary">マダめもくん2</h1>
       <select
-        className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm"
+        className="input-base text-sm"
         value={currentId ?? ''}
         onChange={(e) => void switchSession(e.target.value)}
       >
@@ -79,11 +81,11 @@ export function Toolbar() {
       <button type="button" className={BUTTON_CLASS} onClick={remove}>
         削除
       </button>
-      <span className="mx-1 h-5 w-px bg-zinc-300" />
+      <span className="mx-1 h-5 w-px bg-border-default" />
       <button type="button" className={BUTTON_CLASS} onClick={addAtCenter}>
         ＋付箋
       </button>
-      <span className="ml-auto hidden text-xs text-zinc-400 sm:inline">
+      <span className="ml-auto hidden text-xs text-text-muted sm:inline">
         右クリックでメモを追加 / Ctrl+Z で元に戻す
       </span>
       <button type="button" className={BUTTON_CLASS} onClick={exportJson}>
@@ -91,6 +93,14 @@ export function Toolbar() {
       </button>
       <button type="button" className={BUTTON_CLASS} onClick={() => fileRef.current?.click()}>
         インポート
+      </button>
+      <button
+        type="button"
+        title="テーマ切替"
+        className={BUTTON_CLASS}
+        onClick={onToggleTheme}
+      >
+        {THEME_LABELS[theme]}
       </button>
       <input
         ref={fileRef}
