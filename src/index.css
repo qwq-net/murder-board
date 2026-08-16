@@ -48,7 +48,7 @@
   --radius-lg: 10px;
 }
 
-/* ─── 付箋カラー（ダーク既定） ──────────────────────────────────────────────── */
+/* ─── 付箋カラー: ダーク既定 ──────────────────────────────────────────────── */
 /* コンポーネントから style={{ background: `var(--sticky-${color}-bg)` }} の形で参照する。
    Tailwind ユーティリティ化は不要なため @theme には入れない。 */
 :root {
@@ -207,8 +207,8 @@ textarea,
 }
 
 /* ─── Focus ─────────────────────────────────────────────────────────────────── */
-/* 入力要素とボタンのみ focus-visible を適用。.outline-none を持つ要素（ノード内の
-   入力欄等）は除外する */
+/* 入力要素とボタンのみ focus-visible を適用。ノード内の入力欄のような
+   .outline-none を持つ要素は除外する */
 input:focus-visible:not(.outline-none),
 textarea:focus-visible:not(.outline-none),
 select:focus-visible,

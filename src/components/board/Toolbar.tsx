@@ -16,7 +16,7 @@ export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme:
   const removeSession = useBoardStore((s) => s.removeSession);
   const importSessionData = useBoardStore((s) => s.importSessionData);
   const fileRef = useRef<HTMLInputElement>(null);
-  // セッションメニュー（⋯）の開閉
+  // ⋯ ボタンで開くセッションメニューの開閉状態
   const [menuOpen, setMenuOpen] = useState(false);
 
   const rename = () => {

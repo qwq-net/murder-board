@@ -1,4 +1,4 @@
-// murder-memo v1 の timeParser から移植（normalizeTimeInput / autoCompleteTime / parseEventTime）。
+// murder-memo v1 の timeParser から normalizeTimeInput / autoCompleteTime / parseEventTime を移植。
 
 import type { TimelineEntry } from '@/types/board';
 
@@ -9,7 +9,7 @@ export function normalizeTimeInput(input: string): string {
     .replace(/：/g, ':');
 }
 
-// コロンなし数字入力を HH:MM に自動補完する（blur 時に使用）。
+// コロンなし数字入力を HH:MM に自動補完する。時刻入力欄の blur 時に使う。
 // "1300" → "13:00", "130" → "1:30", "9" → "9:00"
 // 既にコロンがある・数字 1〜4 桁でない場合は正規化のみして返す。
 export function autoCompleteTime(input: string): string {
@@ -24,7 +24,7 @@ export function autoCompleteTime(input: string): string {
 }
 
 // HH:MM 形式の時刻文字列を分換算のソートキーにする。"12:30" → 750。
-// 空文字・HH:MM 以外・範囲外（24:00 等）は undefined を返す（=ソート不能として扱う）。
+// 空文字・HH:MM 以外・24:00 のような範囲外は undefined を返し、呼び手はソート不能として扱う。
 export function parseEventTime(input: string): number | undefined {
   const s = input.trim();
   if (!s) return undefined;
@@ -39,8 +39,8 @@ export function parseEventTime(input: string): number | undefined {
   return h * 60 + m;
 }
 
-// タイムラインの行を時刻の昇順に並べ替えて返す（元配列は変更しない）。
-// 時刻を解釈できない行（空欄・自由記述）は末尾に、互いの元の順序を保って並ぶ。
+// タイムラインの行を時刻の昇順に並べ替えて返す。元配列は変更しない。
+// 空欄・自由記述のような時刻を解釈できない行は末尾に、互いの元の順序を保って並ぶ。
 export function sortTimelineEntries(entries: TimelineEntry[]): TimelineEntry[] {
   return [...entries].sort(
     (a, b) => (parseEventTime(a.time) ?? Infinity) - (parseEventTime(b.time) ?? Infinity),

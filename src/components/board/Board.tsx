@@ -32,7 +32,7 @@ export function Board({ theme }: { theme: Theme }) {
   const addNode = useBoardStore((s) => s.addNode);
   const updateEdgeLabel = useBoardStore((s) => s.updateEdgeLabel);
   const { screenToFlowPosition } = useReactFlow();
-  // 右クリックメニューの表示位置（画面座標）。null なら非表示
+  // 右クリックメニューの表示位置。画面座標で持ち、null なら非表示
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
 
   // Ctrl/Cmd+Z で Undo、Shift 併用で Redo。入力欄へのタイプは対象外
@@ -50,7 +50,7 @@ export function Board({ theme }: { theme: Theme }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // 何もない場所（ペイン）のダブルクリックで付箋を追加
+  // ノードの無いペイン部分のダブルクリックで付箋を追加
   const onDoubleClick = (e: ReactMouseEvent) => {
     if (!(e.target as Element).classList.contains('react-flow__pane')) return;
     addNode('sticky', screenToFlowPosition({ x: e.clientX, y: e.clientY }));

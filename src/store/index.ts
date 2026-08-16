@@ -11,18 +11,12 @@ import { create } from 'zustand';
 import { temporal } from 'zundo';
 import { debounce, throttleLeading } from '@/lib/debounce';
 import * as idb from '@/lib/idb';
-import type {
-  BoardEdge,
-  BoardNode,
-  BoardNodeKind,
-  ListData,
-  Session,
-  SessionMeta,
-  StickyData,
-  TimelineData,
-} from '@/types/board';
+import type { BoardEdge, BoardNode, BoardNodeKind, Session, SessionMeta } from '@/types/board';
 
 const LAST_SESSION_KEY = 'murder-memo2-last-session';
+
+// ノード種別からその data 型を引く。updateNodeData の patch を種別ごとに型付けるために使う
+type DataOf<K extends BoardNodeKind> = Extract<BoardNode, { type: K }>['data'];
 
 type Store = {
   loaded: boolean;
@@ -31,18 +25,18 @@ type Store = {
   nodes: BoardNode[];
   edges: BoardEdge[];
 
-  // IDB からセッション一覧を読み、前回のセッション（無ければ新規作成）を開く。多重呼び出しは無視。
+  // IDB からセッション一覧を読み、前回のセッションを開く。前回のセッションが無ければ新規作成する。
+  // 多重呼び出しは無視。
   init: () => Promise<void>;
 
   onNodesChange: (changes: NodeChange<BoardNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<BoardEdge>[]) => void;
   onConnect: (connection: Connection) => void;
-  // 指定位置（フロー座標）に空のノードを追加する。sticky は作成直後に編集状態になり、
+  // 指定位置に空のノードを追加する。position はフロー座標。sticky は作成直後に編集状態になり、
   // timeline / list は空行 1 つ付きで作られる。
   addNode: (kind: BoardNodeKind, position: { x: number; y: number }) => void;
-  updateStickyData: (id: string, patch: Partial<StickyData>) => void;
-  updateTimelineData: (id: string, patch: Partial<TimelineData>) => void;
-  updateListData: (id: string, patch: Partial<ListData>) => void;
+  // 指定 id かつ指定種別のノードの data を部分更新する。id が存在しても種別が一致しなければ何もしない。
+  updateNodeData: <K extends BoardNodeKind>(id: string, type: K, patch: Partial<DataOf<K>>) => void;
   updateEdgeLabel: (id: string, label: string) => void;
 
   createSession: () => Promise<void>;
@@ -52,7 +46,7 @@ type Store = {
   renameSession: (name: string) => void;
   // 現在のセッションを削除する。残りが無ければ新規セッションを作って開く。
   removeSession: () => Promise<void>;
-  // parseImport 済みのセッションを保存して開く（呼び手側でバリデーション済み前提）。
+  // parseImport 済みのセッションを保存して開く。バリデーションは呼び手側で済んでいる前提。
   importSessionData: (session: Session) => Promise<void>;
 };
 
@@ -120,24 +114,10 @@ export const useBoardStore = create<Store>()(
         set({ nodes: [...get().nodes, node] });
       },
 
-      updateStickyData: (id, patch) =>
+      updateNodeData: (id, type, patch) =>
         set({
           nodes: get().nodes.map((n) =>
-            n.id === id && n.type === 'sticky' ? { ...n, data: { ...n.data, ...patch } } : n,
-          ),
-        }),
-
-      updateTimelineData: (id, patch) =>
-        set({
-          nodes: get().nodes.map((n) =>
-            n.id === id && n.type === 'timeline' ? { ...n, data: { ...n.data, ...patch } } : n,
-          ),
-        }),
-
-      updateListData: (id, patch) =>
-        set({
-          nodes: get().nodes.map((n) =>
-            n.id === id && n.type === 'list' ? { ...n, data: { ...n.data, ...patch } } : n,
+            n.id === id && n.type === type ? ({ ...n, data: { ...n.data, ...patch } } as BoardNode) : n,
           ),
         }),
 
@@ -225,7 +205,7 @@ function saveCurrent() {
 
 const scheduleSave = debounce(saveCurrent, 500);
 
-// nodes/edges の変更（Undo/Redo 含む）を自動保存につなぐ
+// nodes/edges の変更を自動保存につなぐ。Undo/Redo による変更も対象になる
 useBoardStore.subscribe((state, prev) => {
   if (!state.loaded) return;
   if (state.nodes !== prev.nodes || state.edges !== prev.edges) scheduleSave();

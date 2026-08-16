@@ -4,7 +4,7 @@ import { STICKY_COLORS, type BoardEdge, type BoardNode, type Session } from '@/t
 export const EXPORT_APP = 'murder-memo2';
 export const EXPORT_VERSION = 1;
 
-// セッションをエクスポート用 JSON 文字列（整形済み）にする。
+// セッションをエクスポート用の整形済み JSON 文字列にする。
 export function serializeExport(session: Session): string {
   return JSON.stringify({ app: EXPORT_APP, version: EXPORT_VERSION, session }, null, 2);
 }
@@ -18,8 +18,8 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 // - node/edge の ID はすべて再採番し、edge の source/target も追随させる
 // - 存在しないノードを参照する edge、形の壊れた edge は黙って捨てる
 // - 未知の色は 'yellow' に落とし、未知のフィールドは保持しない
-// - createdAt/updatedAt は now で上書きする（インポート時点を新規作成として扱う）
-// 使われ方: ファイル入力（信頼境界）から呼ばれる。失敗は throw で伝え、呼び手が通知を出す。
+// - createdAt/updatedAt は now で上書きし、インポート時点を新規作成として扱う
+// 使われ方: 信頼境界であるファイル入力から呼ばれる。失敗は throw で伝え、呼び手が通知を出す。
 export function parseImport(json: string, now = Date.now()): Session {
   let raw: unknown;
   try {
@@ -87,7 +87,7 @@ export function parseImport(json: string, now = Date.now()): Session {
       };
     }
 
-    // 未知の type は付箋として救出する（黙って捨てると edge の参照ごと消えるため）
+    // 未知の type は付箋として救出する。黙って捨てると edge の参照ごと消えるため
     return {
       id: newId,
       type: 'sticky' as const,

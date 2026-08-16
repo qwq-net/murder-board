@@ -16,7 +16,7 @@ function getDb() {
   return dbPromise;
 }
 
-// 全セッションのメタ情報を作成日時の昇順で返す（nodes/edges は含まない）。
+// 全セッションのメタ情報を作成日時の昇順で返す。nodes/edges は含まない。
 export async function listSessionMetas(): Promise<SessionMeta[]> {
   const all = await (await getDb()).getAll('sessions');
   return all

@@ -1,5 +1,6 @@
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import type { NodeProps } from '@xyflow/react';
 import { useEffect, useRef, useState } from 'react';
+import { NodeShell } from '@/components/nodes/NodeShell';
 import { useBoardStore } from '@/store';
 import { STICKY_COLORS, type StickyColor, type StickyNodeType } from '@/types/board';
 
@@ -13,7 +14,7 @@ const noteStyle = (c: StickyColor) => ({
 // 付箋ノード。空テキストで生成された直後は編集状態で始まる。
 // 表示中はダブルクリックで編集、blur / Escape で確定。選択中は色パレットを上部に出す。
 export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
-  const updateStickyData = useBoardStore((s) => s.updateStickyData);
+  const updateNodeData = useBoardStore((s) => s.updateNodeData);
   const [editing, setEditing] = useState(data.text === '');
   const [draft, setDraft] = useState(data.text);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -36,15 +37,18 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
 
   const commit = () => {
     setEditing(false);
-    if (draft !== data.text) updateStickyData(id, { text: draft });
+    if (draft !== data.text) updateNodeData(id, 'sticky', { text: draft });
   };
 
   return (
-    <div
-      className={`relative w-48 rounded-sm border text-text-primary shadow-md ${
-        selected ? 'ring-2 ring-accent' : ''
-      }`}
-      style={noteStyle(data.color)}
+    <NodeShell
+      selected={selected}
+      frameClassName="w-48 text-text-primary"
+      frameStyle={noteStyle(data.color)}
+      headerStyle={{ background: `var(--sticky-${data.color}-header)` }}
+      title={data.title}
+      titlePlaceholder="タイトル"
+      onTitleCommit={(title) => updateNodeData(id, 'sticky', { title })}
     >
       {selected && !editing && (
         <div className="absolute -top-7 left-0 flex gap-1 rounded bg-bg-elevated/90 p-1 shadow">
@@ -57,27 +61,11 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
                 c === data.color ? 'ring-2 ring-accent' : ''
               }`}
               style={{ background: `var(--sticky-${c}-accent)` }}
-              onClick={() => updateStickyData(id, { color: c })}
+              onClick={() => updateNodeData(id, 'sticky', { color: c })}
             />
           ))}
         </div>
       )}
-      <div
-        className="rounded-t-sm px-2 py-1"
-        style={{ background: `var(--sticky-${data.color}-header)` }}
-      >
-        <input
-          className="nodrag w-full bg-transparent text-sm font-bold outline-none"
-          defaultValue={data.title}
-          placeholder="タイトル"
-          onBlur={(e) => {
-            if (e.target.value !== data.title) updateStickyData(id, { title: e.target.value });
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.currentTarget.blur();
-          }}
-        />
-      </div>
       {editing ? (
         <textarea
           ref={taRef}
@@ -101,10 +89,6 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
           {data.text || <span className="text-text-muted opacity-60">ダブルクリックで編集</span>}
         </div>
       )}
-      <Handle type="target" position={Position.Top} id="t" />
-      <Handle type="target" position={Position.Left} id="l" />
-      <Handle type="source" position={Position.Bottom} id="b" />
-      <Handle type="source" position={Position.Right} id="r" />
-    </div>
+    </NodeShell>
   );
 }
