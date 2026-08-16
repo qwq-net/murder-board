@@ -1,7 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { useEffect, useRef, useState } from 'react';
 import { useBoardStore } from '@/store';
-import { STICKY_COLORS, type BoardNode, type StickyColor } from '@/types/board';
+import { STICKY_COLORS, type StickyColor, type StickyNodeType } from '@/types/board';
 
 const NOTE_CLASSES: Record<StickyColor, string> = {
   yellow: 'bg-amber-100 border-amber-300',
@@ -21,9 +21,18 @@ const DOT_CLASSES: Record<StickyColor, string> = {
   gray: 'bg-zinc-300',
 };
 
+const HEADER_CLASSES: Record<StickyColor, string> = {
+  yellow: 'bg-amber-200/70',
+  pink: 'bg-pink-200/70',
+  blue: 'bg-sky-200/70',
+  green: 'bg-emerald-200/70',
+  purple: 'bg-violet-200/70',
+  gray: 'bg-zinc-200/70',
+};
+
 // 付箋ノード。空テキストで生成された直後は編集状態で始まる。
 // 表示中はダブルクリックで編集、blur / Escape で確定。選択中は色パレットを上部に出す。
-export function StickyNode({ id, data, selected }: NodeProps<BoardNode>) {
+export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
   const updateStickyData = useBoardStore((s) => s.updateStickyData);
   const [editing, setEditing] = useState(data.text === '');
   const [draft, setDraft] = useState(data.text);
@@ -71,6 +80,19 @@ export function StickyNode({ id, data, selected }: NodeProps<BoardNode>) {
           ))}
         </div>
       )}
+      <div className={`rounded-t-sm px-2 py-1 ${HEADER_CLASSES[data.color]}`}>
+        <input
+          className="nodrag w-full bg-transparent text-sm font-bold outline-none"
+          defaultValue={data.title}
+          placeholder="タイトル"
+          onBlur={(e) => {
+            if (e.target.value !== data.title) updateStickyData(id, { title: e.target.value });
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur();
+          }}
+        />
+      </div>
       {editing ? (
         <textarea
           ref={taRef}

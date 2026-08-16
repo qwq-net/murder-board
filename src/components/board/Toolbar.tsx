@@ -9,7 +9,7 @@ const BUTTON_CLASS =
 export function Toolbar() {
   const sessions = useBoardStore((s) => s.sessions);
   const currentId = useBoardStore((s) => s.currentId);
-  const addSticky = useBoardStore((s) => s.addSticky);
+  const addNode = useBoardStore((s) => s.addNode);
   const createSession = useBoardStore((s) => s.createSession);
   const switchSession = useBoardStore((s) => s.switchSession);
   const renameSession = useBoardStore((s) => s.renameSession);
@@ -19,7 +19,7 @@ export function Toolbar() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const addAtCenter = () =>
-    addSticky(screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }));
+    addNode('sticky', screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 }));
 
   const rename = () => {
     const meta = sessions.find((m) => m.id === currentId);
@@ -84,7 +84,7 @@ export function Toolbar() {
         ＋付箋
       </button>
       <span className="ml-auto hidden text-xs text-zinc-400 sm:inline">
-        ダブルクリックで付箋を追加 / Ctrl+Z で元に戻す
+        右クリックでメモを追加 / Ctrl+Z で元に戻す
       </span>
       <button type="button" className={BUTTON_CLASS} onClick={exportJson}>
         エクスポート

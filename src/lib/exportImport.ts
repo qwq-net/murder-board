@@ -49,11 +49,37 @@ export function parseImport(json: string, now = Date.now()): Session {
     const data = isRecord(n.data) ? n.data : {};
     const newId = nanoid();
     idMap.set(n.id, newId);
+    const position = { x: n.position.x, y: n.position.y };
+
+    if (n.type === 'timeline') {
+      const entries = Array.isArray(data.entries)
+        ? data.entries.flatMap((r: unknown) =>
+            isRecord(r)
+              ? [
+                  {
+                    id: nanoid(),
+                    time: typeof r.time === 'string' ? r.time : '',
+                    text: typeof r.text === 'string' ? r.text : '',
+                  },
+                ]
+              : [],
+          )
+        : [];
+      return {
+        id: newId,
+        type: 'timeline' as const,
+        position,
+        data: { title: typeof data.title === 'string' ? data.title : '', entries },
+      };
+    }
+
+    // 未知の type は付箋として救出する（黙って捨てると edge の参照ごと消えるため）
     return {
       id: newId,
       type: 'sticky' as const,
-      position: { x: n.position.x, y: n.position.y },
+      position,
       data: {
+        title: typeof data.title === 'string' ? data.title : '',
         text: typeof data.text === 'string' ? data.text : '',
         color: STICKY_COLORS.find((c) => c === data.color) ?? 'yellow',
       },

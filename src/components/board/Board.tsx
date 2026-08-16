@@ -7,12 +7,18 @@ import {
   type EdgeMouseHandler,
   type NodeTypes,
 } from '@xyflow/react';
-import { useEffect, type MouseEvent } from 'react';
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { StickyNode } from '@/components/nodes/StickyNode';
+import { TimelineNode } from '@/components/nodes/TimelineNode';
 import { useBoardStore } from '@/store';
-import type { BoardEdge, BoardNode } from '@/types/board';
+import type { BoardEdge, BoardNode, BoardNodeKind } from '@/types/board';
 
-const nodeTypes: NodeTypes = { sticky: StickyNode };
+const nodeTypes: NodeTypes = { sticky: StickyNode, timeline: TimelineNode };
+
+const MENU_ITEMS: { kind: BoardNodeKind; label: string }[] = [
+  { kind: 'sticky', label: '通常メモ' },
+  { kind: 'timeline', label: 'タイムラインメモ' },
+];
 
 export function Board() {
   const nodes = useBoardStore((s) => s.nodes);
@@ -20,9 +26,11 @@ export function Board() {
   const onNodesChange = useBoardStore((s) => s.onNodesChange);
   const onEdgesChange = useBoardStore((s) => s.onEdgesChange);
   const onConnect = useBoardStore((s) => s.onConnect);
-  const addSticky = useBoardStore((s) => s.addSticky);
+  const addNode = useBoardStore((s) => s.addNode);
   const updateEdgeLabel = useBoardStore((s) => s.updateEdgeLabel);
   const { screenToFlowPosition } = useReactFlow();
+  // 右クリックメニューの表示位置（画面座標）。null なら非表示
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
 
   // Ctrl/Cmd+Z で Undo、Shift 併用で Redo。入力欄へのタイプは対象外
   useEffect(() => {
@@ -40,9 +48,20 @@ export function Board() {
   }, []);
 
   // 何もない場所（ペイン）のダブルクリックで付箋を追加
-  const onDoubleClick = (e: MouseEvent) => {
+  const onDoubleClick = (e: ReactMouseEvent) => {
     if (!(e.target as Element).classList.contains('react-flow__pane')) return;
-    addSticky(screenToFlowPosition({ x: e.clientX, y: e.clientY }));
+    addNode('sticky', screenToFlowPosition({ x: e.clientX, y: e.clientY }));
+  };
+
+  const onPaneContextMenu = (e: ReactMouseEvent | globalThis.MouseEvent) => {
+    e.preventDefault();
+    setMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const addFromMenu = (kind: BoardNodeKind) => {
+    if (!menu) return;
+    addNode(kind, screenToFlowPosition(menu));
+    setMenu(null);
   };
 
   const onEdgeDoubleClick: EdgeMouseHandler<BoardEdge> = (_, edge) => {
@@ -51,7 +70,7 @@ export function Board() {
   };
 
   return (
-    <div className="min-h-0 flex-1" onDoubleClick={onDoubleClick}>
+    <div className="relative min-h-0 flex-1" onDoubleClick={onDoubleClick}>
       <ReactFlow<BoardNode, BoardEdge>
         nodes={nodes}
         edges={edges}
@@ -59,6 +78,9 @@ export function Board() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onEdgeDoubleClick={onEdgeDoubleClick}
+        onPaneContextMenu={onPaneContextMenu}
+        onPaneClick={() => setMenu(null)}
+        onMoveStart={() => setMenu(null)}
         nodeTypes={nodeTypes}
         deleteKeyCode={['Backspace', 'Delete']}
         zoomOnDoubleClick={false}
@@ -67,6 +89,23 @@ export function Board() {
         <Controls />
         <MiniMap pannable zoomable />
       </ReactFlow>
+      {menu && (
+        <div
+          className="fixed z-50 min-w-40 rounded border border-zinc-200 bg-white py-1 shadow-lg"
+          style={{ left: menu.x, top: menu.y }}
+        >
+          {MENU_ITEMS.map(({ kind, label }) => (
+            <button
+              key={kind}
+              type="button"
+              className="block w-full cursor-pointer px-3 py-1.5 text-left text-sm hover:bg-zinc-100"
+              onClick={() => addFromMenu(kind)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

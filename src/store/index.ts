@@ -11,7 +11,15 @@ import { create } from 'zustand';
 import { temporal } from 'zundo';
 import { debounce, throttleLeading } from '@/lib/debounce';
 import * as idb from '@/lib/idb';
-import type { BoardEdge, BoardNode, Session, SessionMeta, StickyData } from '@/types/board';
+import type {
+  BoardEdge,
+  BoardNode,
+  BoardNodeKind,
+  Session,
+  SessionMeta,
+  StickyData,
+  TimelineData,
+} from '@/types/board';
 
 const LAST_SESSION_KEY = 'murder-memo2-last-session';
 
@@ -28,9 +36,11 @@ type Store = {
   onNodesChange: (changes: NodeChange<BoardNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<BoardEdge>[]) => void;
   onConnect: (connection: Connection) => void;
-  // 指定位置（フロー座標）に空の付箋を追加する。空テキストの付箋は作成直後に編集状態になる。
-  addSticky: (position: { x: number; y: number }) => void;
+  // 指定位置（フロー座標）に空のノードを追加する。sticky は作成直後に編集状態になり、
+  // timeline は空行 1 つ付きで作られる。
+  addNode: (kind: BoardNodeKind, position: { x: number; y: number }) => void;
   updateStickyData: (id: string, patch: Partial<StickyData>) => void;
+  updateTimelineData: (id: string, patch: Partial<TimelineData>) => void;
   updateEdgeLabel: (id: string, label: string) => void;
 
   createSession: () => Promise<void>;
@@ -88,17 +98,31 @@ export const useBoardStore = create<Store>()(
       onEdgesChange: (changes) => set({ edges: applyEdgeChanges(changes, get().edges) }),
       onConnect: (connection) => set({ edges: addEdge({ ...connection, id: nanoid() }, get().edges) }),
 
-      addSticky: (position) =>
-        set({
-          nodes: [
-            ...get().nodes,
-            { id: nanoid(), type: 'sticky', position, data: { text: '', color: 'yellow' } },
-          ],
-        }),
+      addNode: (kind, position) => {
+        const node: BoardNode =
+          kind === 'sticky'
+            ? { id: nanoid(), type: 'sticky', position, data: { title: '', text: '', color: 'yellow' } }
+            : {
+                id: nanoid(),
+                type: 'timeline',
+                position,
+                data: { title: '', entries: [{ id: nanoid(), time: '', text: '' }] },
+              };
+        set({ nodes: [...get().nodes, node] });
+      },
 
       updateStickyData: (id, patch) =>
         set({
-          nodes: get().nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)),
+          nodes: get().nodes.map((n) =>
+            n.id === id && n.type === 'sticky' ? { ...n, data: { ...n.data, ...patch } } : n,
+          ),
+        }),
+
+      updateTimelineData: (id, patch) =>
+        set({
+          nodes: get().nodes.map((n) =>
+            n.id === id && n.type === 'timeline' ? { ...n, data: { ...n.data, ...patch } } : n,
+          ),
         }),
 
       updateEdgeLabel: (id, label) =>

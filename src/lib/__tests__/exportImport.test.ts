@@ -9,8 +9,18 @@ function fixture(): Session {
     createdAt: 1,
     updatedAt: 2,
     nodes: [
-      { id: 'n1', type: 'sticky', position: { x: 0, y: 0 }, data: { text: 'あ', color: 'pink' } },
-      { id: 'n2', type: 'sticky', position: { x: 100, y: 50 }, data: { text: 'い', color: 'blue' } },
+      {
+        id: 'n1',
+        type: 'sticky',
+        position: { x: 0, y: 0 },
+        data: { title: '手がかり', text: 'あ', color: 'pink' },
+      },
+      {
+        id: 'n2',
+        type: 'sticky',
+        position: { x: 100, y: 50 },
+        data: { title: '', text: 'い', color: 'blue' },
+      },
     ],
     edges: [{ id: 'e1', source: 'n1', target: 'n2', label: '関係' }],
   };
@@ -27,7 +37,7 @@ describe('parseImport', () => {
     expect(imported.nodes).toHaveLength(2);
     const ids = imported.nodes.map((n) => n.id);
     expect(ids).not.toContain('n1');
-    expect(imported.nodes[0]!.data).toEqual({ text: 'あ', color: 'pink' });
+    expect(imported.nodes[0]!.data).toEqual({ title: '手がかり', text: 'あ', color: 'pink' });
     expect(imported.nodes[1]!.position).toEqual({ x: 100, y: 50 });
 
     expect(imported.edges).toHaveLength(1);
@@ -36,6 +46,25 @@ describe('parseImport', () => {
     expect(ids).toContain(edge.source);
     expect(ids).toContain(edge.target);
     expect(edge.label).toBe('関係');
+  });
+
+  it('timeline ノードは行 ID を再採番しつつ中身を保つ', () => {
+    const s = fixture();
+    s.nodes.push({
+      id: 'n3',
+      type: 'timeline',
+      position: { x: 200, y: 200 },
+      data: {
+        title: '当日',
+        entries: [{ id: 'r1', time: '21:00', text: '悲鳴が聞こえた' }],
+      },
+    });
+    const imported = parseImport(serializeExport(s));
+    const timeline = imported.nodes.find((n) => n.type === 'timeline')!;
+    expect(timeline.data.title).toBe('当日');
+    expect(timeline.data.entries).toHaveLength(1);
+    expect(timeline.data.entries[0]!.id).not.toBe('r1');
+    expect(timeline.data.entries[0]!).toMatchObject({ time: '21:00', text: '悲鳴が聞こえた' });
   });
 
   it('存在しないノードを参照する edge は捨てる', () => {
@@ -48,7 +77,7 @@ describe('parseImport', () => {
   it('未知の色は yellow に落とす', () => {
     const json = serializeExport(fixture()).replace('"pink"', '"neon"');
     const imported = parseImport(json);
-    expect(imported.nodes[0]!.data.color).toBe('yellow');
+    expect(imported.nodes[0]!.data).toMatchObject({ color: 'yellow' });
   });
 
   it('壊れた JSON は throw する', () => {
