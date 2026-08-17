@@ -24,6 +24,14 @@ export type ListNodeType = Node<ListData, "list">;
 export type CharacterNodeType = Node<CharacterData, "character">;
 export type BoardNode = StickyNodeType | TimelineNodeType | ListNodeType | CharacterNodeType;
 export type BoardNodeKind = NonNullable<BoardNode["type"]>;
+
+// ノード種別の表示名。キーの並びがメニュー・検索結果グループの表示順を兼ねる
+export const NODE_KIND_LABELS = {
+  sticky: "通常メモ",
+  timeline: "タイムラインメモ",
+  list: "リストメモ",
+  character: "登場人物メモ",
+} satisfies Record<BoardNodeKind, string>;
 // label を string に絞る。このアプリの edge ラベルはユーザーが入力するテキストのみで、
 // ReactNode を許す元の型のままだと利用側で毎回 typeof による絞り込みが要るため
 export type BoardEdge = Omit<Edge, "label"> & { label?: string };

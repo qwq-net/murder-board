@@ -14,7 +14,12 @@ import { StickyNode } from "@/components/nodes/StickyNode";
 import { TimelineNode } from "@/components/nodes/TimelineNode";
 import type { Theme } from "@/lib/theme";
 import { useBoardStore } from "@/store";
-import type { BoardEdge, BoardNode, BoardNodeKind } from "@/types/board";
+import {
+  NODE_KIND_LABELS,
+  type BoardEdge,
+  type BoardNode,
+  type BoardNodeKind,
+} from "@/types/board";
 
 const nodeTypes: NodeTypes = {
   sticky: StickyNode,
@@ -23,12 +28,9 @@ const nodeTypes: NodeTypes = {
   character: CharacterNode,
 };
 
-const MENU_ITEMS: { kind: BoardNodeKind; label: string }[] = [
-  { kind: "sticky", label: "通常メモ" },
-  { kind: "timeline", label: "タイムラインメモ" },
-  { kind: "list", label: "リストメモ" },
-  { kind: "character", label: "登場人物メモ" },
-];
+// SAFETY: NODE_KIND_LABELS のキーは BoardNodeKind の全種別。Object.entries が
+// キーを string へ落とすのを戻すだけの表明
+const MENU_ITEMS = Object.entries(NODE_KIND_LABELS) as [BoardNodeKind, string][];
 
 export function Board({ theme }: { theme: Theme }) {
   const nodes = useBoardStore((s) => s.nodes);
@@ -111,7 +113,7 @@ export function Board({ theme }: { theme: Theme }) {
           className="fixed z-50 min-w-40 rounded border border-border-default bg-bg-elevated py-1 shadow-lg"
           style={{ left: menu.x, top: menu.y }}
         >
-          {MENU_ITEMS.map(({ kind, label }) => (
+          {MENU_ITEMS.map(([kind, label]) => (
             <button
               key={kind}
               type="button"

@@ -10,7 +10,15 @@ const THEME_LABELS = { dark: "ダーク", light: "ライト", auto: "自動" } s
   string
 >;
 
-export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () => void }) {
+export function Toolbar({
+  theme,
+  onToggleTheme,
+  onOpenSearch,
+}: {
+  theme: Theme;
+  onToggleTheme: () => void;
+  onOpenSearch: () => void;
+}) {
   const sessions = useBoardStore((s) => s.sessions);
   const currentId = useBoardStore((s) => s.currentId);
   const createSession = useBoardStore((s) => s.createSession);
@@ -116,10 +124,13 @@ export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme:
       </div>
       <button
         type="button"
-        title="テーマ切替"
+        title="検索 (Ctrl+F)"
         className={`${BUTTON_CLASS} ml-auto`}
-        onClick={onToggleTheme}
+        onClick={onOpenSearch}
       >
+        検索
+      </button>
+      <button type="button" title="テーマ切替" className={BUTTON_CLASS} onClick={onToggleTheme}>
         {THEME_LABELS[theme]}
       </button>
       <input

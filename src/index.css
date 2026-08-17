@@ -269,6 +269,27 @@ button:focus-visible {
   }
 }
 
+/* ─── 検索オーバーレイ ───────────────────────────────────────────────────────── */
+
+/* 検索結果のキーワードハイライト */
+mark {
+  background: var(--color-accent-glow);
+  color: var(--color-text-primary);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+@keyframes search-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 /* ─── React Flow テーマ連動 ─────────────────────────────────────────────────── */
 /* colorMode が制御するのはコントロール・MiniMap 等の配色。キャンバス背景色だけは
    アプリのトークンに合わせて上書きする */
