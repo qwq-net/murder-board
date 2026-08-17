@@ -10,7 +10,8 @@
     "typecheck": "tsc -b",
     "lint": "oxlint",
     "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check"
+    "fmt:check": "oxfmt --check",
+    "check": "npm run lint && npm run fmt:check && npm run typecheck"
   },
   "dependencies": {
     "@xyflow/react": "^12.8.2",
