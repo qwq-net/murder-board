@@ -19,7 +19,9 @@ export type TimelineNodeType = Node<TimelineData, "timeline">;
 export type ListNodeType = Node<ListData, "list">;
 export type BoardNode = StickyNodeType | TimelineNodeType | ListNodeType;
 export type BoardNodeKind = NonNullable<BoardNode["type"]>;
-export type BoardEdge = Edge;
+// label を string に絞る。このアプリの edge ラベルはユーザーが入力するテキストのみで、
+// ReactNode を許す元の型のままだと利用側で毎回 typeof による絞り込みが要るため
+export type BoardEdge = Omit<Edge, "label"> & { label?: string };
 
 // 1 セッション = IndexedDB の 1 レコード。nodes/edges を正規化せず丸ごと持つ
 export type Session = {

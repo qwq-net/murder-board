@@ -5,7 +5,10 @@ import { useBoardStore } from "@/store";
 
 const BUTTON_CLASS = "btn-ghost btn-sm text-sm";
 
-const THEME_LABELS: Record<Theme, string> = { dark: "ダーク", light: "ライト", auto: "自動" };
+const THEME_LABELS = { dark: "ダーク", light: "ライト", auto: "自動" } satisfies Record<
+  Theme,
+  string
+>;
 
 export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () => void }) {
   const sessions = useBoardStore((s) => s.sessions);

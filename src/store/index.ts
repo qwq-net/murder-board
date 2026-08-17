@@ -135,11 +135,12 @@ export const useBoardStore = create<Store>()(
 
       updateNodeData: (id, type, patch) =>
         set({
-          nodes: get().nodes.map((n) =>
-            n.id === id && n.type === type
-              ? ({ ...n, data: { ...n.data, ...patch } } as BoardNode)
-              : n,
-          ),
+          nodes: get().nodes.map((n) => {
+            if (n.id !== id || n.type !== type) return n;
+            // SAFETY: n.type === type を確認済みなので、patch は n と同じ種別の data の部分型。
+            // ジェネリクス越しの相関を TS が追えないためだけの表明で、実行時の形は変わらない
+            return { ...n, data: { ...n.data, ...patch } } as BoardNode;
+          }),
         }),
 
       updateEdgeLabel: (id, label) =>
@@ -216,7 +217,9 @@ export const useBoardStore = create<Store>()(
     {
       partialize: (s) => ({ nodes: s.nodes, edges: s.edges }),
       equality: (past, cur) => past.nodes === cur.nodes && past.edges === cur.edges,
-      // ドラッグ中の連続更新で履歴が溢れないよう、記録を 500ms に 1 回へ間引く
+      // ドラッグ中の連続更新で履歴が溢れないよう、記録を 500ms に 1 回へ間引く。
+      // SAFETY: throttleLeading は受けた関数の引数をそのまま素通しするため、間引き後も
+      // handleSet と同じシグネチャのまま。汎用の関数型を経由するための表明
       handleSet: (handleSet) =>
         throttleLeading(handleSet as (...args: unknown[]) => void, 500) as typeof handleSet,
     },

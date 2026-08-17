@@ -39,8 +39,13 @@ export function Board({ theme }: { theme: Theme }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "z") return;
-      const t = e.target as HTMLElement;
-      if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable) return;
+      const t = e.target;
+      if (
+        t instanceof HTMLElement &&
+        (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)
+      ) {
+        return;
+      }
       e.preventDefault();
       const temporal = useBoardStore.temporal.getState();
       if (e.shiftKey) temporal.redo();
@@ -52,7 +57,7 @@ export function Board({ theme }: { theme: Theme }) {
 
   // ノードの無いペイン部分のダブルクリックで付箋を追加
   const onDoubleClick = (e: ReactMouseEvent) => {
-    if (!(e.target as Element).classList.contains("react-flow__pane")) return;
+    if (!(e.target instanceof Element) || !e.target.classList.contains("react-flow__pane")) return;
     addNode("sticky", screenToFlowPosition({ x: e.clientX, y: e.clientY }));
   };
 
@@ -68,10 +73,7 @@ export function Board({ theme }: { theme: Theme }) {
   };
 
   const onEdgeDoubleClick: EdgeMouseHandler<BoardEdge> = (_, edge) => {
-    const label = window.prompt(
-      "つながりのラベル",
-      typeof edge.label === "string" ? edge.label : "",
-    );
+    const label = window.prompt("つながりのラベル", edge.label ?? "");
     if (label !== null) updateEdgeLabel(edge.id, label);
   };
 

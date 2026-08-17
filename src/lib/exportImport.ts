@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import { z } from "zod";
 import { STICKY_COLORS, type BoardEdge, type BoardNode, type Session } from "@/types/board";
 
 export const EXPORT_APP = "murder-memo2";
@@ -9,9 +10,65 @@ export function serializeExport(session: Session): string {
   return JSON.stringify({ app: EXPORT_APP, version: EXPORT_VERSION, session }, null, 2);
 }
 
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null;
-}
+// エクスポートファイルの外枠。app/version が一致しなければ別アプリのファイルとして扱う
+const envelopeSchema = z.object({
+  app: z.literal(EXPORT_APP),
+  version: z.literal(EXPORT_VERSION),
+  session: z.unknown(),
+});
+
+const sessionSchema = z.object({
+  name: z.string(),
+  nodes: z.array(z.unknown()),
+  edges: z.array(z.unknown()),
+});
+
+// ノードの必須部分だけを検証する。type と data は種別ごとに後段で解釈する
+const nodeSchema = z.object({
+  id: z.string(),
+  type: z.unknown(),
+  position: z.object({ x: z.number(), y: z.number() }),
+  data: z.unknown(),
+});
+
+// data 系スキーマはフィールド単位でも全体でも catch で既定値に落とし、決して throw しない。
+// 壊れたフィールドだけを黙って既定値へ置き換える方針のため
+const timelineRowSchema = z.object({
+  time: z.string().catch(""),
+  text: z.string().catch(""),
+});
+
+const timelineDataSchema = z
+  .object({
+    title: z.string().catch(""),
+    entries: z.array(z.unknown()).catch([]),
+  })
+  .catch({ title: "", entries: [] });
+
+const listRowSchema = z.object({ text: z.string().catch("") });
+
+const listDataSchema = z
+  .object({
+    title: z.string().catch(""),
+    entries: z.array(z.unknown()).catch([]),
+  })
+  .catch({ title: "", entries: [] });
+
+const stickyDataSchema = z
+  .object({
+    title: z.string().catch(""),
+    text: z.string().catch(""),
+    color: z.enum(STICKY_COLORS).catch("yellow"),
+  })
+  .catch({ title: "", text: "", color: "yellow" });
+
+const edgeSchema = z.object({
+  source: z.string(),
+  target: z.string(),
+  sourceHandle: z.string().optional().catch(undefined),
+  targetHandle: z.string().optional().catch(undefined),
+  label: z.string().optional().catch(undefined),
+});
 
 // エクスポート JSON を検証し、全 ID を再採番した新しい Session を返す。
 // - JSON 不正・app/version 不一致・セッション/ノードの必須フィールド欠落は Error を throw
@@ -27,99 +84,60 @@ export function parseImport(json: string, now = Date.now()): Session {
   } catch {
     throw new Error("JSON として読み込めませんでした");
   }
-  if (!isRecord(raw) || raw.app !== EXPORT_APP || raw.version !== EXPORT_VERSION) {
+  const envelope = envelopeSchema.safeParse(raw);
+  if (!envelope.success) {
     throw new Error("murder-memo2 のエクスポートファイルではありません");
   }
-  const s = raw.session;
-  if (
-    !isRecord(s) ||
-    typeof s.name !== "string" ||
-    !Array.isArray(s.nodes) ||
-    !Array.isArray(s.edges)
-  ) {
+  const session = sessionSchema.safeParse(envelope.data.session);
+  if (!session.success) {
     throw new Error("セッションデータが壊れています");
   }
 
   const idMap = new Map<string, string>();
-  const nodes: BoardNode[] = s.nodes.map((n: unknown) => {
-    if (
-      !isRecord(n) ||
-      typeof n.id !== "string" ||
-      !isRecord(n.position) ||
-      typeof n.position.x !== "number" ||
-      typeof n.position.y !== "number"
-    ) {
+  const nodes: BoardNode[] = session.data.nodes.map((value) => {
+    const parsed = nodeSchema.safeParse(value);
+    if (!parsed.success) {
       throw new Error("ノードデータが壊れています");
     }
-    const data = isRecord(n.data) ? n.data : {};
+    const { id, type, position, data } = parsed.data;
     const newId = nanoid();
-    idMap.set(n.id, newId);
-    const position = { x: n.position.x, y: n.position.y };
+    idMap.set(id, newId);
 
-    if (n.type === "timeline") {
-      const entries = Array.isArray(data.entries)
-        ? data.entries.flatMap((r: unknown) =>
-            isRecord(r)
-              ? [
-                  {
-                    id: nanoid(),
-                    time: typeof r.time === "string" ? r.time : "",
-                    text: typeof r.text === "string" ? r.text : "",
-                  },
-                ]
-              : [],
-          )
-        : [];
-      return {
-        id: newId,
-        type: "timeline" as const,
-        position,
-        data: { title: typeof data.title === "string" ? data.title : "", entries },
-      };
+    if (type === "timeline") {
+      const { title, entries } = timelineDataSchema.parse(data);
+      const rows = entries.flatMap((row) => {
+        const r = timelineRowSchema.safeParse(row);
+        return r.success ? [{ id: nanoid(), ...r.data }] : [];
+      });
+      return { id: newId, type: "timeline" as const, position, data: { title, entries: rows } };
     }
 
-    if (n.type === "list") {
-      const entries = Array.isArray(data.entries)
-        ? data.entries.flatMap((r: unknown) =>
-            isRecord(r) ? [{ id: nanoid(), text: typeof r.text === "string" ? r.text : "" }] : [],
-          )
-        : [];
-      return {
-        id: newId,
-        type: "list" as const,
-        position,
-        data: { title: typeof data.title === "string" ? data.title : "", entries },
-      };
+    if (type === "list") {
+      const { title, entries } = listDataSchema.parse(data);
+      const rows = entries.flatMap((row) => {
+        const r = listRowSchema.safeParse(row);
+        return r.success ? [{ id: nanoid(), text: r.data.text }] : [];
+      });
+      return { id: newId, type: "list" as const, position, data: { title, entries: rows } };
     }
 
     // 未知の type は付箋として救出する。黙って捨てると edge の参照ごと消えるため
-    return {
-      id: newId,
-      type: "sticky" as const,
-      position,
-      data: {
-        title: typeof data.title === "string" ? data.title : "",
-        text: typeof data.text === "string" ? data.text : "",
-        color: STICKY_COLORS.find((c) => c === data.color) ?? "yellow",
-      },
-    };
+    return { id: newId, type: "sticky" as const, position, data: stickyDataSchema.parse(data) };
   });
 
   const edges: BoardEdge[] = [];
-  for (const e of s.edges as unknown[]) {
-    if (!isRecord(e) || typeof e.source !== "string" || typeof e.target !== "string") continue;
-    const source = idMap.get(e.source);
-    const target = idMap.get(e.target);
+  for (const value of session.data.edges) {
+    const parsed = edgeSchema.safeParse(value);
+    if (!parsed.success) continue;
+    const source = idMap.get(parsed.data.source);
+    const target = idMap.get(parsed.data.target);
     if (!source || !target) continue;
-    edges.push({
-      id: nanoid(),
-      source,
-      target,
-      ...(typeof e.sourceHandle === "string" ? { sourceHandle: e.sourceHandle } : {}),
-      ...(typeof e.targetHandle === "string" ? { targetHandle: e.targetHandle } : {}),
-      ...(typeof e.label === "string" && e.label !== "" ? { label: e.label } : {}),
-    });
+    const edge: BoardEdge = { id: nanoid(), source, target };
+    if (parsed.data.sourceHandle !== undefined) edge.sourceHandle = parsed.data.sourceHandle;
+    if (parsed.data.targetHandle !== undefined) edge.targetHandle = parsed.data.targetHandle;
+    if (parsed.data.label !== undefined && parsed.data.label !== "") edge.label = parsed.data.label;
+    edges.push(edge);
   }
 
-  return { id: nanoid(), name: s.name, createdAt: now, updatedAt: now, nodes, edges };
+  return { id: nanoid(), name: session.data.name, createdAt: now, updatedAt: now, nodes, edges };
 }

@@ -75,6 +75,7 @@ describe("parseImport", () => {
       position: { x: 300, y: 300 },
       data: {
         title: "容疑者",
+        // SAFETY: 壊れた行が捨てられることを検証するため、意図的に型を破った値を注入する
         entries: [{ id: "r1", text: "執事" }, "broken" as never],
       },
     });

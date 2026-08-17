@@ -8,7 +8,7 @@ const THEME_KEY = "murder-memo2-theme";
 // localStorage 等から読んだ生値を Theme に解釈する。
 // 'dark' | 'light' | 'auto' 以外の値は既定の 'dark' を返す。null・空文字も同様。
 export function parseTheme(raw: string | null): Theme {
-  return THEMES.includes(raw as Theme) ? (raw as Theme) : "dark";
+  return THEMES.find((t) => t === raw) ?? "dark";
 }
 
 // テーマ設定を dark → light → auto → dark の順に巡回させた次の値を返す。
