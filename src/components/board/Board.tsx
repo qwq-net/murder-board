@@ -6,21 +6,21 @@ import {
   useReactFlow,
   type EdgeMouseHandler,
   type NodeTypes,
-} from '@xyflow/react';
-import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
-import { ListNode } from '@/components/nodes/ListNode';
-import { StickyNode } from '@/components/nodes/StickyNode';
-import { TimelineNode } from '@/components/nodes/TimelineNode';
-import type { Theme } from '@/lib/theme';
-import { useBoardStore } from '@/store';
-import type { BoardEdge, BoardNode, BoardNodeKind } from '@/types/board';
+} from "@xyflow/react";
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
+import { ListNode } from "@/components/nodes/ListNode";
+import { StickyNode } from "@/components/nodes/StickyNode";
+import { TimelineNode } from "@/components/nodes/TimelineNode";
+import type { Theme } from "@/lib/theme";
+import { useBoardStore } from "@/store";
+import type { BoardEdge, BoardNode, BoardNodeKind } from "@/types/board";
 
 const nodeTypes: NodeTypes = { sticky: StickyNode, timeline: TimelineNode, list: ListNode };
 
 const MENU_ITEMS: { kind: BoardNodeKind; label: string }[] = [
-  { kind: 'sticky', label: '通常メモ' },
-  { kind: 'timeline', label: 'タイムラインメモ' },
-  { kind: 'list', label: 'リストメモ' },
+  { kind: "sticky", label: "通常メモ" },
+  { kind: "timeline", label: "タイムラインメモ" },
+  { kind: "list", label: "リストメモ" },
 ];
 
 export function Board({ theme }: { theme: Theme }) {
@@ -38,22 +38,22 @@ export function Board({ theme }: { theme: Theme }) {
   // Ctrl/Cmd+Z で Undo、Shift 併用で Redo。入力欄へのタイプは対象外
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "z") return;
       const t = e.target as HTMLElement;
-      if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable) return;
+      if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable) return;
       e.preventDefault();
       const temporal = useBoardStore.temporal.getState();
       if (e.shiftKey) temporal.redo();
       else temporal.undo();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   // ノードの無いペイン部分のダブルクリックで付箋を追加
   const onDoubleClick = (e: ReactMouseEvent) => {
-    if (!(e.target as Element).classList.contains('react-flow__pane')) return;
-    addNode('sticky', screenToFlowPosition({ x: e.clientX, y: e.clientY }));
+    if (!(e.target as Element).classList.contains("react-flow__pane")) return;
+    addNode("sticky", screenToFlowPosition({ x: e.clientX, y: e.clientY }));
   };
 
   const onPaneContextMenu = (e: ReactMouseEvent | globalThis.MouseEvent) => {
@@ -68,7 +68,10 @@ export function Board({ theme }: { theme: Theme }) {
   };
 
   const onEdgeDoubleClick: EdgeMouseHandler<BoardEdge> = (_, edge) => {
-    const label = window.prompt('つながりのラベル', typeof edge.label === 'string' ? edge.label : '');
+    const label = window.prompt(
+      "つながりのラベル",
+      typeof edge.label === "string" ? edge.label : "",
+    );
     if (label !== null) updateEdgeLabel(edge.id, label);
   };
 
@@ -85,8 +88,9 @@ export function Board({ theme }: { theme: Theme }) {
         onPaneClick={() => setMenu(null)}
         onMoveStart={() => setMenu(null)}
         nodeTypes={nodeTypes}
-        colorMode={theme === 'auto' ? 'system' : theme}
-        deleteKeyCode={['Backspace', 'Delete']}
+        colorMode={theme === "auto" ? "system" : theme}
+        proOptions={{ hideAttribution: true }}
+        deleteKeyCode={["Backspace", "Delete"]}
         zoomOnDoubleClick={false}
       >
         <Background />

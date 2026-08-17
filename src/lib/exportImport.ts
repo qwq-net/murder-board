@@ -1,7 +1,7 @@
-import { nanoid } from 'nanoid';
-import { STICKY_COLORS, type BoardEdge, type BoardNode, type Session } from '@/types/board';
+import { nanoid } from "nanoid";
+import { STICKY_COLORS, type BoardEdge, type BoardNode, type Session } from "@/types/board";
 
-export const EXPORT_APP = 'murder-memo2';
+export const EXPORT_APP = "murder-memo2";
 export const EXPORT_VERSION = 1;
 
 // セッションをエクスポート用の整形済み JSON 文字列にする。
@@ -10,7 +10,7 @@ export function serializeExport(session: Session): string {
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null;
+  return typeof v === "object" && v !== null;
 }
 
 // エクスポート JSON を検証し、全 ID を再採番した新しい Session を返す。
@@ -25,41 +25,46 @@ export function parseImport(json: string, now = Date.now()): Session {
   try {
     raw = JSON.parse(json);
   } catch {
-    throw new Error('JSON として読み込めませんでした');
+    throw new Error("JSON として読み込めませんでした");
   }
   if (!isRecord(raw) || raw.app !== EXPORT_APP || raw.version !== EXPORT_VERSION) {
-    throw new Error('murder-memo2 のエクスポートファイルではありません');
+    throw new Error("murder-memo2 のエクスポートファイルではありません");
   }
   const s = raw.session;
-  if (!isRecord(s) || typeof s.name !== 'string' || !Array.isArray(s.nodes) || !Array.isArray(s.edges)) {
-    throw new Error('セッションデータが壊れています');
+  if (
+    !isRecord(s) ||
+    typeof s.name !== "string" ||
+    !Array.isArray(s.nodes) ||
+    !Array.isArray(s.edges)
+  ) {
+    throw new Error("セッションデータが壊れています");
   }
 
   const idMap = new Map<string, string>();
   const nodes: BoardNode[] = s.nodes.map((n: unknown) => {
     if (
       !isRecord(n) ||
-      typeof n.id !== 'string' ||
+      typeof n.id !== "string" ||
       !isRecord(n.position) ||
-      typeof n.position.x !== 'number' ||
-      typeof n.position.y !== 'number'
+      typeof n.position.x !== "number" ||
+      typeof n.position.y !== "number"
     ) {
-      throw new Error('ノードデータが壊れています');
+      throw new Error("ノードデータが壊れています");
     }
     const data = isRecord(n.data) ? n.data : {};
     const newId = nanoid();
     idMap.set(n.id, newId);
     const position = { x: n.position.x, y: n.position.y };
 
-    if (n.type === 'timeline') {
+    if (n.type === "timeline") {
       const entries = Array.isArray(data.entries)
         ? data.entries.flatMap((r: unknown) =>
             isRecord(r)
               ? [
                   {
                     id: nanoid(),
-                    time: typeof r.time === 'string' ? r.time : '',
-                    text: typeof r.text === 'string' ? r.text : '',
+                    time: typeof r.time === "string" ? r.time : "",
+                    text: typeof r.text === "string" ? r.text : "",
                   },
                 ]
               : [],
@@ -67,42 +72,42 @@ export function parseImport(json: string, now = Date.now()): Session {
         : [];
       return {
         id: newId,
-        type: 'timeline' as const,
+        type: "timeline" as const,
         position,
-        data: { title: typeof data.title === 'string' ? data.title : '', entries },
+        data: { title: typeof data.title === "string" ? data.title : "", entries },
       };
     }
 
-    if (n.type === 'list') {
+    if (n.type === "list") {
       const entries = Array.isArray(data.entries)
         ? data.entries.flatMap((r: unknown) =>
-            isRecord(r) ? [{ id: nanoid(), text: typeof r.text === 'string' ? r.text : '' }] : [],
+            isRecord(r) ? [{ id: nanoid(), text: typeof r.text === "string" ? r.text : "" }] : [],
           )
         : [];
       return {
         id: newId,
-        type: 'list' as const,
+        type: "list" as const,
         position,
-        data: { title: typeof data.title === 'string' ? data.title : '', entries },
+        data: { title: typeof data.title === "string" ? data.title : "", entries },
       };
     }
 
     // 未知の type は付箋として救出する。黙って捨てると edge の参照ごと消えるため
     return {
       id: newId,
-      type: 'sticky' as const,
+      type: "sticky" as const,
       position,
       data: {
-        title: typeof data.title === 'string' ? data.title : '',
-        text: typeof data.text === 'string' ? data.text : '',
-        color: STICKY_COLORS.find((c) => c === data.color) ?? 'yellow',
+        title: typeof data.title === "string" ? data.title : "",
+        text: typeof data.text === "string" ? data.text : "",
+        color: STICKY_COLORS.find((c) => c === data.color) ?? "yellow",
       },
     };
   });
 
   const edges: BoardEdge[] = [];
   for (const e of s.edges as unknown[]) {
-    if (!isRecord(e) || typeof e.source !== 'string' || typeof e.target !== 'string') continue;
+    if (!isRecord(e) || typeof e.source !== "string" || typeof e.target !== "string") continue;
     const source = idMap.get(e.source);
     const target = idMap.get(e.target);
     if (!source || !target) continue;
@@ -110,9 +115,9 @@ export function parseImport(json: string, now = Date.now()): Session {
       id: nanoid(),
       source,
       target,
-      ...(typeof e.sourceHandle === 'string' ? { sourceHandle: e.sourceHandle } : {}),
-      ...(typeof e.targetHandle === 'string' ? { targetHandle: e.targetHandle } : {}),
-      ...(typeof e.label === 'string' && e.label !== '' ? { label: e.label } : {}),
+      ...(typeof e.sourceHandle === "string" ? { sourceHandle: e.sourceHandle } : {}),
+      ...(typeof e.targetHandle === "string" ? { targetHandle: e.targetHandle } : {}),
+      ...(typeof e.label === "string" && e.label !== "" ? { label: e.label } : {}),
     });
   }
 

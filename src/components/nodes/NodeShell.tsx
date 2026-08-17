@@ -1,5 +1,5 @@
-import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { useState, type ComponentPropsWithoutRef, type CSSProperties, type ReactNode } from 'react';
+import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { useState, type ComponentPropsWithoutRef, type CSSProperties, type ReactNode } from "react";
 
 // 全ノード種別共通の外枠。枠・タイトルヘッダ・接続ハンドル 4 方向・選択リングを持つ。
 // 幅や配色は frameClassName / frameStyle / headerClassName / headerStyle で種別ごとに与える。
@@ -11,14 +11,14 @@ export function NodeShell({
   selected,
   frameClassName,
   frameStyle,
-  headerClassName = '',
+  headerClassName = "",
   headerStyle,
   title,
   titlePlaceholder,
   onTitleCommit,
   children,
 }: {
-  selected: NodeProps['selected'];
+  selected: NodeProps["selected"];
   frameClassName: string;
   frameStyle?: CSSProperties;
   headerClassName?: string;
@@ -31,7 +31,7 @@ export function NodeShell({
   return (
     <div
       className={`relative rounded-sm border shadow-md ${frameClassName} ${
-        selected ? 'ring-2 ring-accent' : ''
+        selected ? "ring-2 ring-accent" : ""
       }`}
       style={frameStyle}
     >
@@ -65,7 +65,7 @@ export function CommitInput({
   value: string;
   onCommit: (value: string) => void;
   normalize?: (value: string) => string;
-} & Omit<ComponentPropsWithoutRef<'input'>, 'value' | 'onChange' | 'onBlur' | 'onKeyDown'>) {
+} & Omit<ComponentPropsWithoutRef<"input">, "value" | "onChange" | "onBlur" | "onKeyDown">) {
   const [draft, setDraft] = useState(value);
   return (
     <input
@@ -78,7 +78,7 @@ export function CommitInput({
         if (committed !== value) onCommit(committed);
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter') e.currentTarget.blur();
+        if (e.key === "Enter") e.currentTarget.blur();
       }}
     />
   );

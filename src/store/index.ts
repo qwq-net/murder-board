@@ -5,18 +5,18 @@ import {
   type Connection,
   type EdgeChange,
   type NodeChange,
-} from '@xyflow/react';
-import { nanoid } from 'nanoid';
-import { create } from 'zustand';
-import { temporal } from 'zundo';
-import { debounce, throttleLeading } from '@/lib/debounce';
-import * as idb from '@/lib/idb';
-import type { BoardEdge, BoardNode, BoardNodeKind, Session, SessionMeta } from '@/types/board';
+} from "@xyflow/react";
+import { nanoid } from "nanoid";
+import { create } from "zustand";
+import { temporal } from "zundo";
+import { debounce, throttleLeading } from "@/lib/debounce";
+import * as idb from "@/lib/idb";
+import type { BoardEdge, BoardNode, BoardNodeKind, Session, SessionMeta } from "@/types/board";
 
-const LAST_SESSION_KEY = 'murder-memo2-last-session';
+const LAST_SESSION_KEY = "murder-memo2-last-session";
 
 // ノード種別からその data 型を引く。updateNodeData の patch を種別ごとに型付けるために使う
-type DataOf<K extends BoardNodeKind> = Extract<BoardNode, { type: K }>['data'];
+type DataOf<K extends BoardNodeKind> = Extract<BoardNode, { type: K }>["data"];
 
 type Store = {
   loaded: boolean;
@@ -52,7 +52,14 @@ type Store = {
 
 function newSession(): Session {
   const now = Date.now();
-  return { id: nanoid(), name: '新しいセッション', createdAt: now, updatedAt: now, nodes: [], edges: [] };
+  return {
+    id: nanoid(),
+    name: "新しいセッション",
+    createdAt: now,
+    updatedAt: now,
+    nodes: [],
+    edges: [],
+  };
 }
 
 function toMeta({ id, name, createdAt, updatedAt }: Session): SessionMeta {
@@ -86,30 +93,42 @@ export const useBoardStore = create<Store>()(
           metas = [...metas, toMeta(session)];
         }
         localStorage.setItem(LAST_SESSION_KEY, session.id);
-        set({ loaded: true, sessions: metas, currentId: session.id, nodes: session.nodes, edges: session.edges });
+        set({
+          loaded: true,
+          sessions: metas,
+          currentId: session.id,
+          nodes: session.nodes,
+          edges: session.edges,
+        });
         useBoardStore.temporal.getState().clear();
       },
 
       onNodesChange: (changes) => set({ nodes: applyNodeChanges(changes, get().nodes) }),
       onEdgesChange: (changes) => set({ edges: applyEdgeChanges(changes, get().edges) }),
-      onConnect: (connection) => set({ edges: addEdge({ ...connection, id: nanoid() }, get().edges) }),
+      onConnect: (connection) =>
+        set({ edges: addEdge({ ...connection, id: nanoid() }, get().edges) }),
 
       addNode: (kind, position) => {
         const node: BoardNode =
-          kind === 'sticky'
-            ? { id: nanoid(), type: 'sticky', position, data: { title: '', text: '', color: 'yellow' } }
-            : kind === 'timeline'
+          kind === "sticky"
+            ? {
+                id: nanoid(),
+                type: "sticky",
+                position,
+                data: { title: "", text: "", color: "yellow" },
+              }
+            : kind === "timeline"
               ? {
                   id: nanoid(),
-                  type: 'timeline',
+                  type: "timeline",
                   position,
-                  data: { title: '', entries: [{ id: nanoid(), time: '', text: '' }] },
+                  data: { title: "", entries: [{ id: nanoid(), time: "", text: "" }] },
                 }
               : {
                   id: nanoid(),
-                  type: 'list',
+                  type: "list",
                   position,
-                  data: { title: '', entries: [{ id: nanoid(), text: '' }] },
+                  data: { title: "", entries: [{ id: nanoid(), text: "" }] },
                 };
         set({ nodes: [...get().nodes, node] });
       },
@@ -117,7 +136,9 @@ export const useBoardStore = create<Store>()(
       updateNodeData: (id, type, patch) =>
         set({
           nodes: get().nodes.map((n) =>
-            n.id === id && n.type === type ? ({ ...n, data: { ...n.data, ...patch } } as BoardNode) : n,
+            n.id === id && n.type === type
+              ? ({ ...n, data: { ...n.data, ...patch } } as BoardNode)
+              : n,
           ),
         }),
 
@@ -129,7 +150,12 @@ export const useBoardStore = create<Store>()(
         const session = newSession();
         await idb.putSession(session);
         localStorage.setItem(LAST_SESSION_KEY, session.id);
-        set({ sessions: [...get().sessions, toMeta(session)], currentId: session.id, nodes: [], edges: [] });
+        set({
+          sessions: [...get().sessions, toMeta(session)],
+          currentId: session.id,
+          nodes: [],
+          edges: [],
+        });
         useBoardStore.temporal.getState().clear();
       },
 
@@ -163,7 +189,12 @@ export const useBoardStore = create<Store>()(
         } else {
           const session = newSession();
           await idb.putSession(session);
-          set({ sessions: [...rest, toMeta(session)], currentId: session.id, nodes: [], edges: [] });
+          set({
+            sessions: [...rest, toMeta(session)],
+            currentId: session.id,
+            nodes: [],
+            edges: [],
+          });
         }
         localStorage.setItem(LAST_SESSION_KEY, get().currentId!);
         useBoardStore.temporal.getState().clear();
@@ -199,7 +230,9 @@ function saveCurrent() {
   const meta = s.sessions.find((m) => m.id === s.currentId);
   if (!meta) return;
   const updatedAt = Date.now();
-  useBoardStore.setState({ sessions: s.sessions.map((m) => (m === meta ? { ...m, updatedAt } : m)) });
+  useBoardStore.setState({
+    sessions: s.sessions.map((m) => (m === meta ? { ...m, updatedAt } : m)),
+  });
   void idb.putSession({ ...meta, updatedAt, nodes: s.nodes, edges: s.edges });
 }
 
@@ -211,4 +244,4 @@ useBoardStore.subscribe((state, prev) => {
   if (state.nodes !== prev.nodes || state.edges !== prev.edges) scheduleSave();
 });
 
-window.addEventListener('beforeunload', () => scheduleSave.flush());
+window.addEventListener("beforeunload", () => scheduleSave.flush());

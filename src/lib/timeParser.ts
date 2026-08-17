@@ -1,12 +1,12 @@
 // murder-memo v1 の timeParser から normalizeTimeInput / autoCompleteTime / parseEventTime を移植。
 
-import type { TimelineEntry } from '@/types/board';
+import type { TimelineEntry } from "@/types/board";
 
 // 全角数字・コロンを半角に変換する。"１３：００" → "13:00"
 export function normalizeTimeInput(input: string): string {
   return input
     .replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
-    .replace(/：/g, ':');
+    .replace(/：/g, ":");
 }
 
 // コロンなし数字入力を HH:MM に自動補完する。時刻入力欄の blur 時に使う。
@@ -14,7 +14,7 @@ export function normalizeTimeInput(input: string): string {
 // 既にコロンがある・数字 1〜4 桁でない場合は正規化のみして返す。
 export function autoCompleteTime(input: string): string {
   const s = normalizeTimeInput(input).trim();
-  if (!s || s.includes(':')) return s;
+  if (!s || s.includes(":")) return s;
   if (!/^\d{1,4}$/.test(s)) return s;
 
   const n = s.length;

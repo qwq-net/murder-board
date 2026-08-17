@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
-export const THEMES = ['dark', 'light', 'auto'] as const;
+export const THEMES = ["dark", "light", "auto"] as const;
 export type Theme = (typeof THEMES)[number];
 
-const THEME_KEY = 'murder-memo2-theme';
+const THEME_KEY = "murder-memo2-theme";
 
 // localStorage 等から読んだ生値を Theme に解釈する。
 // 'dark' | 'light' | 'auto' 以外の値は既定の 'dark' を返す。null・空文字も同様。
 export function parseTheme(raw: string | null): Theme {
-  return THEMES.includes(raw as Theme) ? (raw as Theme) : 'dark';
+  return THEMES.includes(raw as Theme) ? (raw as Theme) : "dark";
 }
 
 // テーマ設定を dark → light → auto → dark の順に巡回させた次の値を返す。
@@ -26,18 +26,18 @@ export function useTheme() {
 
   useEffect(() => {
     localStorage.setItem(THEME_KEY, theme);
-    const apply = (resolved: 'dark' | 'light') => {
+    const apply = (resolved: "dark" | "light") => {
       document.documentElement.dataset.theme = resolved;
     };
-    if (theme !== 'auto') {
+    if (theme !== "auto") {
       apply(theme);
       return;
     }
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    apply(mq.matches ? 'dark' : 'light');
-    const handler = (e: MediaQueryListEvent) => apply(e.matches ? 'dark' : 'light');
-    mq.addEventListener('change', handler);
-    return () => mq.removeEventListener('change', handler);
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    apply(mq.matches ? "dark" : "light");
+    const handler = (e: MediaQueryListEvent) => apply(e.matches ? "dark" : "light");
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, [theme]);
 
   return { theme, toggle: () => setTheme(nextTheme(theme)) };

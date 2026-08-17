@@ -1,9 +1,9 @@
-import type { NodeProps } from '@xyflow/react';
-import { nanoid } from 'nanoid';
-import { AddRowButton, CommitInput, NodeRow, NodeShell } from '@/components/nodes/NodeShell';
-import { autoCompleteTime, sortTimelineEntries } from '@/lib/timeParser';
-import { useBoardStore } from '@/store';
-import type { TimelineEntry, TimelineNodeType } from '@/types/board';
+import type { NodeProps } from "@xyflow/react";
+import { nanoid } from "nanoid";
+import { AddRowButton, CommitInput, NodeRow, NodeShell } from "@/components/nodes/NodeShell";
+import { autoCompleteTime, sortTimelineEntries } from "@/lib/timeParser";
+import { useBoardStore } from "@/store";
+import type { TimelineEntry, TimelineNodeType } from "@/types/board";
 
 // タイムライン付箋。行は「時刻 + 出来事」で、時刻の確定時に自動補完・昇順ソートされる。
 // 確定のタイミングは blur。時刻を解釈できない行は末尾に並ぶ。空欄や自由記述がこれにあたる。
@@ -11,18 +11,20 @@ import type { TimelineEntry, TimelineNodeType } from '@/types/board';
 export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>) {
   const updateNodeData = useBoardStore((s) => s.updateNodeData);
 
-  const commitEntry = (entryId: string, patch: Partial<Omit<TimelineEntry, 'id'>>) =>
-    updateNodeData(id, 'timeline', {
+  const commitEntry = (entryId: string, patch: Partial<Omit<TimelineEntry, "id">>) =>
+    updateNodeData(id, "timeline", {
       entries: sortTimelineEntries(
         data.entries.map((e) => (e.id === entryId ? { ...e, ...patch } : e)),
       ),
     });
 
   const addRow = () =>
-    updateNodeData(id, 'timeline', { entries: [...data.entries, { id: nanoid(), time: '', text: '' }] });
+    updateNodeData(id, "timeline", {
+      entries: [...data.entries, { id: nanoid(), time: "", text: "" }],
+    });
 
   const removeRow = (entryId: string) =>
-    updateNodeData(id, 'timeline', { entries: data.entries.filter((e) => e.id !== entryId) });
+    updateNodeData(id, "timeline", { entries: data.entries.filter((e) => e.id !== entryId) });
 
   return (
     <NodeShell
@@ -31,7 +33,7 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
       headerClassName="bg-panel-timeline-accent/15"
       title={data.title}
       titlePlaceholder="タイムライン"
-      onTitleCommit={(title) => updateNodeData(id, 'timeline', { title })}
+      onTitleCommit={(title) => updateNodeData(id, "timeline", { title })}
     >
       <div className="p-1">
         {data.entries.map((entry) => (

@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { debounce, throttleLeading } from '../debounce';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { debounce, throttleLeading } from "../debounce";
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -8,8 +8,8 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('debounce', () => {
-  it('連続呼び出しは最後の引数で 1 回だけ実行される', () => {
+describe("debounce", () => {
+  it("連続呼び出しは最後の引数で 1 回だけ実行される", () => {
     const fn = vi.fn();
     const d = debounce(fn, 100);
     d(1);
@@ -21,7 +21,7 @@ describe('debounce', () => {
     expect(fn).toHaveBeenCalledExactlyOnceWith(3);
   });
 
-  it('cancel は保留中の実行を破棄する', () => {
+  it("cancel は保留中の実行を破棄する", () => {
     const fn = vi.fn();
     const d = debounce(fn, 100);
     d(1);
@@ -30,7 +30,7 @@ describe('debounce', () => {
     expect(fn).not.toHaveBeenCalled();
   });
 
-  it('flush は保留中なら即実行し、保留なしなら何もしない', () => {
+  it("flush は保留中なら即実行し、保留なしなら何もしない", () => {
     const fn = vi.fn();
     const d = debounce(fn, 100);
     d.flush();
@@ -43,8 +43,8 @@ describe('debounce', () => {
   });
 });
 
-describe('throttleLeading', () => {
-  it('先頭は即実行し、ms 以内の後続は無視する', () => {
+describe("throttleLeading", () => {
+  it("先頭は即実行し、ms 以内の後続は無視する", () => {
     const fn = vi.fn();
     const t = throttleLeading(fn, 100);
     t(1);

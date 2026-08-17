@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 /* ─── Tailwind CSS 4 テーマトークン ────────────────────────────────────────── */
 /* murder-memo から移植したデザイントークン。ダークが既定値。
@@ -38,9 +38,9 @@
 
   /* Typography */
   --font-sans:
-    'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans',
-    'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
-  --font-mono: 'Cascadia Mono', 'Cascadia Code', Consolas, Menlo, Monaco, monospace;
+    "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", Consolas, Menlo, Monaco, monospace;
 
   /* Border Radius */
   --radius-sm: 4px;
@@ -84,7 +84,7 @@
 }
 
 /* ─── ライトテーマ ───────────────────────────────────────────────────────────── */
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   /* Surface */
   --color-bg-base: #f5f2ec;
   --color-bg-surface: #ece8e0;
@@ -173,7 +173,7 @@ body {
 /* 入力要素・編集中テキストのみ選択可能 */
 input,
 textarea,
-[contenteditable='true'] {
+[contenteditable="true"] {
   user-select: text;
   -webkit-user-select: text;
 }
@@ -272,4 +272,14 @@ button:focus-visible {
    アプリのトークンに合わせて上書きする */
 .react-flow {
   --xy-background-color: var(--color-bg-base);
+}
+
+/* 接続ハンドルはカードへのホバー中のみ表示する。opacity なので非表示中も
+   接続ドラッグの受け口としては機能し続ける */
+.react-flow__handle {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.react-flow__node:hover .react-flow__handle {
+  opacity: 1;
 }

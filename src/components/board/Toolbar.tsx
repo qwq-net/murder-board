@@ -1,11 +1,11 @@
-import { useRef, useState } from 'react';
-import { parseImport, serializeExport } from '@/lib/exportImport';
-import type { Theme } from '@/lib/theme';
-import { useBoardStore } from '@/store';
+import { useRef, useState } from "react";
+import { parseImport, serializeExport } from "@/lib/exportImport";
+import type { Theme } from "@/lib/theme";
+import { useBoardStore } from "@/store";
 
-const BUTTON_CLASS = 'btn-ghost btn-sm text-sm';
+const BUTTON_CLASS = "btn-ghost btn-sm text-sm";
 
-const THEME_LABELS: Record<Theme, string> = { dark: 'ダーク', light: 'ライト', auto: '自動' };
+const THEME_LABELS: Record<Theme, string> = { dark: "ダーク", light: "ライト", auto: "自動" };
 
 export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () => void }) {
   const sessions = useBoardStore((s) => s.sessions);
@@ -21,12 +21,12 @@ export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme:
 
   const rename = () => {
     const meta = sessions.find((m) => m.id === currentId);
-    const name = window.prompt('セッション名', meta?.name ?? '');
+    const name = window.prompt("セッション名", meta?.name ?? "");
     if (name) renameSession(name);
   };
 
   const remove = () => {
-    if (window.confirm('このセッションを削除しますか？この操作は取り消せません。')) {
+    if (window.confirm("このセッションを削除しますか？この操作は取り消せません。")) {
       void removeSession();
     }
   };
@@ -36,10 +36,10 @@ export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme:
     const meta = s.sessions.find((m) => m.id === s.currentId);
     if (!meta) return;
     const blob = new Blob([serializeExport({ ...meta, nodes: s.nodes, edges: s.edges })], {
-      type: 'application/json',
+      type: "application/json",
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `${meta.name}.json`;
     a.click();
@@ -50,24 +50,26 @@ export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme:
     try {
       await importSessionData(parseImport(await file.text()));
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : 'インポートに失敗しました');
+      window.alert(err instanceof Error ? err.message : "インポートに失敗しました");
     }
   };
 
   const MENU_ITEMS: { label: string; danger?: boolean; onClick: () => void }[] = [
-    { label: '新規セッション', onClick: () => void createSession() },
-    { label: '名前変更', onClick: rename },
-    { label: 'エクスポート', onClick: exportJson },
-    { label: 'インポート', onClick: () => fileRef.current?.click() },
-    { label: '削除', danger: true, onClick: remove },
+    { label: "新規セッション", onClick: () => void createSession() },
+    { label: "名前変更", onClick: rename },
+    { label: "エクスポート", onClick: exportJson },
+    { label: "インポート", onClick: () => fileRef.current?.click() },
+    { label: "削除", danger: true, onClick: remove },
   ];
 
   return (
     <header className="flex items-center gap-2 border-b border-border-subtle bg-bg-surface px-3 py-2">
-      <h1 className="mr-2 text-sm font-bold whitespace-nowrap text-text-secondary">マダめもくん2</h1>
+      <h1 className="mr-2 text-sm font-bold whitespace-nowrap text-text-secondary">
+        マダめもくん2
+      </h1>
       <select
         className="input-base min-w-0 shrink max-w-48 text-sm"
-        value={currentId ?? ''}
+        value={currentId ?? ""}
         onChange={(e) => void switchSession(e.target.value)}
       >
         {sessions.map((m) => (
@@ -95,7 +97,7 @@ export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme:
                   key={label}
                   type="button"
                   className={`block w-full cursor-pointer px-3 py-1.5 text-left text-sm whitespace-nowrap hover:bg-bg-hover ${
-                    danger ? 'text-danger' : ''
+                    danger ? "text-danger" : ""
                   }`}
                   onClick={() => {
                     setMenuOpen(false);
@@ -109,7 +111,12 @@ export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme:
           </>
         )}
       </div>
-      <button type="button" title="テーマ切替" className={`${BUTTON_CLASS} ml-auto`} onClick={onToggleTheme}>
+      <button
+        type="button"
+        title="テーマ切替"
+        className={`${BUTTON_CLASS} ml-auto`}
+        onClick={onToggleTheme}
+      >
         {THEME_LABELS[theme]}
       </button>
       <input
@@ -120,7 +127,7 @@ export function Toolbar({ theme, onToggleTheme }: { theme: Theme; onToggleTheme:
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) void importJson(file);
-          e.target.value = '';
+          e.target.value = "";
         }}
       />
     </header>

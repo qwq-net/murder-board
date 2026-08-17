@@ -1,8 +1,8 @@
-import type { NodeProps } from '@xyflow/react';
-import { useEffect, useRef, useState } from 'react';
-import { NodeShell } from '@/components/nodes/NodeShell';
-import { useBoardStore } from '@/store';
-import { STICKY_COLORS, type StickyColor, type StickyNodeType } from '@/types/board';
+import type { NodeProps } from "@xyflow/react";
+import { useEffect, useRef, useState } from "react";
+import { NodeShell } from "@/components/nodes/NodeShell";
+import { useBoardStore } from "@/store";
+import { STICKY_COLORS, type StickyColor, type StickyNodeType } from "@/types/board";
 
 // 付箋カラーは index.css の --sticky-* 変数で定義され、テーマに応じて値が切り替わる。
 // クラスマップではなく CSS 変数参照にすることで、テーマ切替時のロジック変更を不要にする。
@@ -15,7 +15,7 @@ const noteStyle = (c: StickyColor) => ({
 // 表示中はダブルクリックで編集、blur / Escape で確定。選択中は色パレットを上部に出す。
 export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
   const updateNodeData = useBoardStore((s) => s.updateNodeData);
-  const [editing, setEditing] = useState(data.text === '');
+  const [editing, setEditing] = useState(data.text === "");
   const [draft, setDraft] = useState(data.text);
   const taRef = useRef<HTMLTextAreaElement>(null);
 
@@ -37,7 +37,7 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
 
   const commit = () => {
     setEditing(false);
-    if (draft !== data.text) updateNodeData(id, 'sticky', { text: draft });
+    if (draft !== data.text) updateNodeData(id, "sticky", { text: draft });
   };
 
   return (
@@ -48,7 +48,7 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
       headerStyle={{ background: `var(--sticky-${data.color}-header)` }}
       title={data.title}
       titlePlaceholder="タイトル"
-      onTitleCommit={(title) => updateNodeData(id, 'sticky', { title })}
+      onTitleCommit={(title) => updateNodeData(id, "sticky", { title })}
     >
       {selected && !editing && (
         <div className="absolute -top-7 left-0 flex gap-1 rounded bg-bg-elevated/90 p-1 shadow">
@@ -58,10 +58,10 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
               type="button"
               aria-label={`色: ${c}`}
               className={`h-4 w-4 cursor-pointer rounded-full ${
-                c === data.color ? 'ring-2 ring-accent' : ''
+                c === data.color ? "ring-2 ring-accent" : ""
               }`}
               style={{ background: `var(--sticky-${c}-accent)` }}
-              onClick={() => updateNodeData(id, 'sticky', { color: c })}
+              onClick={() => updateNodeData(id, "sticky", { color: c })}
             />
           ))}
         </div>
@@ -75,7 +75,7 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
           onKeyDown={(e) => {
-            if (e.key === 'Escape') commit();
+            if (e.key === "Escape") commit();
           }}
         />
       ) : (
