@@ -8,6 +8,7 @@ import {
   type NodeTypes,
 } from "@xyflow/react";
 import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
+import { CharacterNode } from "@/components/nodes/CharacterNode";
 import { ListNode } from "@/components/nodes/ListNode";
 import { StickyNode } from "@/components/nodes/StickyNode";
 import { TimelineNode } from "@/components/nodes/TimelineNode";
@@ -15,12 +16,18 @@ import type { Theme } from "@/lib/theme";
 import { useBoardStore } from "@/store";
 import type { BoardEdge, BoardNode, BoardNodeKind } from "@/types/board";
 
-const nodeTypes: NodeTypes = { sticky: StickyNode, timeline: TimelineNode, list: ListNode };
+const nodeTypes: NodeTypes = {
+  sticky: StickyNode,
+  timeline: TimelineNode,
+  list: ListNode,
+  character: CharacterNode,
+};
 
 const MENU_ITEMS: { kind: BoardNodeKind; label: string }[] = [
   { kind: "sticky", label: "通常メモ" },
   { kind: "timeline", label: "タイムラインメモ" },
   { kind: "list", label: "リストメモ" },
+  { kind: "character", label: "登場人物メモ" },
 ];
 
 export function Board({ theme }: { theme: Theme }) {

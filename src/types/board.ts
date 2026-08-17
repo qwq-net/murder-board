@@ -14,10 +14,15 @@ export type TimelineData = { title: string; entries: TimelineEntry[] };
 export type ListEntry = { id: string; text: string };
 export type ListData = { title: string; entries: ListEntry[] };
 
+// 登場人物メモの 1 行。color がその人物の識別色で、付箋と同じ 6 色を使う
+export type CharacterEntry = { id: string; text: string; color: StickyColor };
+export type CharacterData = { title: string; entries: CharacterEntry[] };
+
 export type StickyNodeType = Node<StickyData, "sticky">;
 export type TimelineNodeType = Node<TimelineData, "timeline">;
 export type ListNodeType = Node<ListData, "list">;
-export type BoardNode = StickyNodeType | TimelineNodeType | ListNodeType;
+export type CharacterNodeType = Node<CharacterData, "character">;
+export type BoardNode = StickyNodeType | TimelineNodeType | ListNodeType | CharacterNodeType;
 export type BoardNodeKind = NonNullable<BoardNode["type"]>;
 // label を string に絞る。このアプリの edge ラベルはユーザーが入力するテキストのみで、
 // ReactNode を許す元の型のままだと利用側で毎回 typeof による絞り込みが要るため

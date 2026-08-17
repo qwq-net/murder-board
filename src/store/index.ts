@@ -124,12 +124,19 @@ export const useBoardStore = create<Store>()(
                   position,
                   data: { title: "", entries: [{ id: nanoid(), time: "", text: "" }] },
                 }
-              : {
-                  id: nanoid(),
-                  type: "list",
-                  position,
-                  data: { title: "", entries: [{ id: nanoid(), text: "" }] },
-                };
+              : kind === "list"
+                ? {
+                    id: nanoid(),
+                    type: "list",
+                    position,
+                    data: { title: "", entries: [{ id: nanoid(), text: "" }] },
+                  }
+                : {
+                    id: nanoid(),
+                    type: "character",
+                    position,
+                    data: { title: "", entries: [{ id: nanoid(), text: "", color: "yellow" }] },
+                  };
         set({ nodes: [...get().nodes, node] });
       },
 

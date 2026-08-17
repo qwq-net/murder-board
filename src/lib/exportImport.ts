@@ -54,6 +54,18 @@ const listDataSchema = z
   })
   .catch({ title: "", entries: [] });
 
+const characterRowSchema = z.object({
+  text: z.string().catch(""),
+  color: z.enum(STICKY_COLORS).catch("yellow"),
+});
+
+const characterDataSchema = z
+  .object({
+    title: z.string().catch(""),
+    entries: z.array(z.unknown()).catch([]),
+  })
+  .catch({ title: "", entries: [] });
+
 const stickyDataSchema = z
   .object({
     title: z.string().catch(""),
@@ -119,6 +131,15 @@ export function parseImport(json: string, now = Date.now()): Session {
         return r.success ? [{ id: nanoid(), text: r.data.text }] : [];
       });
       return { id: newId, type: "list" as const, position, data: { title, entries: rows } };
+    }
+
+    if (type === "character") {
+      const { title, entries } = characterDataSchema.parse(data);
+      const rows = entries.flatMap((row) => {
+        const r = characterRowSchema.safeParse(row);
+        return r.success ? [{ id: nanoid(), ...r.data }] : [];
+      });
+      return { id: newId, type: "character" as const, position, data: { title, entries: rows } };
     }
 
     // 未知の type は付箋として救出する。黙って捨てると edge の参照ごと消えるため

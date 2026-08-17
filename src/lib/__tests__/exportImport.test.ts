@@ -87,6 +87,30 @@ describe("parseImport", () => {
     expect(list.data.entries[0]!.text).toBe("執事");
   });
 
+  it("character ノードは行 ID を再採番しつつ中身を保ち、未知の色は yellow に落とす", () => {
+    const s = fixture();
+    s.nodes.push({
+      id: "n5",
+      type: "character",
+      position: { x: 400, y: 400 },
+      data: {
+        title: "プレイヤー",
+        // SAFETY: 未知の色が yellow に落ちることを検証するため、意図的に型を破った値を注入する
+        entries: [
+          { id: "r1", text: "探偵", color: "blue" },
+          { id: "r2", text: "医者", color: "neon" as never },
+        ],
+      },
+    });
+    const imported = parseImport(serializeExport(s));
+    const character = imported.nodes.find((n) => n.type === "character")!;
+    expect(character.data.title).toBe("プレイヤー");
+    expect(character.data.entries).toHaveLength(2);
+    expect(character.data.entries[0]!.id).not.toBe("r1");
+    expect(character.data.entries[0]!).toMatchObject({ text: "探偵", color: "blue" });
+    expect(character.data.entries[1]!).toMatchObject({ text: "医者", color: "yellow" });
+  });
+
   it("存在しないノードを参照する edge は捨てる", () => {
     const s = fixture();
     s.edges.push({ id: "e2", source: "n1", target: "ghost" });
