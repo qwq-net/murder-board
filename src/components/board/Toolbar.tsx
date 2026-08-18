@@ -1,23 +1,15 @@
 import { useRef, useState } from "react";
 import { parseImport, serializeExport } from "@/lib/exportImport";
-import type { Theme } from "@/lib/theme";
 import { useBoardStore } from "@/store";
 
 const BUTTON_CLASS = "btn-ghost btn-sm text-sm";
 
-const THEME_LABELS = { dark: "ダーク", light: "ライト", auto: "自動" } satisfies Record<
-  Theme,
-  string
->;
-
 export function Toolbar({
-  theme,
-  onToggleTheme,
   onOpenSearch,
+  onOpenSettings,
 }: {
-  theme: Theme;
-  onToggleTheme: () => void;
   onOpenSearch: () => void;
+  onOpenSettings: () => void;
 }) {
   const sessions = useBoardStore((s) => s.sessions);
   const currentId = useBoardStore((s) => s.currentId);
@@ -130,8 +122,8 @@ export function Toolbar({
       >
         検索
       </button>
-      <button type="button" title="テーマ切替" className={BUTTON_CLASS} onClick={onToggleTheme}>
-        {THEME_LABELS[theme]}
+      <button type="button" title="設定" className={BUTTON_CLASS} onClick={onOpenSettings}>
+        設定
       </button>
       <input
         ref={fileRef}

@@ -11,15 +11,10 @@ export function parseTheme(raw: string | null): Theme {
   return THEMES.find((t) => t === raw) ?? "dark";
 }
 
-// テーマ設定を dark → light → auto → dark の順に巡回させた次の値を返す。
-export function nextTheme(theme: Theme): Theme {
-  return THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]!;
-}
-
 // テーマ設定を localStorage に永続化しつつ <html data-theme> に反映するフック。
 // 'auto' のときは prefers-color-scheme に追従し、OS 設定の変更にも即座に反応する。
-// 返り値は現在の設定値と、設定を巡回させる toggle。
-// 使われ方: App のルートで 1 箇所だけ呼び、theme を Toolbar の表示と Board の
+// 返り値は現在の設定値と、設定値を直接切り替える setTheme。
+// 使われ方: App のルートで 1 箇所だけ呼び、theme を設定モーダルの表示と Board の
 // ReactFlow colorMode に渡す前提。複数箇所で呼ぶと data-theme の反映が競合する。
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>(() => parseTheme(localStorage.getItem(THEME_KEY)));
@@ -40,5 +35,5 @@ export function useTheme() {
     return () => mq.removeEventListener("change", handler);
   }, [theme]);
 
-  return { theme, toggle: () => setTheme(nextTheme(theme)) };
+  return { theme, setTheme };
 }

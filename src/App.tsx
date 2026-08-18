@@ -3,14 +3,16 @@ import { useEffect, useState } from "react";
 import { Board } from "@/components/board/Board";
 import { SearchOverlay } from "@/components/board/SearchOverlay";
 import { Toolbar } from "@/components/board/Toolbar";
+import { SettingsModal } from "@/components/settings/SettingsModal";
 import { useTheme } from "@/lib/theme";
 import { useBoardStore } from "@/store";
 
 export function App() {
   const loaded = useBoardStore((s) => s.loaded);
   const init = useBoardStore((s) => s.init);
-  const { theme, toggle } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     void init();
@@ -39,10 +41,16 @@ export function App() {
   return (
     <ReactFlowProvider>
       <div className="flex h-dvh flex-col">
-        <Toolbar theme={theme} onToggleTheme={toggle} onOpenSearch={() => setSearchOpen(true)} />
+        <Toolbar
+          onOpenSearch={() => setSearchOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
         <Board theme={theme} />
       </div>
       {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
+      {settingsOpen && (
+        <SettingsModal theme={theme} onSetTheme={setTheme} onClose={() => setSettingsOpen(false)} />
+      )}
     </ReactFlowProvider>
   );
 }
