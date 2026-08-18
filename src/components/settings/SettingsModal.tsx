@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { parseImport, serializeExport } from "@/lib/exportImport";
 import { THEMES, type Theme } from "@/lib/theme";
+import { useBoardStore } from "@/store";
 
 const THEME_LABELS = { dark: "ダーク", light: "ライト", auto: "自動" } satisfies Record<
   Theme,
@@ -36,7 +38,7 @@ function PendingButton({ label, danger }: { label: string; danger?: boolean }) {
 }
 
 // 設定モーダル。左のメニューで項目を選び、右にその内容を表示する。
-// テーマ選択は onSetTheme で即時反映する。それ以外の操作は未実装で表示のみ。
+// テーマ選択は onSetTheme で即時反映する。未実装の操作は PendingButton で表示のみ。
 // Escape・背景クリック・× ボタンで onClose を呼ぶ。開閉のたびにマウントし直す前提。
 export function SettingsModal({
   theme,
@@ -48,6 +50,40 @@ export function SettingsModal({
   onClose: () => void;
 }) {
   const [section, setSection] = useState<SectionId>("theme");
+  const importSessionData = useBoardStore((s) => s.importSessionData);
+  const removeSession = useBoardStore((s) => s.removeSession);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // 現在のセッションを JSON ファイルとしてダウンロードさせる。ファイル名はセッション名
+  const exportJson = () => {
+    const s = useBoardStore.getState();
+    const meta = s.sessions.find((m) => m.id === s.currentId);
+    if (!meta) return;
+    const blob = new Blob([serializeExport({ ...meta, nodes: s.nodes, edges: s.edges })], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${meta.name}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // 選択された JSON を検証して新規セッションとして取り込む。不正な内容は alert で通知
+  const importJson = async (file: File) => {
+    try {
+      await importSessionData(parseImport(await file.text()));
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "インポートに失敗しました");
+    }
+  };
+
+  const remove = () => {
+    if (window.confirm("このセッションを削除しますか？この操作は取り消せません。")) {
+      void removeSession();
+    }
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -90,8 +126,16 @@ export function SettingsModal({
           ファイルとしてエクスポート、またはファイルからインポートして復元します。
         </Description>
         <div className="flex gap-2">
-          <PendingButton label="エクスポート" />
-          <PendingButton label="インポート" />
+          <button type="button" className="btn-ghost btn-sm text-sm" onClick={exportJson}>
+            エクスポート
+          </button>
+          <button
+            type="button"
+            className="btn-ghost btn-sm text-sm"
+            onClick={() => fileRef.current?.click()}
+          >
+            インポート
+          </button>
         </div>
       </>
     ),
@@ -101,6 +145,14 @@ export function SettingsModal({
           現在のセッションのすべての付箋と接続線を削除します。セッション自体は残ります。
         </Description>
         <PendingButton label="初期化する" danger />
+        <Description>現在のセッションそのものを削除します。この操作は取り消せません。</Description>
+        <button
+          type="button"
+          className="btn-ghost btn-sm w-fit text-sm text-danger"
+          onClick={remove}
+        >
+          セッションを削除
+        </button>
       </>
     ),
     reset: (
@@ -168,6 +220,17 @@ export function SettingsModal({
           </div>
         </div>
       </div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void importJson(file);
+          e.target.value = "";
+        }}
+      />
     </>
   );
 }
