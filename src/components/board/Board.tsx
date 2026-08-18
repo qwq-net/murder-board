@@ -1,4 +1,11 @@
-import { Background, Controls, ReactFlow, useReactFlow, type NodeTypes } from "@xyflow/react";
+import {
+  Background,
+  Controls,
+  ReactFlow,
+  SelectionMode,
+  useReactFlow,
+  type NodeTypes,
+} from "@xyflow/react";
 import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { CharacterNode } from "@/components/nodes/CharacterNode";
 import { ListNode } from "@/components/nodes/ListNode";
@@ -110,10 +117,11 @@ export function Board({ theme }: { theme: Theme }) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onNodeDragStop={(_, node) => onNodeDragStop(node)}
+        onNodeDragStop={(_, _node, dragged) => onNodeDragStop(dragged)}
         onPaneContextMenu={onPaneContextMenu}
         onPaneClick={() => setMenu(null)}
         onMoveStart={() => setMenu(null)}
+        onSelectionStart={() => setMenu(null)}
         nodeTypes={nodeTypes}
         colorMode={theme === "auto" ? "system" : theme}
         proOptions={{ hideAttribution: true }}
@@ -122,6 +130,9 @@ export function Board({ theme }: { theme: Theme }) {
         className={spacePanning ? "space-panning" : undefined}
         nodesDraggable={!spacePanning}
         elementsSelectable={!spacePanning}
+        selectionOnDrag={!spacePanning}
+        selectionMode={SelectionMode.Partial}
+        panOnDrag={spacePanning ? true : [1]}
       >
         <Background />
         <Controls />

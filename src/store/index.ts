@@ -12,7 +12,7 @@ import { temporal } from "zundo";
 import { debounce, throttleLeading } from "@/lib/debounce";
 import { buildDemoSession, DEMO_VERSION } from "@/lib/demoSession";
 import * as idb from "@/lib/idb";
-import { applyStackDrop, STACK_EMPTY_H, STACK_EMPTY_W } from "@/lib/stackLayout";
+import { applyStackDrops, STACK_EMPTY_H, STACK_EMPTY_W } from "@/lib/stackLayout";
 import { THEME_KEY } from "@/lib/theme";
 import type { BoardEdge, BoardNode, BoardNodeKind, Session, SessionMeta } from "@/types/board";
 
@@ -35,8 +35,8 @@ type Store = {
   onNodesChange: (changes: NodeChange<BoardNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<BoardEdge>[]) => void;
   onConnect: (connection: Connection) => void;
-  // ドラッグ終了ノードのスタック所属を applyStackDrop で解決する。変更が無ければ何もしない。
-  onNodeDragStop: (node: BoardNode) => void;
+  // ドラッグ終了した選択ノード群のスタック所属を applyStackDrops で解決する。変更が無ければ何もしない。
+  onNodeDragStop: (dragged: BoardNode[]) => void;
   // 指定位置に空のノードを追加する。position はフロー座標。sticky は作成直後に編集状態になり、
   // timeline / list は空行 1 つ付きで作られる。
   addNode: (kind: BoardNodeKind, position: { x: number; y: number }) => void;
@@ -146,8 +146,11 @@ export const useBoardStore = create<Store>()(
       onEdgesChange: (changes) => set({ edges: applyEdgeChanges(changes, get().edges) }),
       onConnect: (connection) =>
         set({ edges: addEdge({ ...connection, id: nanoid() }, get().edges) }),
-      onNodeDragStop: (node) => {
-        const next = applyStackDrop(get().nodes, node.id);
+      onNodeDragStop: (dragged) => {
+        const next = applyStackDrops(
+          get().nodes,
+          dragged.map((n) => n.id),
+        );
         if (next) set({ nodes: next });
       },
 

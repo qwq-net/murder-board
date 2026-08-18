@@ -1,5 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
 import { nanoid } from "nanoid";
+import { useState } from "react";
 import { AddRowButton, CommitInput, NodeRow, NodeShell } from "@/components/nodes/NodeShell";
 import { useBoardStore } from "@/store";
 import { STICKY_COLORS, type CharacterEntry, type CharacterNodeType } from "@/types/board";
@@ -12,6 +13,8 @@ const nextColor = (c: CharacterEntry["color"]) =>
 // 行の追加時は前の行の次の色を割り当て、隣り合う行の色が自然にずれるようにする。
 export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeType>) {
   const updateNodeData = useBoardStore((s) => s.updateNodeData);
+  // 追加直後の行だけマウント時から編集で始めるための印
+  const [newRowId, setNewRowId] = useState<string | null>(null);
 
   const patchEntry = (entryId: string, patch: Partial<CharacterEntry>) =>
     updateNodeData(id, "character", {
@@ -20,10 +23,12 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
 
   const addRow = () => {
     const last = data.entries[data.entries.length - 1];
+    const rowId = nanoid();
+    setNewRowId(rowId);
     updateNodeData(id, "character", {
       entries: [
         ...data.entries,
-        { id: nanoid(), text: "", color: last ? nextColor(last.color) : "yellow" },
+        { id: rowId, text: "", color: last ? nextColor(last.color) : "yellow" },
       ],
     });
   };
@@ -52,9 +57,10 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
               onClick={() => patchEntry(entry.id, { color: nextColor(entry.color) })}
             />
             <CommitInput
-              className="nodrag min-w-0 flex-1 bg-transparent text-sm outline-none"
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none"
               value={entry.text}
               placeholder="名前"
+              defaultEditing={entry.id === newRowId}
               onCommit={(text) => patchEntry(entry.id, { text })}
             />
           </NodeRow>

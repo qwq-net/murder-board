@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyStackDrop,
+  applyStackDrops,
   delegateEdgesToStacks,
   relayoutStack,
   STACK_EMPTY_H,
@@ -164,6 +165,29 @@ describe("applyStackDrop", () => {
       stack("st2", { x: 10, y: 10 }),
     ];
     expect(applyStackDrop(nodes, "st2")).toBeNull();
+  });
+});
+
+describe("applyStackDrops", () => {
+  it("ドロップした複数ノードがまとめてスタックの子になる", () => {
+    const nodes = [
+      stack("st", { x: 0, y: 0 }, { width: 200, height: 300 }),
+      sticky("a", { x: 10, y: 50 }, { measured: { width: 100, height: 50 } }),
+      sticky("b", { x: 10, y: 120 }, { measured: { width: 100, height: 50 } }),
+    ];
+    const result = applyStackDrops(nodes, ["a", "b"])!;
+    expect(byId(result, "a").parentId).toBe("st");
+    expect(byId(result, "b").parentId).toBe("st");
+    expect(byId(result, "a").position.y).toBeLessThan(byId(result, "b").position.y);
+  });
+
+  it("いずれのノードにも変更が無ければ null を返す", () => {
+    const nodes = [
+      stack("st", { x: 0, y: 0 }, { width: 200, height: 300 }),
+      sticky("a", { x: 900, y: 900 }, { measured: { width: 100, height: 50 } }),
+      sticky("b", { x: 900, y: 990 }, { measured: { width: 100, height: 50 } }),
+    ];
+    expect(applyStackDrops(nodes, ["a", "b"])).toBeNull();
   });
 });
 

@@ -1,5 +1,12 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { useState, type ComponentPropsWithoutRef, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentPropsWithoutRef,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 
 // 全ノード種別共通の外枠。枠・タイトルヘッダ・接続ハンドル 4 方向・選択リングを持つ。
 // 幅や配色は frameClassName / frameStyle / headerClassName / headerStyle で種別ごとに与える。
@@ -37,7 +44,7 @@ export function NodeShell({
     >
       <div className={`rounded-t-sm px-2 py-1 ${headerClassName}`} style={headerStyle}>
         <CommitInput
-          className="nodrag w-full bg-transparent text-sm font-bold text-text-primary outline-none"
+          className="w-full bg-transparent text-sm font-bold text-text-primary outline-none"
           value={title}
           placeholder={titlePlaceholder}
           onCommit={onTitleCommit}
@@ -52,29 +59,69 @@ export function NodeShell({
   );
 }
 
-// blur で値を確定するテキスト入力。Enter でも blur して確定する。
-// onCommit は確定値が value と異なるときだけ呼ばれる。
-// normalize を渡すと blur 時に入力値へ適用し、表示・確定値ともその結果になる。
-// 入力中の値はローカル状態なので、外部から value が変わっても入力中の表示には反映されない。
+// ダブルクリックで編集に入るテキスト。通常は表示テキストで、その領域はノードの
+// ドラッグや選択にそのまま使える。編集中は blur / Enter で確定して表示に戻り、
+// onCommit は確定値が value と異なるときだけ呼ばれる。normalize を渡すと blur 時に
+// 入力値へ適用し、表示・確定値ともその結果になる。value が空なら placeholder を
+// 薄く表示する。defaultEditing はマウント直後から編集で始めたいとき（行の追加直後
+// など）に渡す。マウント時にだけ効き、以降の変化は無視される。
 export function CommitInput({
   value,
   onCommit,
   normalize,
+  defaultEditing = false,
+  className = "",
+  placeholder,
   ...rest
 }: {
   value: string;
   onCommit: (value: string) => void;
   normalize?: (value: string) => string;
-} & Omit<ComponentPropsWithoutRef<"input">, "value" | "onChange" | "onBlur" | "onKeyDown">) {
+  defaultEditing?: boolean;
+  className?: string;
+  placeholder?: string;
+} & Omit<
+  ComponentPropsWithoutRef<"input">,
+  "value" | "onChange" | "onBlur" | "onKeyDown" | "className" | "placeholder"
+>) {
+  const [editing, setEditing] = useState(defaultEditing);
   const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!editing) return;
+    const el = inputRef.current;
+    if (el && document.activeElement !== el) {
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    }
+  }, [editing]);
+
+  if (!editing) {
+    return (
+      <div
+        className={`truncate ${className}`}
+        onDoubleClick={() => {
+          setDraft(value);
+          setEditing(true);
+        }}
+      >
+        {value || <span className="text-text-muted opacity-60">{placeholder}</span>}
+      </div>
+    );
+  }
   return (
     <input
       {...rest}
+      ref={inputRef}
+      className={`nodrag ${className}`}
       value={draft}
+      placeholder={placeholder}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={() => {
         const committed = normalize ? normalize(draft) : draft;
         setDraft(committed);
+        setEditing(false);
         if (committed !== value) onCommit(committed);
       }}
       onKeyDown={(e) => {

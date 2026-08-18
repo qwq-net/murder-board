@@ -48,13 +48,13 @@ export function relayoutStack(nodes: BoardNode[], stackId: string): BoardNode[] 
   });
 }
 
-// ドラッグ終了したノードのスタック所属を「ドロップ後にスタックへ重なっていれば所属、
-// いなければ非所属」の一本のルールで解決した nodes を返す。重なり判定はノード中心点が
-// スタック矩形に入っているか。所属時は座標を親相対へ変換して配列末尾へ移し（React Flow の
-// 「親は子より前」の制約を満たすため）、離脱時は絶対座標へ戻す。関係するスタックは
-// 詰め直す。所属の変わらないスタック外の移動やスタック自身のドラッグでは null を返す。
-// 使われ方: store の onNodeDragStop から毎ドラッグ終了時に呼ばれる前提。
-export function applyStackDrop(nodes: BoardNode[], nodeId: string): BoardNode[] | null {
+// 1 ノード分のドロップ解決。abs は絶対座標、from は元の親、to は所属先のスタック。
+// to と from が同じなら同一スタック内の並び直しを意味する
+type DropOp = { id: string; abs: { x: number; y: number }; from?: string; to?: string };
+
+// ドロップ時点の配置に対して、ノードの所属先を「中心点がスタック矩形に入っていれば
+// 所属、いなければ非所属」で解決する。所属に変化も並び直しも無ければ null
+function resolveDrop(nodes: BoardNode[], nodeId: string): DropOp | null {
   const current = nodes.find((n) => n.id === nodeId);
   if (!current || current.type === "stack") return null;
 
@@ -75,26 +75,51 @@ export function applyStackDrop(nodes: BoardNode[], nodeId: string): BoardNode[] 
       center.y <= n.position.y + (n.height ?? STACK_EMPTY_H),
   );
 
-  if (target) {
-    const attached: BoardNode = {
-      ...current,
-      parentId: target.id,
-      position: { x: abs.x - target.position.x, y: abs.y - target.position.y },
-    };
-    let next: BoardNode[] = [...nodes.filter((n) => n.id !== nodeId), attached];
-    next = relayoutStack(next, target.id);
-    if (oldParent && oldParent.id !== target.id) next = relayoutStack(next, oldParent.id);
-    return next;
-  }
+  if (!target && !oldParent) return null;
+  return { id: nodeId, abs, from: oldParent?.id, to: target?.id };
+}
 
-  if (!oldParent) return null;
-  const { parentId: _parentId, ...detached } = current;
-  // SAFETY: current から parentId を除き position を差し替えただけで、type と data の
-  // 対応は崩れていない。rest 分解でユニオンの判別が落ちるのを戻すだけの表明
-  const next = nodes.map((n) =>
-    n.id === nodeId ? ({ ...detached, position: abs } as BoardNode) : n,
-  );
-  return relayoutStack(next, oldParent.id);
+// ドラッグ終了した複数ノードのスタック所属を「ドロップ後にスタックへ重なっていれば所属、
+// いなければ非所属」の一本のルールで解決した nodes を返す。判定は全ノード分を
+// ドロップ時点の配置に対して行う。先に適用するとスタックの詰め直しで矩形が変わり、
+// 後続ノードの判定がずれるため。所属時は座標を親相対へ変換して配列末尾へ移し
+// （React Flow の「親は子より前」の制約を満たすため）、離脱時は絶対座標へ戻す。
+// 関係するスタックは最後にまとめて詰め直す。どのノードにも変更が無ければ null を返す。
+// 使われ方: store の onNodeDragStop からドラッグされた選択ノード全件で呼ばれる前提。
+export function applyStackDrops(nodes: BoardNode[], ids: string[]): BoardNode[] | null {
+  const ops = ids.map((id) => resolveDrop(nodes, id)).filter((op) => op !== null);
+  if (ops.length === 0) return null;
+
+  let next = nodes;
+  const affected = new Set<string>();
+  for (const op of ops) {
+    const current = next.find((n) => n.id === op.id)!;
+    if (op.to !== undefined) {
+      const target = next.find((n) => n.id === op.to)!;
+      const attached: BoardNode = {
+        ...current,
+        parentId: op.to,
+        position: { x: op.abs.x - target.position.x, y: op.abs.y - target.position.y },
+      };
+      next = [...next.filter((n) => n.id !== op.id), attached];
+    } else {
+      const { parentId: _parentId, ...detached } = current;
+      // SAFETY: current から parentId を除き position を差し替えただけで、type と data の
+      // 対応は崩れていない。rest 分解でユニオンの判別が落ちるのを戻すだけの表明
+      next = next.map((n) =>
+        n.id === op.id ? ({ ...detached, position: op.abs } as BoardNode) : n,
+      );
+    }
+    if (op.from !== undefined) affected.add(op.from);
+    if (op.to !== undefined) affected.add(op.to);
+  }
+  for (const stackId of affected) next = relayoutStack(next, stackId);
+  return next;
+}
+
+// 1 ノードだけのドラッグ終了を applyStackDrops に委譲する。挙動はそちらの契約に従う。
+export function applyStackDrop(nodes: BoardNode[], nodeId: string): BoardNode[] | null {
+  return applyStackDrops(nodes, [nodeId]);
 }
 
 // 子ノードに付いた線を親スタックへ付け替えた表示用の edges を返す。id とハンドルは
