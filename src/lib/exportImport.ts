@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import { z } from "zod";
+import { STACK_EMPTY_H, STACK_EMPTY_W } from "@/lib/stackLayout";
 import { STICKY_COLORS, type BoardEdge, type BoardNode, type Session } from "@/types/board";
 
 export const EXPORT_APP = "murder-memo2";
@@ -28,6 +29,9 @@ const nodeSchema = z.object({
   id: z.string(),
   type: z.unknown(),
   position: z.object({ x: z.number(), y: z.number() }),
+  parentId: z.string().optional().catch(undefined),
+  width: z.number().optional().catch(undefined),
+  height: z.number().optional().catch(undefined),
   data: z.unknown(),
 });
 
@@ -74,6 +78,8 @@ const stickyDataSchema = z
   })
   .catch({ title: "", text: "", color: "yellow" });
 
+const stackDataSchema = z.object({ title: z.string().catch("") }).catch({ title: "" });
+
 const edgeSchema = z.object({
   source: z.string(),
   target: z.string(),
@@ -104,46 +110,83 @@ export function parseImport(json: string, now = Date.now()): Session {
     throw new Error("セッションデータが壊れています");
   }
 
-  const idMap = new Map<string, string>();
-  const nodes: BoardNode[] = session.data.nodes.map((value) => {
+  // パス 1: 必須フィールドの検証と新 ID の採番。parentId の解決には全ノードの
+  // 新 ID と種別が必要なため、data の解釈より先に全件を済ませる
+  const parsedNodes = session.data.nodes.map((value) => {
     const parsed = nodeSchema.safeParse(value);
     if (!parsed.success) {
       throw new Error("ノードデータが壊れています");
     }
-    const { id, type, position, data } = parsed.data;
-    const newId = nanoid();
-    idMap.set(id, newId);
-
-    if (type === "timeline") {
-      const { title, entries } = timelineDataSchema.parse(data);
-      const rows = entries.flatMap((row) => {
-        const r = timelineRowSchema.safeParse(row);
-        return r.success ? [{ id: nanoid(), ...r.data }] : [];
-      });
-      return { id: newId, type: "timeline" as const, position, data: { title, entries: rows } };
-    }
-
-    if (type === "list") {
-      const { title, entries } = listDataSchema.parse(data);
-      const rows = entries.flatMap((row) => {
-        const r = listRowSchema.safeParse(row);
-        return r.success ? [{ id: nanoid(), text: r.data.text }] : [];
-      });
-      return { id: newId, type: "list" as const, position, data: { title, entries: rows } };
-    }
-
-    if (type === "character") {
-      const { title, entries } = characterDataSchema.parse(data);
-      const rows = entries.flatMap((row) => {
-        const r = characterRowSchema.safeParse(row);
-        return r.success ? [{ id: nanoid(), ...r.data }] : [];
-      });
-      return { id: newId, type: "character" as const, position, data: { title, entries: rows } };
-    }
-
-    // 未知の type は付箋として救出する。黙って捨てると edge の参照ごと消えるため
-    return { id: newId, type: "sticky" as const, position, data: stickyDataSchema.parse(data) };
+    return parsed.data;
   });
+  const idMap = new Map<string, string>();
+  const typeMap = new Map<string, unknown>();
+  for (const n of parsedNodes) {
+    idMap.set(n.id, nanoid());
+    typeMap.set(n.id, n.type);
+  }
+
+  // パス 2: data の種別ごとの解釈。parentId はスタックを指すときだけ新 ID で引き継ぎ、
+  // 存在しない親やスタック以外を指すものは捨ててトップレベルのノードとして残す
+  const nodes: BoardNode[] = parsedNodes.map(
+    ({ id, type, position, parentId, width, height, data }) => {
+      const newId = idMap.get(id)!;
+      const newParentId =
+        parentId !== undefined && typeMap.get(parentId) === "stack"
+          ? idMap.get(parentId)
+          : undefined;
+      const base =
+        newParentId !== undefined
+          ? { id: newId, position, parentId: newParentId }
+          : { id: newId, position };
+
+      if (type === "timeline") {
+        const { title, entries } = timelineDataSchema.parse(data);
+        const rows = entries.flatMap((row) => {
+          const r = timelineRowSchema.safeParse(row);
+          return r.success ? [{ id: nanoid(), ...r.data }] : [];
+        });
+        return { ...base, type: "timeline" as const, data: { title, entries: rows } };
+      }
+
+      if (type === "list") {
+        const { title, entries } = listDataSchema.parse(data);
+        const rows = entries.flatMap((row) => {
+          const r = listRowSchema.safeParse(row);
+          return r.success ? [{ id: nanoid(), text: r.data.text }] : [];
+        });
+        return { ...base, type: "list" as const, data: { title, entries: rows } };
+      }
+
+      if (type === "character") {
+        const { title, entries } = characterDataSchema.parse(data);
+        const rows = entries.flatMap((row) => {
+          const r = characterRowSchema.safeParse(row);
+          return r.success ? [{ id: nanoid(), ...r.data }] : [];
+        });
+        return { ...base, type: "character" as const, data: { title, entries: rows } };
+      }
+
+      if (type === "stack") {
+        return {
+          ...base,
+          type: "stack" as const,
+          width: width ?? STACK_EMPTY_W,
+          height: height ?? STACK_EMPTY_H,
+          data: stackDataSchema.parse(data),
+        };
+      }
+
+      // 未知の type は付箋として救出する。黙って捨てると edge の参照ごと消えるため
+      return { ...base, type: "sticky" as const, data: stickyDataSchema.parse(data) };
+    },
+  );
+
+  // React Flow の「親は子より配列で前」の制約を、スタックを前へ寄せる安定パーティションで満たす
+  const orderedNodes = [
+    ...nodes.filter((n) => n.type === "stack"),
+    ...nodes.filter((n) => n.type !== "stack"),
+  ];
 
   const edges: BoardEdge[] = [];
   for (const value of session.data.edges) {
@@ -158,5 +201,12 @@ export function parseImport(json: string, now = Date.now()): Session {
     edges.push(edge);
   }
 
-  return { id: nanoid(), name: session.data.name, createdAt: now, updatedAt: now, nodes, edges };
+  return {
+    id: nanoid(),
+    name: session.data.name,
+    createdAt: now,
+    updatedAt: now,
+    nodes: orderedNodes,
+    edges,
+  };
 }

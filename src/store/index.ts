@@ -12,6 +12,7 @@ import { temporal } from "zundo";
 import { debounce, throttleLeading } from "@/lib/debounce";
 import { buildDemoSession, DEMO_VERSION } from "@/lib/demoSession";
 import * as idb from "@/lib/idb";
+import { applyStackDrop, STACK_EMPTY_H, STACK_EMPTY_W } from "@/lib/stackLayout";
 import { THEME_KEY } from "@/lib/theme";
 import type { BoardEdge, BoardNode, BoardNodeKind, Session, SessionMeta } from "@/types/board";
 
@@ -34,6 +35,8 @@ type Store = {
   onNodesChange: (changes: NodeChange<BoardNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<BoardEdge>[]) => void;
   onConnect: (connection: Connection) => void;
+  // ドラッグ終了ノードのスタック所属を applyStackDrop で解決する。変更が無ければ何もしない。
+  onNodeDragStop: (node: BoardNode) => void;
   // 指定位置に空のノードを追加する。position はフロー座標。sticky は作成直後に編集状態になり、
   // timeline / list は空行 1 つ付きで作られる。
   addNode: (kind: BoardNodeKind, position: { x: number; y: number }) => void;
@@ -128,10 +131,25 @@ export const useBoardStore = create<Store>()(
         useBoardStore.temporal.getState().clear();
       },
 
-      onNodesChange: (changes) => set({ nodes: applyNodeChanges(changes, get().nodes) }),
+      onNodesChange: (changes) => {
+        // スタックの削除時は子も一緒に消す。React Flow が子の remove を発行しない
+        // 経路に備え、削除対象を親に持つ子の remove を補ってから適用する
+        const removed = new Set(changes.filter((c) => c.type === "remove").map((c) => c.id));
+        if (removed.size > 0) {
+          const orphans = get().nodes.filter(
+            (n) => n.parentId && removed.has(n.parentId) && !removed.has(n.id),
+          );
+          changes = [...changes, ...orphans.map((n) => ({ type: "remove" as const, id: n.id }))];
+        }
+        set({ nodes: applyNodeChanges(changes, get().nodes) });
+      },
       onEdgesChange: (changes) => set({ edges: applyEdgeChanges(changes, get().edges) }),
       onConnect: (connection) =>
         set({ edges: addEdge({ ...connection, id: nanoid() }, get().edges) }),
+      onNodeDragStop: (node) => {
+        const next = applyStackDrop(get().nodes, node.id);
+        if (next) set({ nodes: next });
+      },
 
       addNode: (kind, position) => {
         const node: BoardNode =
@@ -156,12 +174,21 @@ export const useBoardStore = create<Store>()(
                     position,
                     data: { title: "", entries: [{ id: nanoid(), text: "" }] },
                   }
-                : {
-                    id: nanoid(),
-                    type: "character",
-                    position,
-                    data: { title: "", entries: [{ id: nanoid(), text: "", color: "yellow" }] },
-                  };
+                : kind === "character"
+                  ? {
+                      id: nanoid(),
+                      type: "character",
+                      position,
+                      data: { title: "", entries: [{ id: nanoid(), text: "", color: "yellow" }] },
+                    }
+                  : {
+                      id: nanoid(),
+                      type: "stack",
+                      position,
+                      width: STACK_EMPTY_W,
+                      height: STACK_EMPTY_H,
+                      data: { title: "" },
+                    };
         set({ nodes: [...get().nodes, node] });
       },
 

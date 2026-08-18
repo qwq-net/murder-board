@@ -45,6 +45,8 @@ function nodeBody(node: BoardNode): string {
     case "list":
     case "character":
       return node.data.entries.map((e) => e.text).join("\n");
+    case "stack":
+      return "";
   }
 }
 

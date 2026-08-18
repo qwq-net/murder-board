@@ -19,6 +19,7 @@ const KIND_ACCENT = {
   timeline: "var(--color-panel-timeline-accent)",
   list: "var(--color-panel-list-accent)",
   character: "var(--color-panel-character-accent)",
+  stack: "var(--color-text-muted)",
 } satisfies Record<BoardNodeKind, string>;
 
 // SAFETY: NODE_KIND_LABELS のキーは BoardNodeKind の全種別。Object.keys が

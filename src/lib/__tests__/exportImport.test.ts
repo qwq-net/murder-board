@@ -110,6 +110,51 @@ describe("parseImport", () => {
     expect(character.data.entries[1]!).toMatchObject({ text: "医者", color: "yellow" });
   });
 
+  it("stack ノードはサイズと子の parentId を新 ID へ引き継いで往復する", () => {
+    const s = fixture();
+    s.nodes.push({
+      id: "n6",
+      type: "stack",
+      position: { x: 500, y: 500 },
+      width: 216,
+      height: 150,
+      data: { title: "まとめ" },
+    });
+    s.nodes[0]!.parentId = "n6";
+    const imported = parseImport(serializeExport(s));
+    const stack = imported.nodes.find((n) => n.type === "stack")!;
+    expect(stack.data.title).toBe("まとめ");
+    expect(stack.width).toBe(216);
+    expect(stack.height).toBe(150);
+    const child = imported.nodes.find((n) => n.parentId !== undefined)!;
+    expect(child.parentId).toBe(stack.id);
+    expect(child.type).toBe("sticky");
+  });
+
+  it("存在しない親やスタック以外を指す parentId は捨て、ノード自体は残す", () => {
+    const s = fixture();
+    s.nodes[0]!.parentId = "ghost";
+    s.nodes[1]!.parentId = "n1";
+    const imported = parseImport(serializeExport(s));
+    expect(imported.nodes).toHaveLength(2);
+    expect(imported.nodes.every((n) => n.parentId === undefined)).toBe(true);
+  });
+
+  it("子が親より前に並んだ入力でも、出力ではスタックが先に並ぶ", () => {
+    const s = fixture();
+    s.nodes[0]!.parentId = "n6";
+    s.nodes.push({
+      id: "n6",
+      type: "stack",
+      position: { x: 500, y: 500 },
+      data: { title: "" },
+    });
+    const imported = parseImport(serializeExport(s));
+    const stackIndex = imported.nodes.findIndex((n) => n.type === "stack");
+    const childIndex = imported.nodes.findIndex((n) => n.parentId !== undefined);
+    expect(childIndex).toBeGreaterThan(stackIndex);
+  });
+
   it("存在しないノードを参照する edge は捨てる", () => {
     const s = fixture();
     s.edges.push({ id: "e2", source: "n1", target: "ghost" });

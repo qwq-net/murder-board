@@ -18,11 +18,21 @@ export type ListData = { title: string; entries: ListEntry[] };
 export type CharacterEntry = { id: string; text: string; color: StickyColor };
 export type CharacterData = { title: string; entries: CharacterEntry[] };
 
+// スタックノードの中身。本文を持たず、タイトルだけを持つ入れ物。
+// 子ノードは parentId で所属し、順番は子の相対 y 座標の昇順そのもので表す
+export type StackData = { title: string };
+
 export type StickyNodeType = Node<StickyData, "sticky">;
 export type TimelineNodeType = Node<TimelineData, "timeline">;
 export type ListNodeType = Node<ListData, "list">;
 export type CharacterNodeType = Node<CharacterData, "character">;
-export type BoardNode = StickyNodeType | TimelineNodeType | ListNodeType | CharacterNodeType;
+export type StackNodeType = Node<StackData, "stack">;
+export type BoardNode =
+  | StickyNodeType
+  | TimelineNodeType
+  | ListNodeType
+  | CharacterNodeType
+  | StackNodeType;
 export type BoardNodeKind = NonNullable<BoardNode["type"]>;
 
 // ノード種別の表示名。キーの並びがメニュー・検索結果グループの表示順を兼ねる
@@ -31,6 +41,7 @@ export const NODE_KIND_LABELS = {
   timeline: "タイムラインメモ",
   list: "リストメモ",
   character: "登場人物メモ",
+  stack: "スタック",
 } satisfies Record<BoardNodeKind, string>;
 // label を持たせない。このアプリのつながりは線だけで表現し、テキスト付与の機能は置かない
 export type BoardEdge = Omit<Edge, "label">;
