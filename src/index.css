@@ -299,6 +299,17 @@ mark {
   --xy-background-color: var(--color-bg-base);
 }
 
+/* Space パンモード中はペイントソフトの手のひらツールのように、
+   ノード上を含む全域で手カーソルを示す。:active はドラッグ中の握り表示 */
+.space-panning .react-flow__pane,
+.space-panning .react-flow__node {
+  cursor: grab;
+}
+.space-panning:active .react-flow__pane,
+.space-panning:active .react-flow__node {
+  cursor: grabbing;
+}
+
 /* 接続ハンドルはカードへのホバー中のみ表示する。opacity なので非表示中も
    接続ドラッグの受け口としては機能し続ける */
 .react-flow__handle {

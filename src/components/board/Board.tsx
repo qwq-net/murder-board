@@ -1,7 +1,6 @@
 import {
   Background,
   Controls,
-  MiniMap,
   ReactFlow,
   useReactFlow,
   type EdgeMouseHandler,
@@ -32,6 +31,11 @@ const nodeTypes: NodeTypes = {
 // キーを string へ落とすのを戻すだけの表明
 const MENU_ITEMS = Object.entries(NODE_KIND_LABELS) as [BoardNodeKind, string][];
 
+// キーボードショートカットを抑止すべき「テキスト入力中」かを判定する
+const isTypingTarget = (t: EventTarget | null): boolean =>
+  t instanceof HTMLElement &&
+  (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+
 export function Board({ theme }: { theme: Theme }) {
   const nodes = useBoardStore((s) => s.nodes);
   const edges = useBoardStore((s) => s.edges);
@@ -43,18 +47,37 @@ export function Board({ theme }: { theme: Theme }) {
   const { screenToFlowPosition } = useReactFlow();
   // 右クリックメニューの表示位置。画面座標で持ち、null なら非表示
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  // Space 押下中のパン専用モード。ノードの移動・選択を止めることで、
+  // ノード上からでもドラッグが React Flow のビューポートパンに落ちる
+  const [spacePanning, setSpacePanning] = useState(false);
+
+  // Space 長押しでパンモードに入る。テキスト入力中は空白入力を優先して発動しない。
+  // keyup の取りこぼしに備え、ウィンドウの blur でも必ず解除する
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || isTypingTarget(e.target)) return;
+      e.preventDefault();
+      setSpacePanning(true);
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") setSpacePanning(false);
+    };
+    const onBlur = () => setSpacePanning(false);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, []);
 
   // Ctrl/Cmd+Z で Undo、Shift 併用で Redo。入力欄へのタイプは対象外
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "z") return;
-      const t = e.target;
-      if (
-        t instanceof HTMLElement &&
-        (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)
-      ) {
-        return;
-      }
+      if (isTypingTarget(e.target)) return;
       e.preventDefault();
       const temporal = useBoardStore.temporal.getState();
       if (e.shiftKey) temporal.redo();
@@ -103,10 +126,12 @@ export function Board({ theme }: { theme: Theme }) {
         proOptions={{ hideAttribution: true }}
         deleteKeyCode={["Backspace", "Delete"]}
         zoomOnDoubleClick={false}
+        className={spacePanning ? "space-panning" : undefined}
+        nodesDraggable={!spacePanning}
+        elementsSelectable={!spacePanning}
       >
         <Background />
         <Controls />
-        <MiniMap pannable zoomable />
       </ReactFlow>
       {menu && (
         <div
