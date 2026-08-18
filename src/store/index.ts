@@ -10,6 +10,7 @@ import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { temporal } from "zundo";
 import { debounce, throttleLeading } from "@/lib/debounce";
+import { buildDemoSession, DEMO_VERSION } from "@/lib/demoSession";
 import * as idb from "@/lib/idb";
 import type { BoardEdge, BoardNode, BoardNodeKind, Session, SessionMeta } from "@/types/board";
 
@@ -37,7 +38,6 @@ type Store = {
   addNode: (kind: BoardNodeKind, position: { x: number; y: number }) => void;
   // 指定 id かつ指定種別のノードの data を部分更新する。id が存在しても種別が一致しなければ何もしない。
   updateNodeData: <K extends BoardNodeKind>(id: string, type: K, patch: Partial<DataOf<K>>) => void;
-  updateEdgeLabel: (id: string, label: string) => void;
 
   createSession: () => Promise<void>;
   // 未保存の変更を flush してから切り替える。切替後は Undo 履歴をクリアする。
@@ -62,8 +62,11 @@ function newSession(): Session {
   };
 }
 
-function toMeta({ id, name, createdAt, updatedAt }: Session): SessionMeta {
-  return { id, name, createdAt, updatedAt };
+// nodes/edges 以外を丸ごと残す。isDemo/demoVersion を落とすと自動保存で
+// デモの印が消え、次回起動時にデモが二重作成されるため、フィールドを列挙しない
+function toMeta(session: Session): SessionMeta {
+  const { nodes: _nodes, edges: _edges, ...meta } = session;
+  return meta;
 }
 
 let initStarted = false;
@@ -82,6 +85,24 @@ export const useBoardStore = create<Store>()(
         initStarted = true;
 
         let metas = await idb.listSessionMetas();
+
+        // デモセッションの保証: 未作成またはバージョン不一致なら最新デモへ置き換える。
+        // isDemo の有無で判定するため、既にあれば何度起動しても二重には作られない
+        const oldDemo = metas.find((m) => m.isDemo);
+        if (!oldDemo || oldDemo.demoVersion !== DEMO_VERSION) {
+          const demo = buildDemoSession();
+          if (oldDemo) {
+            await idb.deleteSession(oldDemo.id);
+            metas = metas.filter((m) => m.id !== oldDemo.id);
+            // 旧デモを開いていた場合、復元先を新デモへ引き継ぐ
+            if (localStorage.getItem(LAST_SESSION_KEY) === oldDemo.id) {
+              localStorage.setItem(LAST_SESSION_KEY, demo.id);
+            }
+          }
+          await idb.putSession(demo);
+          metas = [...metas, toMeta(demo)];
+        }
+
         const lastId = localStorage.getItem(LAST_SESSION_KEY);
         let session = lastId ? await idb.getSession(lastId) : undefined;
         if (!session && metas.length > 0) {
@@ -149,9 +170,6 @@ export const useBoardStore = create<Store>()(
             return { ...n, data: { ...n.data, ...patch } } as BoardNode;
           }),
         }),
-
-      updateEdgeLabel: (id, label) =>
-        set({ edges: get().edges.map((e) => (e.id === id ? { ...e, label } : e)) }),
 
       createSession: async () => {
         scheduleSave.flush();

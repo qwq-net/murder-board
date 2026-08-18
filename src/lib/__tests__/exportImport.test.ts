@@ -22,7 +22,7 @@ function fixture(): Session {
         data: { title: "", text: "い", color: "blue" },
       },
     ],
-    edges: [{ id: "e1", source: "n1", target: "n2", label: "関係" }],
+    edges: [{ id: "e1", source: "n1", target: "n2" }],
   };
 }
 
@@ -45,7 +45,6 @@ describe("parseImport", () => {
     expect(edge.id).not.toBe("e1");
     expect(ids).toContain(edge.source);
     expect(ids).toContain(edge.target);
-    expect(edge.label).toBe("関係");
   });
 
   it("timeline ノードは行 ID を再採番しつつ中身を保つ", () => {

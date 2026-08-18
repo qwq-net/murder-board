@@ -32,16 +32,19 @@ export const NODE_KIND_LABELS = {
   list: "リストメモ",
   character: "登場人物メモ",
 } satisfies Record<BoardNodeKind, string>;
-// label を string に絞る。このアプリの edge ラベルはユーザーが入力するテキストのみで、
-// ReactNode を許す元の型のままだと利用側で毎回 typeof による絞り込みが要るため
-export type BoardEdge = Omit<Edge, "label"> & { label?: string };
+// label を持たせない。このアプリのつながりは線だけで表現し、テキスト付与の機能は置かない
+export type BoardEdge = Omit<Edge, "label">;
 
-// 1 セッション = IndexedDB の 1 レコード。nodes/edges を正規化せず丸ごと持つ
+// 1 セッション = IndexedDB の 1 レコード。nodes/edges を正規化せず丸ごと持つ。
+// isDemo は自動生成されるデモセッションの印。demoVersion が DEMO_VERSION と
+// 一致しないデモは、起動時に最新の内容へ丸ごと置き換えられる
 export type Session = {
   id: string;
   name: string;
   createdAt: number;
   updatedAt: number;
+  isDemo?: boolean;
+  demoVersion?: number;
   nodes: BoardNode[];
   edges: BoardEdge[];
 };

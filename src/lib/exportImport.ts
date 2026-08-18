@@ -79,7 +79,6 @@ const edgeSchema = z.object({
   target: z.string(),
   sourceHandle: z.string().optional().catch(undefined),
   targetHandle: z.string().optional().catch(undefined),
-  label: z.string().optional().catch(undefined),
 });
 
 // エクスポート JSON を検証し、全 ID を再採番した新しい Session を返す。
@@ -156,7 +155,6 @@ export function parseImport(json: string, now = Date.now()): Session {
     const edge: BoardEdge = { id: nanoid(), source, target };
     if (parsed.data.sourceHandle !== undefined) edge.sourceHandle = parsed.data.sourceHandle;
     if (parsed.data.targetHandle !== undefined) edge.targetHandle = parsed.data.targetHandle;
-    if (parsed.data.label !== undefined && parsed.data.label !== "") edge.label = parsed.data.label;
     edges.push(edge);
   }
 

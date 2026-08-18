@@ -20,7 +20,7 @@ function getDb() {
 export async function listSessionMetas(): Promise<SessionMeta[]> {
   const all = await (await getDb()).getAll("sessions");
   return all
-    .map(({ id, name, createdAt, updatedAt }) => ({ id, name, createdAt, updatedAt }))
+    .map(({ nodes: _nodes, edges: _edges, ...meta }) => meta)
     .sort((a, b) => a.createdAt - b.createdAt);
 }
 

@@ -1,11 +1,4 @@
-import {
-  Background,
-  Controls,
-  ReactFlow,
-  useReactFlow,
-  type EdgeMouseHandler,
-  type NodeTypes,
-} from "@xyflow/react";
+import { Background, Controls, ReactFlow, useReactFlow, type NodeTypes } from "@xyflow/react";
 import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { CharacterNode } from "@/components/nodes/CharacterNode";
 import { ListNode } from "@/components/nodes/ListNode";
@@ -43,7 +36,6 @@ export function Board({ theme }: { theme: Theme }) {
   const onEdgesChange = useBoardStore((s) => s.onEdgesChange);
   const onConnect = useBoardStore((s) => s.onConnect);
   const addNode = useBoardStore((s) => s.addNode);
-  const updateEdgeLabel = useBoardStore((s) => s.updateEdgeLabel);
   const { screenToFlowPosition } = useReactFlow();
   // 右クリックメニューの表示位置。画面座標で持ち、null なら非表示
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
@@ -104,11 +96,6 @@ export function Board({ theme }: { theme: Theme }) {
     setMenu(null);
   };
 
-  const onEdgeDoubleClick: EdgeMouseHandler<BoardEdge> = (_, edge) => {
-    const label = window.prompt("つながりのラベル", edge.label ?? "");
-    if (label !== null) updateEdgeLabel(edge.id, label);
-  };
-
   return (
     <div className="relative min-h-0 flex-1" onDoubleClick={onDoubleClick}>
       <ReactFlow<BoardNode, BoardEdge>
@@ -117,7 +104,6 @@ export function Board({ theme }: { theme: Theme }) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
-        onEdgeDoubleClick={onEdgeDoubleClick}
         onPaneContextMenu={onPaneContextMenu}
         onPaneClick={() => setMenu(null)}
         onMoveStart={() => setMenu(null)}
