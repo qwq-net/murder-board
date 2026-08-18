@@ -16,16 +16,18 @@ export function App() {
     void init();
   }, [init]);
 
-  // Ctrl/Cmd+F でブラウザ検索の代わりにメモ検索を開く。入力欄フォーカス中も対象
+  // Ctrl/Cmd+F でブラウザ検索の代わりにメモ検索を開く。入力欄フォーカス中も対象。
+  // IME 変換中は e.key が "Process" になるため物理キーの e.code でも判定し、
+  // 途中の要素に stopPropagation されても届くよう capture 段階で受ける
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
+      if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "f" || e.code === "KeyF")) {
         e.preventDefault();
         setSearchOpen(true);
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, []);
 
   if (!loaded) {
