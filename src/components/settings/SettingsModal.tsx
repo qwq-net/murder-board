@@ -52,6 +52,10 @@ export function SettingsModal({
   const [section, setSection] = useState<SectionId>("theme");
   const importSessionData = useBoardStore((s) => s.importSessionData);
   const removeSession = useBoardStore((s) => s.removeSession);
+  const resetAll = useBoardStore((s) => s.resetAll);
+  const isDemoSession = useBoardStore(
+    (s) => s.sessions.find((m) => m.id === s.currentId)?.isDemo === true,
+  );
   const fileRef = useRef<HTMLInputElement>(null);
 
   // 現在のセッションを JSON ファイルとしてダウンロードさせる。ファイル名はセッション名
@@ -82,6 +86,16 @@ export function SettingsModal({
   const remove = () => {
     if (window.confirm("このセッションを削除しますか？この操作は取り消せません。")) {
       void removeSession();
+    }
+  };
+
+  const reset = () => {
+    if (
+      window.confirm(
+        "すべてのセッション・設定・保存データを削除して初期状態に戻しますか？この操作は取り消せません。",
+      )
+    ) {
+      void resetAll();
     }
   };
 
@@ -148,6 +162,8 @@ export function SettingsModal({
         <Description>現在のセッションそのものを削除します。この操作は取り消せません。</Description>
         <button
           type="button"
+          disabled={isDemoSession}
+          title={isDemoSession ? "デモセッションは削除できません" : undefined}
           className="btn-ghost btn-sm w-fit text-sm text-danger"
           onClick={remove}
         >
@@ -160,7 +176,13 @@ export function SettingsModal({
         <Description>
           すべてのセッション・設定・保存データを完全に削除し、アプリを初期状態に戻します。
         </Description>
-        <PendingButton label="完全リセット" danger />
+        <button
+          type="button"
+          className="btn-ghost btn-sm w-fit text-sm text-danger"
+          onClick={reset}
+        >
+          完全リセット
+        </button>
       </>
     ),
   } satisfies Record<SectionId, React.ReactNode>;

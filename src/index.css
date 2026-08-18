@@ -310,6 +310,11 @@ mark {
   cursor: grabbing;
 }
 
+/* ノード間の線。既定の 1px は視認しづらいため少し太くする */
+.react-flow__edge-path {
+  stroke-width: 2;
+}
+
 /* 接続ハンドルはカードへのホバー中のみ表示する。opacity なので非表示中も
    接続ドラッグの受け口としては機能し続ける */
 .react-flow__handle {

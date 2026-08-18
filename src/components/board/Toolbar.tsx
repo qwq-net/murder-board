@@ -3,7 +3,7 @@ import { useBoardStore } from "@/store";
 
 const BUTTON_CLASS = "btn-ghost btn-sm text-sm";
 // アイコンのみのボタン。テキストボタンと高さが揃う正方形の枠にする
-const ICON_BUTTON_CLASS = "btn-ghost size-7 shrink-0 justify-center";
+const ICON_BUTTON_CLASS = "btn-ghost size-8 shrink-0 justify-center";
 
 export function Toolbar({
   onOpenSearch,

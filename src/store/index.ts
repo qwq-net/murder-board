@@ -12,6 +12,7 @@ import { temporal } from "zundo";
 import { debounce, throttleLeading } from "@/lib/debounce";
 import { buildDemoSession, DEMO_VERSION } from "@/lib/demoSession";
 import * as idb from "@/lib/idb";
+import { THEME_KEY } from "@/lib/theme";
 import type { BoardEdge, BoardNode, BoardNodeKind, Session, SessionMeta } from "@/types/board";
 
 const LAST_SESSION_KEY = "murder-memo2-last-session";
@@ -48,6 +49,9 @@ type Store = {
   removeSession: () => Promise<void>;
   // parseImport 済みのセッションを保存して開く。バリデーションは呼び手側で済んでいる前提。
   importSessionData: (session: Session) => Promise<void>;
+  // 全セッション・保存キー・テーマ設定を削除し、ページを再読み込みして初期状態に戻す。
+  // 確認ダイアログは呼び手側で済んでいる前提。
+  resetAll: () => Promise<void>;
 };
 
 function newSession(): Session {
@@ -237,6 +241,17 @@ export const useBoardStore = create<Store>()(
           edges: session.edges,
         });
         useBoardStore.temporal.getState().clear();
+      },
+
+      resetAll: async () => {
+        // 再読み込み前の flush や自動保存が消したデータを書き戻さないよう、
+        // 保存経路を先にすべて塞ぐ。loaded=false で saveCurrent は無条件に no-op になる
+        set({ loaded: false });
+        scheduleSave.cancel();
+        await idb.deleteDatabase();
+        localStorage.removeItem(LAST_SESSION_KEY);
+        localStorage.removeItem(THEME_KEY);
+        location.reload();
       },
     }),
     {

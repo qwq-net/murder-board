@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 export const THEMES = ["dark", "light", "auto"] as const;
 export type Theme = (typeof THEMES)[number];
 
-const THEME_KEY = "murder-memo2-theme";
+export const THEME_KEY = "murder-memo2-theme";
 
 // localStorage 等から読んだ生値を Theme に解釈する。
 // 'dark' | 'light' | 'auto' 以外の値は既定の 'dark' を返す。null・空文字も同様。

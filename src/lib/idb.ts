@@ -5,15 +5,29 @@ interface MemoDb extends DBSchema {
   sessions: { key: string; value: Session };
 }
 
+const DB_NAME = "murder-memo2";
+
 let dbPromise: Promise<IDBPDatabase<MemoDb>> | undefined;
 
 function getDb() {
-  dbPromise ??= openDB<MemoDb>("murder-memo2", 1, {
+  dbPromise ??= openDB<MemoDb>(DB_NAME, 1, {
     upgrade(db) {
       db.createObjectStore("sessions", { keyPath: "id" });
     },
   });
   return dbPromise;
+}
+
+// 接続を閉じてデータベースを丸ごと削除する。以後この接続では読み書きできないため、
+// 呼び手はページを再読み込みして初期化し直す前提。完全リセットからのみ呼ばれる。
+export async function deleteDatabase(): Promise<void> {
+  if (dbPromise) (await dbPromise).close();
+  dbPromise = undefined;
+  await new Promise<void>((resolve, reject) => {
+    const req = indexedDB.deleteDatabase(DB_NAME);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error ?? new Error("deleteDatabase failed"));
+  });
 }
 
 // 全セッションのメタ情報を作成日時の昇順で返す。nodes/edges は含まない。
