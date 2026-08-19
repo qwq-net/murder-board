@@ -45,7 +45,7 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
         {data.entries.map((entry) => (
           <NodeRow key={entry.id} onRemove={() => removeRow(entry.id)}>
             <CommitInput
-              className="w-12 shrink-0 bg-transparent text-center font-mono text-xs text-text-muted outline-none"
+              className="w-12 shrink-0 self-start bg-transparent text-center font-mono text-xs leading-5 text-text-muted outline-none"
               value={entry.time}
               placeholder="21:00"
               normalize={autoCompleteTime}
