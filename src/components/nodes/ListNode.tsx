@@ -37,7 +37,11 @@ export function ListNode({ id, data, selected }: NodeProps<ListNodeType>) {
     >
       <div className="p-1">
         {data.entries.map((entry) => (
-          <NodeRow key={entry.id} onRemove={() => removeRow(entry.id)}>
+          <NodeRow
+            key={entry.id}
+            className="pl-2 before:absolute before:top-1 before:bottom-1 before:left-0.5 before:w-[3px] before:rounded-sm before:bg-panel-list-accent/45"
+            onRemove={() => removeRow(entry.id)}
+          >
             <CommitInput
               className="min-w-0 flex-1 bg-transparent text-sm outline-none"
               value={entry.text}

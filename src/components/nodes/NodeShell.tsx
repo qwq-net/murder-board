@@ -148,9 +148,21 @@ export function CommitInput({
 // timeline / list 共通の 1 行。children に入力欄を並べ、hover 時だけ削除ボタンを見せる。
 // 削除ボタンは absolute で右端に重ね、非表示時に幅を取らせない。行の左右余白を対称に
 // 保つためで、hover 時は行のホバー背景と同じ色を敷いてテキストの上に浮く。
-export function NodeRow({ onRemove, children }: { onRemove: () => void; children: ReactNode }) {
+// className はノード種別ごとの装飾の追加用。行の div は relative なので、
+// before 疑似要素などの absolute 配置は行を基準にできる。
+export function NodeRow({
+  onRemove,
+  className = "",
+  children,
+}: {
+  onRemove: () => void;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
-    <div className="group relative flex items-center gap-1 rounded px-1 py-0.5 hover:bg-bg-hover">
+    <div
+      className={`group relative flex items-center gap-1 rounded px-1 py-0.5 hover:bg-bg-hover ${className}`}
+    >
       {children}
       <button
         type="button"
