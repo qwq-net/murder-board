@@ -71,6 +71,8 @@ export function NodeShell({
 // 薄く表示する。defaultEditing はマウント直後から編集で始めたいとき（行の追加直後
 // など）に渡す。マウント時にだけ効き、以降の変化は無視される。
 // 表示は既定で折り返して全文を見せる。singleLine を渡したときだけ 1 行に省略する。
+// 編集中も表示と同じ折り返しで全文が見えるよう textarea を使うが、値は 1 行の
+// テキストとして扱う。Enter は改行せず確定し、ペースト等で入った改行は空白に潰す。
 export function CommitInput({
   value,
   onCommit,
@@ -89,12 +91,12 @@ export function CommitInput({
   className?: string;
   placeholder?: string;
 } & Omit<
-  ComponentPropsWithoutRef<"input">,
-  "value" | "onChange" | "onBlur" | "onKeyDown" | "className" | "placeholder"
+  ComponentPropsWithoutRef<"textarea">,
+  "value" | "onChange" | "onBlur" | "onKeyDown" | "className" | "placeholder" | "rows"
 >) {
   const [editing, setEditing] = useState(defaultEditing);
   const [draft, setDraft] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!editing) return;
@@ -119,13 +121,14 @@ export function CommitInput({
     );
   }
   return (
-    <input
+    <textarea
       {...rest}
       ref={inputRef}
-      className={`nodrag ${className}`}
+      rows={1}
+      className={`nodrag field-sizing-content resize-none break-words ${className}`}
       value={draft}
       placeholder={placeholder}
-      onChange={(e) => setDraft(e.target.value)}
+      onChange={(e) => setDraft(e.target.value.replace(/\n/g, " "))}
       onBlur={() => {
         const committed = normalize ? normalize(draft) : draft;
         setDraft(committed);
@@ -133,21 +136,26 @@ export function CommitInput({
         if (committed !== value) onCommit(committed);
       }}
       onKeyDown={(e) => {
-        if (e.key === "Enter") e.currentTarget.blur();
+        if (e.key === "Enter") {
+          e.preventDefault();
+          e.currentTarget.blur();
+        }
       }}
     />
   );
 }
 
 // timeline / list 共通の 1 行。children に入力欄を並べ、hover 時だけ削除ボタンを見せる。
+// 削除ボタンは absolute で右端に重ね、非表示時に幅を取らせない。行の左右余白を対称に
+// 保つためで、hover 時は行のホバー背景と同じ色を敷いてテキストの上に浮く。
 export function NodeRow({ onRemove, children }: { onRemove: () => void; children: ReactNode }) {
   return (
-    <div className="group flex items-center gap-1 rounded px-1 py-0.5 hover:bg-bg-hover">
+    <div className="group relative flex items-center gap-1 rounded px-1 py-0.5 hover:bg-bg-hover">
       {children}
       <button
         type="button"
         aria-label="行を削除"
-        className="nodrag invisible shrink-0 cursor-pointer px-1 text-xs text-text-muted group-hover:visible hover:text-danger"
+        className="nodrag invisible absolute top-1/2 right-0.5 -translate-y-1/2 cursor-pointer rounded bg-bg-hover px-1 text-xs text-text-muted group-hover:visible hover:text-danger"
         onClick={onRemove}
       >
         ×
