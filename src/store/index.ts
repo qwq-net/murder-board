@@ -12,7 +12,12 @@ import { temporal } from "zundo";
 import { debounce, throttleLeading } from "@/lib/debounce";
 import { buildDemoSession, DEMO_VERSION } from "@/lib/demoSession";
 import * as idb from "@/lib/idb";
-import { applyStackDrops, STACK_EMPTY_H, STACK_EMPTY_W } from "@/lib/stackLayout";
+import {
+  applyStackDrops,
+  relayoutOnDimensionChanges,
+  STACK_EMPTY_H,
+  STACK_EMPTY_W,
+} from "@/lib/stackLayout";
 import { THEME_KEY } from "@/lib/theme";
 import type { BoardEdge, BoardNode, BoardNodeKind, Session, SessionMeta } from "@/types/board";
 
@@ -141,7 +146,9 @@ export const useBoardStore = create<Store>()(
           );
           changes = [...changes, ...orphans.map((n) => ({ type: "remove" as const, id: n.id }))];
         }
-        set({ nodes: applyNodeChanges(changes, get().nodes) });
+        const applied = applyNodeChanges(changes, get().nodes);
+        // テキストの折り返しなどで子の高さが変わったら、その場でスタックを詰め直す
+        set({ nodes: relayoutOnDimensionChanges(applied, changes) });
       },
       onEdgesChange: (changes) => set({ edges: applyEdgeChanges(changes, get().edges) }),
       onConnect: (connection) =>

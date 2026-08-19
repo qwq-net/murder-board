@@ -12,6 +12,8 @@ import {
 // 幅や配色は frameClassName / frameStyle / headerClassName / headerStyle で種別ごとに与える。
 // 枠は relative なので、children 内の absolute 配置はこの枠を基準にできる。
 // タイトルは blur で確定し、変更があったときだけ onTitleCommit が呼ばれる。
+// タイトルは既定で折り返して全文表示する。titleSingleLine はヘッダの高さを固定したい
+// ノード（スタック）だけが渡し、1 行に省略する。
 // 使われ方: 各ノードコンポーネントが body だけを children として渡す前提。
 // 新しいノード種別を追加するときはこのシェルに body を載せる。
 export function NodeShell({
@@ -22,6 +24,7 @@ export function NodeShell({
   headerStyle,
   title,
   titlePlaceholder,
+  titleSingleLine,
   onTitleCommit,
   children,
 }: {
@@ -32,6 +35,7 @@ export function NodeShell({
   headerStyle?: CSSProperties;
   title: string;
   titlePlaceholder: string;
+  titleSingleLine?: boolean;
   onTitleCommit: (title: string) => void;
   children: ReactNode;
 }) {
@@ -47,6 +51,7 @@ export function NodeShell({
           className="w-full bg-transparent text-sm font-bold text-text-primary outline-none"
           value={title}
           placeholder={titlePlaceholder}
+          singleLine={titleSingleLine}
           onCommit={onTitleCommit}
         />
       </div>
@@ -65,11 +70,13 @@ export function NodeShell({
 // 入力値へ適用し、表示・確定値ともその結果になる。value が空なら placeholder を
 // 薄く表示する。defaultEditing はマウント直後から編集で始めたいとき（行の追加直後
 // など）に渡す。マウント時にだけ効き、以降の変化は無視される。
+// 表示は既定で折り返して全文を見せる。singleLine を渡したときだけ 1 行に省略する。
 export function CommitInput({
   value,
   onCommit,
   normalize,
   defaultEditing = false,
+  singleLine = false,
   className = "",
   placeholder,
   ...rest
@@ -78,6 +85,7 @@ export function CommitInput({
   onCommit: (value: string) => void;
   normalize?: (value: string) => string;
   defaultEditing?: boolean;
+  singleLine?: boolean;
   className?: string;
   placeholder?: string;
 } & Omit<
@@ -100,7 +108,7 @@ export function CommitInput({
   if (!editing) {
     return (
       <div
-        className={`truncate ${className}`}
+        className={`${singleLine ? "truncate" : "break-words"} ${className}`}
         onDoubleClick={() => {
           setDraft(value);
           setEditing(true);

@@ -4,6 +4,7 @@
  * 順番は順番専用のデータではなく、子ノードの親相対 y 座標の昇順そのもので表す。
  * 挿入・離脱のたびにここで y を詰め直すことで、同期すべき状態を増やさない。
  */
+import type { NodeChange } from "@xyflow/react";
 import type { BoardEdge, BoardNode } from "@/types/board";
 
 export const STACK_PAD = 8;
@@ -120,6 +121,26 @@ export function applyStackDrops(nodes: BoardNode[], ids: string[]): BoardNode[] 
 // 1 ノードだけのドラッグ終了を applyStackDrops に委譲する。挙動はそちらの契約に従う。
 export function applyStackDrop(nodes: BoardNode[], nodeId: string): BoardNode[] | null {
   return applyStackDrops(nodes, [nodeId]);
+}
+
+// changes にスタックの子のサイズ変化（type: "dimensions"）が含まれていたら、その親
+// スタックを詰め直した nodes を返す。テキストの折り返しなどで子の高さが変わっても、
+// ドラッグを待たずに重なりを解消するためのもの。対象が無ければ nodes をそのまま返す。
+// 使われ方: store の onNodesChange で applyNodeChanges の適用後に毎回呼ばれる前提。
+// 詰め直しで変化が無ければ同一参照が返るため、続けて呼ばれても発散しない。
+export function relayoutOnDimensionChanges(
+  nodes: BoardNode[],
+  changes: NodeChange<BoardNode>[],
+): BoardNode[] {
+  const parents = new Set<string>();
+  for (const c of changes) {
+    if (c.type !== "dimensions") continue;
+    const parentId = nodes.find((n) => n.id === c.id)?.parentId;
+    if (parentId !== undefined) parents.add(parentId);
+  }
+  let next = nodes;
+  for (const stackId of parents) next = relayoutStack(next, stackId);
+  return next;
 }
 
 // 子ノードに付いた線を親スタックへ付け替えた表示用の edges を返す。id とハンドルは

@@ -69,7 +69,7 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
       {editing ? (
         <textarea
           ref={taRef}
-          className="nodrag block h-24 w-full resize-none bg-transparent p-2 text-sm outline-none"
+          className="nodrag block field-sizing-content min-h-24 w-full resize-none bg-transparent p-2 text-sm outline-none"
           value={draft}
           placeholder="メモを入力..."
           onChange={(e) => setDraft(e.target.value)}

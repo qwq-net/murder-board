@@ -16,6 +16,7 @@ export function StackNode({ id, data, selected }: NodeProps<StackNodeType>) {
       headerClassName="bg-bg-hover"
       title={data.title}
       titlePlaceholder="スタック名"
+      titleSingleLine
       onTitleCommit={(title) => updateNodeData(id, "stack", { title })}
     >
       {!hasChildren && (

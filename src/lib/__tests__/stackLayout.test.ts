@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
+import type { NodeChange } from "@xyflow/react";
 import {
   applyStackDrop,
   applyStackDrops,
   delegateEdgesToStacks,
+  relayoutOnDimensionChanges,
   relayoutStack,
   STACK_EMPTY_H,
   STACK_EMPTY_W,
@@ -188,6 +190,48 @@ describe("applyStackDrops", () => {
       sticky("b", { x: 900, y: 990 }, { measured: { width: 100, height: 50 } }),
     ];
     expect(applyStackDrops(nodes, ["a", "b"])).toBeNull();
+  });
+});
+
+describe("relayoutOnDimensionChanges", () => {
+  const dims = (id: string): NodeChange<BoardNode> => ({
+    id,
+    type: "dimensions",
+    dimensions: { width: 100, height: 90 },
+  });
+
+  it("サイズが変わった子を持つスタックを詰め直す", () => {
+    const y1 = STACK_HEADER_H + STACK_PAD;
+    const nodes = [
+      stack("st", { x: 0, y: 0 }),
+      // a が 50 → 90 に伸びた直後で、b の位置がまだ古い前提
+      sticky(
+        "a",
+        { x: STACK_PAD, y: y1 },
+        { parentId: "st", measured: { width: 100, height: 90 } },
+      ),
+      sticky(
+        "b",
+        { x: STACK_PAD, y: y1 + 50 + STACK_GAP },
+        { parentId: "st", measured: { width: 100, height: 50 } },
+      ),
+    ];
+    const result = relayoutOnDimensionChanges(nodes, [dims("a")]);
+    expect(byId(result, "b").position.y).toBe(y1 + 90 + STACK_GAP);
+  });
+
+  it("スタックの子が絡まないサイズ変化なら nodes をそのまま返す", () => {
+    const nodes = [stack("st", { x: 0, y: 0 }), sticky("a", { x: 900, y: 900 })];
+    expect(relayoutOnDimensionChanges(nodes, [dims("a")])).toBe(nodes);
+  });
+
+  it("サイズ変化以外の change は無視する", () => {
+    const nodes = [
+      stack("st", { x: 0, y: 0 }),
+      sticky("a", { x: 999, y: 999 }, { parentId: "st" }),
+    ];
+    const change: NodeChange<BoardNode> = { id: "a", type: "select", selected: true };
+    expect(relayoutOnDimensionChanges(nodes, [change])).toBe(nodes);
   });
 });
 
