@@ -6,21 +6,24 @@ export type StickyColor = (typeof STICKY_COLORS)[number];
 // 付箋ノードの中身。title/text は空文字を許す。作成直後は空で、付箋側が自動的に編集状態になる
 export type StickyData = { title: string; text: string; color: StickyColor };
 
-// タイムラインの 1 行。time は "HH:MM" を想定するが自由入力を許し、不正な時刻の行は末尾に並ぶ
+// タイムラインの 1 行。time は "HH:MM" を想定するが自由入力を許し、不正な時刻の行は末尾に並ぶ。
+// color は付箋と同じ 6 色で、未設定なら種別既定のアクセント色で描画される
 export type TimelineEntry = { id: string; time: string; text: string };
-export type TimelineData = { title: string; entries: TimelineEntry[] };
+export type TimelineData = { title: string; entries: TimelineEntry[]; color?: StickyColor };
 
-// リストメモの 1 行。text は作成直後の空行のような空文字を許す。並び順は登録順のまま
+// リストメモの 1 行。text は作成直後の空行のような空文字を許す。並び順は登録順のまま。
+// color の意味はタイムラインと同じ
 export type ListEntry = { id: string; text: string };
-export type ListData = { title: string; entries: ListEntry[] };
+export type ListData = { title: string; entries: ListEntry[]; color?: StickyColor };
 
 // 登場人物メモの 1 行。color がその人物の識別色で、付箋と同じ 6 色を使う
 export type CharacterEntry = { id: string; text: string; color: StickyColor };
 export type CharacterData = { title: string; entries: CharacterEntry[] };
 
 // スタックノードの中身。本文を持たず、タイトルだけを持つ入れ物。
-// 子ノードは parentId で所属し、順番は子の相対 y 座標の昇順そのもので表す
-export type StackData = { title: string };
+// 子ノードは parentId で所属し、順番は子の相対 y 座標の昇順そのもので表す。
+// color の意味はタイムラインと同じで、未設定なら無彩色の既定枠になる
+export type StackData = { title: string; color?: StickyColor };
 
 export type StickyNodeType = Node<StickyData, "sticky">;
 export type TimelineNodeType = Node<TimelineData, "timeline">;

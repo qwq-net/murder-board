@@ -1,8 +1,8 @@
 import type { NodeProps } from "@xyflow/react";
 import { useEffect, useRef, useState } from "react";
-import { NodeShell } from "@/components/nodes/NodeShell";
+import { ColorPalette, NodeShell } from "@/components/nodes/NodeShell";
 import { useBoardStore } from "@/store";
-import { STICKY_COLORS, type StickyColor, type StickyNodeType } from "@/types/board";
+import { type StickyColor, type StickyNodeType } from "@/types/board";
 
 // 付箋カラーは index.css の --sticky-* 変数で定義され、テーマに応じて値が切り替わる。
 // クラスマップではなく CSS 変数参照にすることで、テーマ切替時のロジック変更を不要にする。
@@ -51,20 +51,10 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
       onTitleCommit={(title) => updateNodeData(id, "sticky", { title })}
     >
       {selected && !editing && (
-        <div className="absolute -top-7 left-0 flex gap-1 rounded bg-bg-elevated/90 p-1 shadow">
-          {STICKY_COLORS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              aria-label={`色: ${c}`}
-              className={`h-4 w-4 cursor-pointer rounded-full ${
-                c === data.color ? "ring-2 ring-accent" : ""
-              }`}
-              style={{ background: `var(--sticky-${c}-accent)` }}
-              onClick={() => updateNodeData(id, "sticky", { color: c })}
-            />
-          ))}
-        </div>
+        <ColorPalette
+          color={data.color}
+          onPick={(color) => color && updateNodeData(id, "sticky", { color })}
+        />
       )}
       {editing ? (
         <textarea

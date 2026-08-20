@@ -42,10 +42,14 @@ const timelineRowSchema = z.object({
   text: z.string().catch(""),
 });
 
+// ノード単位の色は任意フィールド。未知の値は「色未設定 = 種別既定色」へ落とす
+const nodeColorSchema = z.enum(STICKY_COLORS).optional().catch(undefined);
+
 const timelineDataSchema = z
   .object({
     title: z.string().catch(""),
     entries: z.array(z.unknown()).catch([]),
+    color: nodeColorSchema,
   })
   .catch({ title: "", entries: [] });
 
@@ -55,6 +59,7 @@ const listDataSchema = z
   .object({
     title: z.string().catch(""),
     entries: z.array(z.unknown()).catch([]),
+    color: nodeColorSchema,
   })
   .catch({ title: "", entries: [] });
 
@@ -78,7 +83,9 @@ const stickyDataSchema = z
   })
   .catch({ title: "", text: "", color: "yellow" });
 
-const stackDataSchema = z.object({ title: z.string().catch("") }).catch({ title: "" });
+const stackDataSchema = z
+  .object({ title: z.string().catch(""), color: nodeColorSchema })
+  .catch({ title: "" });
 
 const edgeSchema = z.object({
   source: z.string(),
@@ -91,7 +98,8 @@ const edgeSchema = z.object({
 // - JSON 不正・app/version 不一致・セッション/ノードの必須フィールド欠落は Error を throw
 // - node/edge の ID はすべて再採番し、edge の source/target も追随させる
 // - 存在しないノードを参照する edge、形の壊れた edge は黙って捨てる
-// - 未知の色は 'yellow' に落とし、未知のフィールドは保持しない
+// - 未知の色は、必須の色（付箋・登場人物の行）は 'yellow'、任意のノード色は未設定に落とす。
+//   未知のフィールドは保持しない
 // - createdAt/updatedAt は now で上書きし、インポート時点を新規作成として扱う
 // 使われ方: 信頼境界であるファイル入力から呼ばれる。失敗は throw で伝え、呼び手が通知を出す。
 export function parseImport(json: string, now = Date.now()): Session {
@@ -141,21 +149,21 @@ export function parseImport(json: string, now = Date.now()): Session {
           : { id: newId, position };
 
       if (type === "timeline") {
-        const { title, entries } = timelineDataSchema.parse(data);
+        const { title, entries, color } = timelineDataSchema.parse(data);
         const rows = entries.flatMap((row) => {
           const r = timelineRowSchema.safeParse(row);
           return r.success ? [{ id: nanoid(), ...r.data }] : [];
         });
-        return { ...base, type: "timeline" as const, data: { title, entries: rows } };
+        return { ...base, type: "timeline" as const, data: { title, entries: rows, color } };
       }
 
       if (type === "list") {
-        const { title, entries } = listDataSchema.parse(data);
+        const { title, entries, color } = listDataSchema.parse(data);
         const rows = entries.flatMap((row) => {
           const r = listRowSchema.safeParse(row);
           return r.success ? [{ id: nanoid(), text: r.data.text }] : [];
         });
-        return { ...base, type: "list" as const, data: { title, entries: rows } };
+        return { ...base, type: "list" as const, data: { title, entries: rows, color } };
       }
 
       if (type === "character") {

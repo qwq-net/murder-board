@@ -7,6 +7,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
+import { STICKY_COLORS, type StickyColor } from "@/types/board";
 
 // 全ノード種別共通の外枠。枠・タイトルヘッダ・接続ハンドル 4 方向・選択リングを持つ。
 // 幅や配色は frameClassName / frameStyle / headerClassName / headerStyle で種別ごとに与える。
@@ -142,6 +143,44 @@ export function CommitInput({
         }
       }}
     />
+  );
+}
+
+// ノード配色を 1 本で決める --node-accent 変数を frameStyle として与えるためのスタイル。
+// accent には CSS の色値を渡す。var() 参照のままでよい。
+export const nodeAccentStyle = (accent: string) =>
+  // SAFETY: カスタムプロパティは実行時のインラインスタイルとして有効だが、
+  // CSSProperties がキーとして許さないためだけの表明
+  ({ "--node-accent": accent }) as CSSProperties;
+
+// ノード上部に浮かべる色パレット。選択中のノードだけが描画する前提。
+// スワッチのクリックで onPick に色を渡す。defaultSwatch を渡すと先頭に「既定色へ戻す」
+// スワッチが付き、そのクリックでは onPick(undefined) が呼ばれる。付箋のように既定色の
+// 概念が無いノードは defaultSwatch を渡さないことで undefined が来ないことを保証できる。
+export function ColorPalette({
+  color,
+  defaultSwatch,
+  onPick,
+}: {
+  color: StickyColor | undefined;
+  defaultSwatch?: string;
+  onPick: (color: StickyColor | undefined) => void;
+}) {
+  const swatch = (label: string, current: boolean, bg: string, pick: StickyColor | undefined) => (
+    <button
+      key={label}
+      type="button"
+      aria-label={`色: ${label}`}
+      className={`h-4 w-4 cursor-pointer rounded-full ${current ? "ring-2 ring-accent" : ""}`}
+      style={{ background: bg }}
+      onClick={() => onPick(pick)}
+    />
+  );
+  return (
+    <div className="absolute -top-7 left-0 flex gap-1 rounded bg-bg-elevated/90 p-1 shadow">
+      {defaultSwatch !== undefined && swatch("既定", color === undefined, defaultSwatch, undefined)}
+      {STICKY_COLORS.map((c) => swatch(c, c === color, `var(--sticky-${c}-accent)`, c))}
+    </div>
   );
 }
 

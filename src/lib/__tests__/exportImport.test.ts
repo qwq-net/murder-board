@@ -110,6 +110,35 @@ describe("parseImport", () => {
     expect(character.data.entries[1]!).toMatchObject({ text: "医者", color: "yellow" });
   });
 
+  it("timeline / list / stack のノード色は往復し、未知の色は未設定に落ちる", () => {
+    const s = fixture();
+    s.nodes.push(
+      {
+        id: "n7",
+        type: "list",
+        position: { x: 0, y: 0 },
+        data: { title: "", entries: [], color: "pink" },
+      },
+      {
+        id: "n8",
+        type: "timeline",
+        position: { x: 0, y: 0 },
+        // SAFETY: 未知の色が未設定に落ちることを検証するため、意図的に型を破った値を注入する
+        data: { title: "", entries: [], color: "neon" as never },
+      },
+      {
+        id: "n9",
+        type: "stack",
+        position: { x: 0, y: 0 },
+        data: { title: "", color: "green" },
+      },
+    );
+    const imported = parseImport(serializeExport(s));
+    expect(imported.nodes.find((n) => n.type === "list")!.data.color).toBe("pink");
+    expect(imported.nodes.find((n) => n.type === "timeline")!.data.color).toBeUndefined();
+    expect(imported.nodes.find((n) => n.type === "stack")!.data.color).toBe("green");
+  });
+
   it("stack ノードはサイズと子の parentId を新 ID へ引き継いで往復する", () => {
     const s = fixture();
     s.nodes.push({
