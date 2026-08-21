@@ -19,7 +19,7 @@ import {
 } from "react";
 import { DEFAULT_NODE_WIDTHS, type WidthKind } from "@/lib/nodeWidths";
 import { useBoardStore } from "@/store";
-import { STICKY_COLORS, type BoardNodeKind, type StickyColor } from "@/types/board";
+import { STICKY_COLORS_BY_HUE, type BoardNodeKind, type StickyColor } from "@/types/board";
 
 // ノード種別を示すアイコン。ツールバーと同じ lucide を使い、
 // ノードヘッダと Board の右クリックメニューで共用する
@@ -201,9 +201,10 @@ export const nodeAccentStyle = (accent: string) =>
   ({ "--node-accent": accent }) as CSSProperties;
 
 // ノード上部に浮かべる色パレット。選択中のノードだけが描画する前提。
-// スワッチのクリックで onPick に色を渡す。defaultSwatch を渡すと先頭に「既定色へ戻す」
-// スワッチが付き、そのクリックでは onPick(undefined) が呼ばれる。付箋のように既定色の
-// 概念が無いノードは defaultSwatch を渡さないことで undefined が来ないことを保証できる。
+// スワッチは色相環の順に並ぶ。クリックで onPick に色を渡す。defaultSwatch を渡すと
+// 先頭に「既定色へ戻す」スワッチが付き、そのクリックでは onPick(undefined) が呼ばれる。
+// 付箋のように既定色の概念が無いノードは defaultSwatch を渡さないことで
+// undefined が来ないことを保証できる。
 export function ColorPalette({
   color,
   defaultSwatch,
@@ -226,7 +227,7 @@ export function ColorPalette({
   return (
     <div className="absolute -top-7 left-0 flex gap-1 rounded bg-bg-elevated/90 p-1 shadow">
       {defaultSwatch !== undefined && swatch("既定", color === undefined, defaultSwatch, undefined)}
-      {STICKY_COLORS.map((c) => swatch(c, c === color, `var(--sticky-${c}-accent)`, c))}
+      {STICKY_COLORS_BY_HUE.map((c) => swatch(c, c === color, `var(--sticky-${c}-accent)`, c))}
     </div>
   );
 }

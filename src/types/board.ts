@@ -1,6 +1,6 @@
 import type { Node } from "@xyflow/react";
 
-// パレットの並びは色相が隣り合わないように組んである。登場人物メモの行追加が
+// この並びは色相が隣り合わないように組んである。登場人物メモの行追加が
 // この並び順で色を循環させるため、隣の行と紛らわしい色が続かない
 export const STICKY_COLORS = [
   "yellow",
@@ -16,6 +16,22 @@ export const STICKY_COLORS = [
   "gray",
 ] as const;
 export type StickyColor = (typeof STICKY_COLORS)[number];
+
+// 色パレットの表示用の並び。STICKY_COLORS と同じ 11 色を色相環の順に並べ替えたもので、
+// 末尾に無彩色を置く。循環用の STICKY_COLORS とは並びの役割が違う
+export const STICKY_COLORS_BY_HUE: readonly StickyColor[] = [
+  "red",
+  "orange",
+  "yellow",
+  "olive",
+  "green",
+  "teal",
+  "blue",
+  "indigo",
+  "purple",
+  "pink",
+  "gray",
+];
 
 // 付箋ノードの中身。title/text は空文字を許す。作成直後は空で、付箋側が自動的に編集状態になる
 export type StickyData = { title: string; text: string; color: StickyColor };
@@ -68,15 +84,16 @@ export type BoardNodeKind = NonNullable<BoardNode["type"]>;
 
 // 種別ごとの既定カラー。新規作成時に色を持つ種別（通常メモ・登場人物の行）が参照する。
 // パネル系の未設定時の描画は index.css の識別色変数が担うため、ここは同じ色相の
-// パレット色を対応させた一覧という位置づけ。種別間で被らないように割り当てる
+// パレット色を対応させた一覧という位置づけ。有彩色は種別間で被らないように割り当て、
+// 無彩色だけは通常メモとスタックで共用する
 export const DEFAULT_NODE_COLORS = {
-  sticky: "yellow",
+  sticky: "gray",
   stack: "gray",
   list: "blue",
   timeline: "purple",
   actionlog: "orange",
   character: "green",
-  keyword: "pink",
+  keyword: "yellow",
 } satisfies Record<BoardNodeKind, StickyColor>;
 
 // ノード種別の表示名。キーの並びが検索結果グループの表示順を兼ねる。
