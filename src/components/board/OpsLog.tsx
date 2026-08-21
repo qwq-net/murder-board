@@ -21,7 +21,7 @@ function OpsToast({ message, onExpire }: { message: string; onExpire: () => void
   }, []);
   return (
     <div
-      className={`rounded border border-border-subtle bg-bg-elevated/95 px-2.5 py-1 text-xs text-text-secondary shadow transition-opacity duration-500 ${
+      className={`rounded-md border border-border-subtle bg-bg-elevated/95 px-3 py-1.5 text-sm text-text-secondary shadow transition-opacity duration-500 ${
         fading ? "opacity-0" : "opacity-100"
       }`}
       style={{ animation: "ops-in 0.2s ease-out" }}
@@ -45,7 +45,7 @@ export function OpsLog() {
   if (visible.length === 0) return null;
 
   return (
-    <div className="pointer-events-none absolute right-3 bottom-3 z-40 flex flex-col items-end gap-1">
+    <div className="pointer-events-none absolute right-3 bottom-3 z-40 flex flex-col items-end gap-1.5">
       {visible.map((op) => (
         <OpsToast
           key={op.id}

@@ -9,7 +9,7 @@ function ControlButton({ className = "", ...rest }: ComponentPropsWithoutRef<"bu
   return (
     <button
       type="button"
-      className={`flex h-7 min-w-7 cursor-pointer items-center justify-center rounded text-text-secondary hover:bg-bg-hover hover:text-text-primary disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-text-secondary ${className}`}
+      className={`flex h-9 min-w-9 cursor-pointer items-center justify-center rounded text-text-secondary hover:bg-bg-hover hover:text-text-primary disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-text-secondary ${className}`}
       {...rest}
     />
   );
@@ -29,31 +29,31 @@ export function BoardControls() {
   return (
     <Panel
       position="bottom-left"
-      className="flex items-center gap-0.5 rounded-md border border-border-default bg-bg-elevated p-1 shadow-lg"
+      className="flex items-center gap-1 rounded-md border border-border-default bg-bg-elevated p-1.5 shadow-lg"
     >
       <ControlButton title="縮小" aria-label="縮小" onClick={() => void zoomOut()}>
-        <Minus size={14} />
+        <Minus size={18} />
       </ControlButton>
       <ControlButton
         title="100% に戻す"
         aria-label="ズームを 100% に戻す"
-        className="px-1 font-mono text-xs tabular-nums"
+        className="px-1.5 font-mono text-sm tabular-nums"
         onClick={() => void zoomTo(1, { duration: 150 })}
       >
         {Math.round(zoom * 100)}%
       </ControlButton>
       <ControlButton title="拡大" aria-label="拡大" onClick={() => void zoomIn()}>
-        <Plus size={14} />
+        <Plus size={18} />
       </ControlButton>
-      <div className="mx-0.5 h-4 w-px bg-border-default" />
+      <div className="mx-1 h-5 w-px bg-border-default" />
       <ControlButton
         title="全体を表示"
         aria-label="全体を表示"
         onClick={() => void fitView({ duration: 200 })}
       >
-        <Maximize size={14} />
+        <Maximize size={18} />
       </ControlButton>
-      <div className="mx-0.5 h-4 w-px bg-border-default" />
+      <div className="mx-1 h-5 w-px bg-border-default" />
       <ControlButton
         title="元に戻す"
         aria-label="元に戻す"
@@ -63,7 +63,7 @@ export function BoardControls() {
           useBoardStore.getState().logOp("元に戻す");
         }}
       >
-        <Undo2 size={14} />
+        <Undo2 size={18} />
       </ControlButton>
       <ControlButton
         title="やり直す"
@@ -74,7 +74,7 @@ export function BoardControls() {
           useBoardStore.getState().logOp("やり直す");
         }}
       >
-        <Redo2 size={14} />
+        <Redo2 size={18} />
       </ControlButton>
     </Panel>
   );
