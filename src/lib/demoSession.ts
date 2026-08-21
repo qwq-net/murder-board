@@ -33,7 +33,7 @@ const guide = (x: number, y: number, title: string, text: string): BoardNode => 
 
 // デモの内容を変えたらこの数値を上げる。既存デモとの不一致を init が検知し、
 // ユーザーの編集ごと最新の内容へ置き換える
-export const DEMO_VERSION = 8;
+export const DEMO_VERSION = 9;
 
 // デモシナリオ「宇宙ステーション・整備士視点」のセッションを新規 ID で生成する。
 // 全ノード種別・時刻なしタイムライン行を含む機能ショーケース。
@@ -138,12 +138,13 @@ export function buildDemoSession(): Session {
       position: { x: 290, y: 150 },
       data: {
         title: "プレイヤー",
+        // 通信士を yellow にしないのは、キーワードリンクの琥珀系と紛れるのを避けるため
         entries: [
           ch("ステーション長", "pink"),
           ch("研究員", "blue"),
           ch("医療班長", "green"),
           ch("整備士（自分）", "purple"),
-          ch("通信士", "yellow"),
+          ch("通信士", "teal"),
         ],
       },
     },
@@ -266,6 +267,7 @@ export function buildDemoSession(): Session {
       data: {
         title: "研究員",
         text: "データ改ざんの疑惑。報告書が届けば破滅する動機がある",
+        color: "blue",
       },
     },
     {
@@ -275,6 +277,7 @@ export function buildDemoSession(): Session {
       data: {
         title: "通信士",
         text: "権限外の端末操作と30分の通信遮断。遠隔開放ができる立場",
+        color: "teal",
       },
     },
     {
@@ -284,6 +287,7 @@ export function buildDemoSession(): Session {
       data: {
         title: "ステーション長",
         text: "ログ保全を止め、事故処理を急ぎすぎている。何かを隠している？",
+        color: "pink",
       },
     },
     {
@@ -293,6 +297,7 @@ export function buildDemoSession(): Session {
       data: {
         title: "医療班長",
         text: "睡眠導入剤の在庫が合わない。単独犯行は難しいが共犯なら？",
+        color: "green",
       },
     },
     {
