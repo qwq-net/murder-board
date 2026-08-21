@@ -29,9 +29,10 @@
   --color-accent-dim: #8a5e10;
   --color-accent-glow: rgba(200, 137, 26, 0.15);
 
-  /* タイムライン付箋・リスト付箋・登場人物付箋のアイデンティティカラー */
+  /* タイムライン付箋・リスト付箋・キーワード付箋・登場人物付箋のアイデンティティカラー */
   --color-panel-timeline-accent: #7a6aa8;
   --color-panel-list-accent: #4a8fa8;
+  --color-panel-keyword-accent: #a86a8a;
   --color-panel-character-accent: #4aa86a;
 
   /* Functional */
@@ -110,9 +111,10 @@
   --color-accent-dim: #c89a40;
   --color-accent-glow: rgba(176, 120, 24, 0.18);
 
-  /* タイムライン付箋・リスト付箋・登場人物付箋 — ライト背景でのコントラスト調整 */
+  /* タイムライン付箋・リスト付箋・キーワード付箋・登場人物付箋 — ライト背景でのコントラスト調整 */
   --color-panel-timeline-accent: #5c4e94;
   --color-panel-list-accent: #2e7a94;
+  --color-panel-keyword-accent: #94446e;
   --color-panel-character-accent: #2e8a4a;
 
   /* Functional */

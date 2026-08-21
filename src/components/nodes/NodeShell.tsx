@@ -74,6 +74,8 @@ export function NodeShell({
 // 表示は既定で折り返して全文を見せる。singleLine を渡したときだけ 1 行に省略する。
 // 編集中も表示と同じ折り返しで全文が見えるよう textarea を使うが、値は 1 行の
 // テキストとして扱う。Enter は改行せず確定し、ペースト等で入った改行は空白に潰す。
+// renderText は表示モードの装飾フック。空でない value の表示にだけ使われ、編集中の
+// textarea とプレースホルダには効かない。
 export function CommitInput({
   value,
   onCommit,
@@ -82,6 +84,7 @@ export function CommitInput({
   singleLine = false,
   className = "",
   placeholder,
+  renderText,
   ...rest
 }: {
   value: string;
@@ -91,6 +94,7 @@ export function CommitInput({
   singleLine?: boolean;
   className?: string;
   placeholder?: string;
+  renderText?: (text: string) => ReactNode;
 } & Omit<
   ComponentPropsWithoutRef<"textarea">,
   "value" | "onChange" | "onBlur" | "onKeyDown" | "className" | "placeholder" | "rows"
@@ -117,7 +121,11 @@ export function CommitInput({
           setEditing(true);
         }}
       >
-        {value || <span className="text-text-muted opacity-60">{placeholder}</span>}
+        {value ? (
+          (renderText?.(value) ?? value)
+        ) : (
+          <span className="text-text-muted opacity-60">{placeholder}</span>
+        )}
       </div>
     );
   }

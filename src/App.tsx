@@ -11,7 +11,10 @@ export function App() {
   const loaded = useBoardStore((s) => s.loaded);
   const init = useBoardStore((s) => s.init);
   const { theme, setTheme } = useTheme();
-  const [searchOpen, setSearchOpen] = useState(false);
+  // 検索の開閉はストアが持つ。本文中の検索リンクが文言入りで開けるようにするため
+  const searchSeed = useBoardStore((s) => s.searchSeed);
+  const openSearch = useBoardStore((s) => s.openSearch);
+  const closeSearch = useBoardStore((s) => s.closeSearch);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -25,12 +28,12 @@ export function App() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "f" || e.code === "KeyF")) {
         e.preventDefault();
-        setSearchOpen(true);
+        openSearch("");
       }
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, []);
+  }, [openSearch]);
 
   if (!loaded) {
     return (
@@ -41,13 +44,10 @@ export function App() {
   return (
     <ReactFlowProvider>
       <div className="flex h-dvh flex-col">
-        <Toolbar
-          onOpenSearch={() => setSearchOpen(true)}
-          onOpenSettings={() => setSettingsOpen(true)}
-        />
+        <Toolbar onOpenSearch={() => openSearch("")} onOpenSettings={() => setSettingsOpen(true)} />
         <Board theme={theme} />
       </div>
-      {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
+      {searchSeed !== null && <SearchOverlay initialQuery={searchSeed} onClose={closeSearch} />}
       {settingsOpen && (
         <SettingsModal theme={theme} onSetTheme={setTheme} onClose={() => setSettingsOpen(false)} />
       )}

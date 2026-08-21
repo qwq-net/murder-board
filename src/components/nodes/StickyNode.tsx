@@ -1,5 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
 import { useEffect, useRef, useState } from "react";
+import { StyledText } from "@/components/nodes/StyledText";
 import { ColorPalette, NodeShell } from "@/components/nodes/NodeShell";
 import { useBoardStore } from "@/store";
 import { type StickyColor, type StickyNodeType } from "@/types/board";
@@ -76,7 +77,11 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
             setEditing(true);
           }}
         >
-          {data.text || <span className="text-text-muted opacity-60">ダブルクリックで編集</span>}
+          {data.text ? (
+            <StyledText text={data.text} />
+          ) : (
+            <span className="text-text-muted opacity-60">ダブルクリックで編集</span>
+          )}
         </div>
       )}
     </NodeShell>

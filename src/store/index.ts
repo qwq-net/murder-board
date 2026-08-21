@@ -32,6 +32,11 @@ type Store = {
   currentId: string | null;
   nodes: BoardNode[];
   edges: BoardEdge[];
+  // 検索オーバーレイの状態。null なら閉、文字列なら開でその値が検索欄の初期値。
+  // 本文中の検索リンクが「その文言入りで検索を開く」ために文字列を持つ
+  searchSeed: string | null;
+  openSearch: (seed: string) => void;
+  closeSearch: () => void;
 
   // IDB からセッション一覧を読み、前回のセッションを開く。前回のセッションが無ければ新規作成する。
   // 多重呼び出しは無視。
@@ -43,7 +48,7 @@ type Store = {
   // ドラッグ終了した選択ノード群のスタック所属を applyStackDrops で解決する。変更が無ければ何もしない。
   onNodeDragStop: (dragged: BoardNode[]) => void;
   // 指定位置に空のノードを追加する。position はフロー座標。sticky は作成直後に編集状態になり、
-  // timeline / list は空行 1 つ付きで作られる。
+  // 行を持つ種別は空行 1 つ付きで作られる。
   addNode: (kind: BoardNodeKind, position: { x: number; y: number }) => void;
   // 指定 id かつ指定種別のノードの data を部分更新する。id が存在しても種別が一致しなければ何もしない。
   updateNodeData: <K extends BoardNodeKind>(id: string, type: K, patch: Partial<DataOf<K>>) => void;
@@ -91,6 +96,9 @@ export const useBoardStore = create<Store>()(
       currentId: null,
       nodes: [],
       edges: [],
+      searchSeed: null,
+      openSearch: (seed) => set({ searchSeed: seed }),
+      closeSearch: () => set({ searchSeed: null }),
 
       init: async () => {
         if (initStarted) return;
@@ -184,21 +192,28 @@ export const useBoardStore = create<Store>()(
                     position,
                     data: { title: "", entries: [{ id: nanoid(), text: "" }] },
                   }
-                : kind === "character"
+                : kind === "keyword"
                   ? {
                       id: nanoid(),
-                      type: "character",
+                      type: "keyword",
                       position,
-                      data: { title: "", entries: [{ id: nanoid(), text: "", color: "yellow" }] },
+                      data: { title: "", entries: [{ id: nanoid(), text: "" }] },
                     }
-                  : {
-                      id: nanoid(),
-                      type: "stack",
-                      position,
-                      width: STACK_EMPTY_W,
-                      height: STACK_EMPTY_H,
-                      data: { title: "" },
-                    };
+                  : kind === "character"
+                    ? {
+                        id: nanoid(),
+                        type: "character",
+                        position,
+                        data: { title: "", entries: [{ id: nanoid(), text: "", color: "yellow" }] },
+                      }
+                    : {
+                        id: nanoid(),
+                        type: "stack",
+                        position,
+                        width: STACK_EMPTY_W,
+                        height: STACK_EMPTY_H,
+                        data: { title: "" },
+                      };
         set({ nodes: [...get().nodes, node] });
       },
 

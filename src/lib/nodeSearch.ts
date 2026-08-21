@@ -43,6 +43,7 @@ function nodeBody(node: BoardNode): string {
     case "timeline":
       return node.data.entries.map((e) => `${e.time} ${e.text}`.trim()).join("\n");
     case "list":
+    case "keyword":
     case "character":
       return node.data.entries.map((e) => e.text).join("\n");
     case "stack":

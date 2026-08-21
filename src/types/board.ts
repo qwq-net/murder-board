@@ -16,6 +16,10 @@ export type TimelineData = { title: string; entries: TimelineEntry[]; color?: St
 export type ListEntry = { id: string; text: string };
 export type ListData = { title: string; entries: ListEntry[]; color?: StickyColor };
 
+// キーワードメモ。行の形も操作もリストメモと同じだが、登録された言葉は
+// 他ノードの本文中で完全一致の検索リンクに置き換わる
+export type KeywordData = { title: string; entries: ListEntry[]; color?: StickyColor };
+
 // 登場人物メモの 1 行。color がその人物の識別色で、付箋と同じ 6 色を使う
 export type CharacterEntry = { id: string; text: string; color: StickyColor };
 export type CharacterData = { title: string; entries: CharacterEntry[] };
@@ -28,12 +32,14 @@ export type StackData = { title: string; color?: StickyColor };
 export type StickyNodeType = Node<StickyData, "sticky">;
 export type TimelineNodeType = Node<TimelineData, "timeline">;
 export type ListNodeType = Node<ListData, "list">;
+export type KeywordNodeType = Node<KeywordData, "keyword">;
 export type CharacterNodeType = Node<CharacterData, "character">;
 export type StackNodeType = Node<StackData, "stack">;
 export type BoardNode =
   | StickyNodeType
   | TimelineNodeType
   | ListNodeType
+  | KeywordNodeType
   | CharacterNodeType
   | StackNodeType;
 export type BoardNodeKind = NonNullable<BoardNode["type"]>;
@@ -43,6 +49,7 @@ export const NODE_KIND_LABELS = {
   sticky: "通常メモ",
   timeline: "タイムラインメモ",
   list: "リストメモ",
+  keyword: "キーワードメモ",
   character: "登場人物メモ",
   stack: "スタック",
 } satisfies Record<BoardNodeKind, string>;

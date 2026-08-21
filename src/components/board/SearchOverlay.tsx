@@ -18,6 +18,7 @@ const KIND_ACCENT = {
   sticky: "var(--color-accent)",
   timeline: "var(--color-panel-timeline-accent)",
   list: "var(--color-panel-list-accent)",
+  keyword: "var(--color-panel-keyword-accent)",
   character: "var(--color-panel-character-accent)",
   stack: "var(--color-text-muted)",
 } satisfies Record<BoardNodeKind, string>;
@@ -36,13 +37,21 @@ function Segments({ segments }: { segments: HighlightSegment[] }) {
 // 検索パレット。マウント時に入力欄へフォーカスし、Escape・背景クリックで onClose を呼ぶ。
 // 結果クリックで対象ノードだけを選択状態にし、fitView でその位置へパンして閉じる。
 // 開閉のたびにマウントし直す前提で、閉じれば入力値は消える。
-export function SearchOverlay({ onClose }: { onClose: () => void }) {
+// initialQuery は開いた時点の検索欄の値。本文中の検索リンクからの起動が文言を渡してくる。
+// マウント時にだけ効き、デバウンスを挟まず即座に結果が出る。
+export function SearchOverlay({
+  initialQuery = "",
+  onClose,
+}: {
+  initialQuery?: string;
+  onClose: () => void;
+}) {
   const nodes = useBoardStore((s) => s.nodes);
   const onNodesChange = useBoardStore((s) => s.onNodesChange);
   const { fitView } = useReactFlow();
 
-  const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(query), DEBOUNCE_MS);

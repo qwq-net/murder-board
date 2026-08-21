@@ -1,7 +1,6 @@
 import type { NodeProps } from "@xyflow/react";
 import { nanoid } from "nanoid";
 import { useState } from "react";
-import { StyledText } from "@/components/nodes/StyledText";
 import {
   AddRowButton,
   ColorPalette,
@@ -11,34 +10,35 @@ import {
   nodeAccentStyle,
 } from "@/components/nodes/NodeShell";
 import { useBoardStore } from "@/store";
-import type { ListNodeType } from "@/types/board";
+import type { KeywordNodeType } from "@/types/board";
 
-// リスト付箋。プレーンテキスト行の追加・削除ができ、並び順は登録順のまま。
-// 行の確定は blur。タイムライン付箋と違い、時刻もソートも持たない。
-// 枠・ヘッダ・縦線・追加ボタンの配色は --node-accent 変数 1 本で決まり、
-// data.color があれば付箋カラー、無ければリスト既定色になる。
-export function ListNode({ id, data, selected }: NodeProps<ListNodeType>) {
+// キーワード付箋。操作はリスト付箋と同じで、登録された言葉が他ノードの本文中で
+// 検索リンクになる。リンク化は StyledText 側の仕事で、このノードは言葉の登録だけを担う。
+// 自ノードの行はリンク化しない。ダブルクリック編集と衝突するため。
+// 配色は --node-accent 変数 1 本で決まり、data.color があれば付箋カラー、
+// 無ければキーワード既定色になる。
+export function KeywordNode({ id, data, selected }: NodeProps<KeywordNodeType>) {
   const updateNodeData = useBoardStore((s) => s.updateNodeData);
   // 追加直後の行だけマウント時から編集で始めるための印
   const [newRowId, setNewRowId] = useState<string | null>(null);
 
   const commitEntry = (entryId: string, text: string) =>
-    updateNodeData(id, "list", {
+    updateNodeData(id, "keyword", {
       entries: data.entries.map((e) => (e.id === entryId ? { ...e, text } : e)),
     });
 
   const addRow = () => {
     const rowId = nanoid();
     setNewRowId(rowId);
-    updateNodeData(id, "list", { entries: [...data.entries, { id: rowId, text: "" }] });
+    updateNodeData(id, "keyword", { entries: [...data.entries, { id: rowId, text: "" }] });
   };
 
   const removeRow = (entryId: string) =>
-    updateNodeData(id, "list", { entries: data.entries.filter((e) => e.id !== entryId) });
+    updateNodeData(id, "keyword", { entries: data.entries.filter((e) => e.id !== entryId) });
 
   const accent = data.color
     ? `var(--sticky-${data.color}-accent)`
-    : "var(--color-panel-list-accent)";
+    : "var(--color-panel-keyword-accent)";
 
   return (
     <NodeShell
@@ -47,14 +47,14 @@ export function ListNode({ id, data, selected }: NodeProps<ListNodeType>) {
       frameStyle={nodeAccentStyle(accent)}
       headerClassName="bg-(--node-accent)/15"
       title={data.title}
-      titlePlaceholder="リスト"
-      onTitleCommit={(title) => updateNodeData(id, "list", { title })}
+      titlePlaceholder="キーワード"
+      onTitleCommit={(title) => updateNodeData(id, "keyword", { title })}
     >
       {selected && (
         <ColorPalette
           color={data.color}
-          defaultSwatch="var(--color-panel-list-accent)"
-          onPick={(color) => updateNodeData(id, "list", { color })}
+          defaultSwatch="var(--color-panel-keyword-accent)"
+          onPick={(color) => updateNodeData(id, "keyword", { color })}
         />
       )}
       <div className="p-1">
@@ -67,9 +67,8 @@ export function ListNode({ id, data, selected }: NodeProps<ListNodeType>) {
             <CommitInput
               className="min-w-0 flex-1 bg-transparent text-sm outline-none"
               value={entry.text}
-              placeholder="項目"
+              placeholder="言葉"
               defaultEditing={entry.id === newRowId}
-              renderText={(text) => <StyledText text={text} />}
               onCommit={(text) => commitEntry(entry.id, text)}
             />
           </NodeRow>

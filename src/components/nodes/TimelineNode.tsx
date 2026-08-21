@@ -1,6 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { nanoid } from "nanoid";
 import { useState } from "react";
+import { StyledText } from "@/components/nodes/StyledText";
 import {
   AddRowButton,
   ColorPalette,
@@ -77,6 +78,7 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
               className="min-w-0 flex-1 border-l-[3px] border-(--node-accent)/45 bg-transparent pl-1.5 text-sm outline-none"
               value={entry.text}
               placeholder="出来事"
+              renderText={(text) => <StyledText text={text} />}
               onCommit={(text) => commitEntry(entry.id, { text })}
             />
           </NodeRow>

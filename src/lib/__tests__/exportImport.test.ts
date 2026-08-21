@@ -110,6 +110,23 @@ describe("parseImport", () => {
     expect(character.data.entries[1]!).toMatchObject({ text: "医者", color: "yellow" });
   });
 
+  it("keyword ノードは list と同じ形で行 ID を再採番しつつ往復する", () => {
+    const s = fixture();
+    s.nodes.push({
+      id: "n10",
+      type: "keyword",
+      position: { x: 600, y: 600 },
+      data: { title: "重要ワード", entries: [{ id: "r1", text: "凶器" }], color: "blue" },
+    });
+    const imported = parseImport(serializeExport(s));
+    const keyword = imported.nodes.find((n) => n.type === "keyword")!;
+    expect(keyword.data.title).toBe("重要ワード");
+    expect(keyword.data.color).toBe("blue");
+    expect(keyword.data.entries).toHaveLength(1);
+    expect(keyword.data.entries[0]!.id).not.toBe("r1");
+    expect(keyword.data.entries[0]!.text).toBe("凶器");
+  });
+
   it("timeline / list / stack のノード色は往復し、未知の色は未設定に落ちる", () => {
     const s = fixture();
     s.nodes.push(

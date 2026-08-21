@@ -8,6 +8,7 @@ import {
 } from "@xyflow/react";
 import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { CharacterNode } from "@/components/nodes/CharacterNode";
+import { KeywordNode } from "@/components/nodes/KeywordNode";
 import { ListNode } from "@/components/nodes/ListNode";
 import { StackNode } from "@/components/nodes/StackNode";
 import { StickyNode } from "@/components/nodes/StickyNode";
@@ -26,6 +27,7 @@ const nodeTypes: NodeTypes = {
   sticky: StickyNode,
   timeline: TimelineNode,
   list: ListNode,
+  keyword: KeywordNode,
   character: CharacterNode,
   stack: StackNode,
 };

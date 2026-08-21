@@ -157,13 +157,13 @@ export function parseImport(json: string, now = Date.now()): Session {
         return { ...base, type: "timeline" as const, data: { title, entries: rows, color } };
       }
 
-      if (type === "list") {
+      if (type === "list" || type === "keyword") {
         const { title, entries, color } = listDataSchema.parse(data);
         const rows = entries.flatMap((row) => {
           const r = listRowSchema.safeParse(row);
           return r.success ? [{ id: nanoid(), text: r.data.text }] : [];
         });
-        return { ...base, type: "list" as const, data: { title, entries: rows, color } };
+        return { ...base, type, data: { title, entries: rows, color } };
       }
 
       if (type === "character") {
