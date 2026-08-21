@@ -37,11 +37,12 @@ function OpsToast({ message, onExpire }: { message: string; onExpire: () => void
 // 使われ方: Board のラッパー直下に 1 つだけ置く前提。
 export function OpsLog() {
   const opsLog = useBoardStore((s) => s.opsLog);
-  // 表示を終えたエントリの id。opsLog がストア側で直近 8 件に刈られるため、
-  // それを覆う 16 件だけ覚えれば取りこぼしがない
-  const [expiredIds, setExpiredIds] = useState<readonly number[]>([]);
+  // 表示を終えた最大の id。これ以下のエントリは表示対象にしない。id は採番順なので、
+  // 1 件消えた時点でそれより古いものはすべて用済みになる。上限の 5 件から溢れて
+  // 一度も表示されなかった古い分も、この敷居を越えられず後から降ってくることがない
+  const [expiredUpTo, setExpiredUpTo] = useState(0);
 
-  const visible = opsLog.filter((op) => !expiredIds.includes(op.id)).slice(-5);
+  const visible = opsLog.filter((op) => op.id > expiredUpTo).slice(-5);
   if (visible.length === 0) return null;
 
   return (
@@ -50,7 +51,7 @@ export function OpsLog() {
         <OpsToast
           key={op.id}
           message={op.message}
-          onExpire={() => setExpiredIds((prev) => [...prev, op.id].slice(-16))}
+          onExpire={() => setExpiredUpTo((prev) => Math.max(prev, op.id))}
         />
       ))}
     </div>
