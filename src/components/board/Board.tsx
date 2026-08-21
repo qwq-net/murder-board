@@ -11,6 +11,7 @@ import { ActionLogNode } from "@/components/nodes/ActionLogNode";
 import { CharacterNode } from "@/components/nodes/CharacterNode";
 import { KeywordNode } from "@/components/nodes/KeywordNode";
 import { ListNode } from "@/components/nodes/ListNode";
+import { KIND_ICONS } from "@/components/nodes/NodeShell";
 import { StackNode } from "@/components/nodes/StackNode";
 import { StickyNode } from "@/components/nodes/StickyNode";
 import { TimelineNode } from "@/components/nodes/TimelineNode";
@@ -28,9 +29,13 @@ const nodeTypes: NodeTypes = {
   stack: StackNode,
 };
 
-// SAFETY: NODE_KIND_LABELS のキーは BoardNodeKind の全種別。Object.entries が
-// キーを string へ落とすのを戻すだけの表明
-const MENU_ITEMS = Object.entries(NODE_KIND_LABELS) as [BoardNodeKind, string][];
+// 右クリックメニューの並び。役割の近さでグループ化し、グループ間に区切り線を挟む。
+// 「単体メモとその入れ物 / 行を積む記録系 / 他ノードの装飾に効く登録系」の 3 グループ
+const MENU_GROUPS: BoardNodeKind[][] = [
+  ["sticky", "stack"],
+  ["list", "timeline", "actionlog"],
+  ["character", "keyword"],
+];
 
 // キーボードショートカットを抑止すべき「テキスト入力中」かを判定する
 const isTypingTarget = (t: EventTarget | null): boolean =>
@@ -132,15 +137,24 @@ export function Board({ theme }: { theme: Theme }) {
           className="fixed z-50 min-w-40 rounded border border-border-default bg-bg-elevated py-1 shadow-lg"
           style={{ left: menu.x, top: menu.y }}
         >
-          {MENU_ITEMS.map(([kind, label]) => (
-            <button
-              key={kind}
-              type="button"
-              className="block w-full cursor-pointer px-3 py-1.5 text-left text-sm hover:bg-bg-hover"
-              onClick={() => addFromMenu(kind)}
-            >
-              {label}
-            </button>
+          {MENU_GROUPS.map((group, gi) => (
+            <div key={group[0]}>
+              {gi > 0 && <div className="my-1 border-t border-border-subtle" />}
+              {group.map((kind) => {
+                const Icon = KIND_ICONS[kind];
+                return (
+                  <button
+                    key={kind}
+                    type="button"
+                    className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-bg-hover"
+                    onClick={() => addFromMenu(kind)}
+                  >
+                    <Icon size={14} className="shrink-0 opacity-70" />
+                    {NODE_KIND_LABELS[kind]}
+                  </button>
+                );
+              })}
+            </div>
           ))}
         </div>
       )}

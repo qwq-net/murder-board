@@ -52,15 +52,16 @@ export type BoardNode =
   | StackNodeType;
 export type BoardNodeKind = NonNullable<BoardNode["type"]>;
 
-// ノード種別の表示名。キーの並びがメニュー・検索結果グループの表示順を兼ねる
+// ノード種別の表示名。キーの並びが検索結果グループの表示順を兼ねる。
+// 右クリックメニューの並びと区切りは Board の MENU_GROUPS が別途持つ
 export const NODE_KIND_LABELS = {
   sticky: "通常メモ",
-  timeline: "タイムラインメモ",
-  list: "リストメモ",
-  keyword: "キーワードメモ",
-  character: "登場人物メモ",
-  actionlog: "アクションログ",
-  stack: "スタック",
+  stack: "メモスタック",
+  list: "リスト",
+  timeline: "タイムライン",
+  actionlog: "行動ログ",
+  character: "登場人物",
+  keyword: "キーワード",
 } satisfies Record<BoardNodeKind, string>;
 // 1 セッション = IndexedDB の 1 レコード。nodes を正規化せず丸ごと持つ。
 // isDemo は自動生成されるデモセッションの印。demoVersion が DEMO_VERSION と

@@ -21,8 +21,9 @@ import { DEFAULT_NODE_WIDTHS, type WidthKind } from "@/lib/nodeWidths";
 import { useBoardStore } from "@/store";
 import { STICKY_COLORS, type BoardNodeKind, type StickyColor } from "@/types/board";
 
-// ノード種別を示すヘッダアイコン。ツールバーと同じ lucide を使う
-const KIND_ICONS = {
+// ノード種別を示すアイコン。ツールバーと同じ lucide を使い、
+// ノードヘッダと Board の右クリックメニューで共用する
+export const KIND_ICONS = {
   sticky: StickyNote,
   timeline: Clock,
   list: List,
