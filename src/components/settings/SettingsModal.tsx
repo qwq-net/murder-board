@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { parseImport, serializeExport } from "@/lib/exportImport";
-import { DEFAULT_NODE_WIDTH, MAX_NODE_WIDTH, MIN_NODE_WIDTH, WIDTH_KINDS } from "@/lib/nodeWidths";
+import { DEFAULT_NODE_WIDTHS, MAX_NODE_WIDTH, MIN_NODE_WIDTH, WIDTH_KINDS } from "@/lib/nodeWidths";
 import { THEMES, type Theme } from "@/lib/theme";
 import { useBoardStore } from "@/store";
 import { NODE_KIND_LABELS } from "@/types/board";
@@ -12,7 +12,7 @@ const THEME_LABELS = { dark: "ダーク", light: "ライト", auto: "自動" } s
 
 const SECTIONS = [
   { id: "theme", label: "テーマ" },
-  { id: "nodeWidth", label: "ノードのデフォルト横幅" },
+  { id: "nodeWidth", label: "ノードの横幅" },
   { id: "export", label: "エクスポート" },
   { id: "backup", label: "バックアップ" },
   { id: "session", label: "現在のセッション" },
@@ -135,8 +135,8 @@ export function SettingsModal({
     nodeWidth: (
       <>
         <Description>
-          ノード種別ごとのデフォルト横幅をピクセルで指定します。空欄なら既定値の
-          {DEFAULT_NODE_WIDTH}px になります。スタックは子のサイズに追従するため対象外です。
+          ノード種別ごとの横幅をピクセルで指定します。空欄なら種別ごとの既定値になります。
+          スタックは子のサイズに追従するため対象外です。
         </Description>
         <div className="flex flex-col gap-2">
           {WIDTH_KINDS.map((kind) => (
@@ -148,7 +148,7 @@ export function SettingsModal({
                 type="number"
                 min={MIN_NODE_WIDTH}
                 max={MAX_NODE_WIDTH}
-                placeholder={String(DEFAULT_NODE_WIDTH)}
+                placeholder={String(DEFAULT_NODE_WIDTHS[kind])}
                 defaultValue={nodeWidths[kind] ?? ""}
                 className="input-base w-24 text-sm"
                 onBlur={(e) =>

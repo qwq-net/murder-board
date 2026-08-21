@@ -17,8 +17,15 @@ export type WidthKind = (typeof WIDTH_KINDS)[number];
 // 設定値。キーが無い種別は DEFAULT_NODE_WIDTH で描画される
 export type NodeWidths = Partial<Record<WidthKind, number>>;
 
-// タイムラインノードの従来幅 w-72 相当を全種別の基準にする
-export const DEFAULT_NODE_WIDTH = 288;
+// 種別ごとの既定幅。時刻や 2 人分のチップで左カラムが幅を取る種別だけ広めにする
+export const DEFAULT_NODE_WIDTHS = {
+  sticky: 250,
+  timeline: 320,
+  list: 250,
+  keyword: 250,
+  character: 250,
+  actionlog: 320,
+} satisfies Record<WidthKind, number>;
 export const MIN_NODE_WIDTH = 160;
 export const MAX_NODE_WIDTH = 800;
 

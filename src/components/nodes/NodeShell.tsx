@@ -7,14 +7,14 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { DEFAULT_NODE_WIDTH, type WidthKind } from "@/lib/nodeWidths";
+import { DEFAULT_NODE_WIDTHS, type WidthKind } from "@/lib/nodeWidths";
 import { useBoardStore } from "@/store";
 import { STICKY_COLORS, type StickyColor } from "@/types/board";
 
-// ノード枠に使う横幅。設定があればその値、無ければタイムライン基準の既定値を返す。
+// ノード枠に使う横幅。設定があればその値、無ければ種別ごとの既定値を返す。
 // 使われ方: 各ノードコンポーネントが frameStyle の width としてそのまま渡す前提
 export const useNodeWidth = (kind: WidthKind): number =>
-  useBoardStore((s) => s.nodeWidths[kind] ?? DEFAULT_NODE_WIDTH);
+  useBoardStore((s) => s.nodeWidths[kind] ?? DEFAULT_NODE_WIDTHS[kind]);
 
 // 全ノード種別共通の外枠。枠・タイトルヘッダ・接続ハンドル 4 方向・選択リングを持つ。
 // 幅や配色は frameClassName / frameStyle / headerClassName / headerStyle で種別ごとに与える。
