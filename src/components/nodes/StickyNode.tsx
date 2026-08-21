@@ -50,7 +50,7 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
       frameStyle={{ ...noteStyle(data.color), width }}
       headerStyle={{ background: `var(--sticky-${data.color}-header)` }}
       title={data.title}
-      titlePlaceholder="タイトル"
+      titlePlaceholder="メモ"
       onTitleCommit={(title) => updateNodeData(id, "sticky", { title })}
     >
       {selected && !editing && (

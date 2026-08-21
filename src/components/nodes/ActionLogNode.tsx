@@ -192,7 +192,7 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
       frameStyle={{ ...nodeAccentStyle(accent), width }}
       headerClassName="bg-(--node-accent)/15"
       title={data.title}
-      titlePlaceholder="アクションログ"
+      titlePlaceholder="行動ログ"
       onTitleCommit={(title) => updateNodeData(id, "actionlog", { title })}
     >
       {selected && (

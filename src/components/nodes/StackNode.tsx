@@ -19,7 +19,7 @@ export function StackNode({ id, data, selected }: NodeProps<StackNodeType>) {
       frameStyle={data.color ? nodeAccentStyle(`var(--sticky-${data.color}-accent)`) : undefined}
       headerClassName={data.color ? "bg-(--node-accent)/15" : "bg-bg-hover"}
       title={data.title}
-      titlePlaceholder="スタック名"
+      titlePlaceholder="メモスタック"
       titleSingleLine
       onTitleCommit={(title) => updateNodeData(id, "stack", { title })}
     >
