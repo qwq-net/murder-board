@@ -1,5 +1,15 @@
 import { useNodeId, type NodeProps } from "@xyflow/react";
 import {
+  ArrowLeftRight,
+  Clock,
+  Layers,
+  Link,
+  List,
+  StickyNote,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+import {
   useEffect,
   useRef,
   useState,
@@ -9,7 +19,18 @@ import {
 } from "react";
 import { DEFAULT_NODE_WIDTHS, type WidthKind } from "@/lib/nodeWidths";
 import { useBoardStore } from "@/store";
-import { STICKY_COLORS, type StickyColor } from "@/types/board";
+import { STICKY_COLORS, type BoardNodeKind, type StickyColor } from "@/types/board";
+
+// ノード種別を示すヘッダアイコン。ツールバーと同じ lucide を使う
+const KIND_ICONS = {
+  sticky: StickyNote,
+  timeline: Clock,
+  list: List,
+  keyword: Link,
+  character: Users,
+  actionlog: ArrowLeftRight,
+  stack: Layers,
+} satisfies Record<BoardNodeKind, LucideIcon>;
 
 // ノード枠に使う横幅。設定があればその値、無ければ種別ごとの既定値を返す。
 // 使われ方: 各ノードコンポーネントが frameStyle の width としてそのまま渡す前提
@@ -17,6 +38,7 @@ export const useNodeWidth = (kind: WidthKind): number =>
   useBoardStore((s) => s.nodeWidths[kind] ?? DEFAULT_NODE_WIDTHS[kind]);
 
 // 全ノード種別共通の外枠。枠・タイトルヘッダ・選択リングを持つ。
+// ヘッダのタイトル左には自ノードの種別アイコンが付く。種別は store から id で引く。
 // 幅や配色は frameClassName / frameStyle / headerClassName / headerStyle で種別ごとに与える。
 // 枠は relative なので、children 内の absolute 配置はこの枠を基準にできる。
 // タイトルは blur で確定し、変更があったときだけ onTitleCommit が呼ばれる。
@@ -54,6 +76,8 @@ export function NodeShell({
     const parentId = s.nodes.find((n) => n.id === id)?.parentId;
     return parentId !== undefined && s.nodes.some((n) => n.id === parentId && n.selected === true);
   });
+  const kind = useBoardStore((s) => s.nodes.find((n) => n.id === id)?.type);
+  const Icon = kind !== undefined ? KIND_ICONS[kind] : null;
   return (
     <div
       className={`relative rounded-sm border shadow-md ${frameClassName} ${
@@ -61,7 +85,11 @@ export function NodeShell({
       }`}
       style={frameStyle}
     >
-      <div className={`rounded-t-sm px-2 py-1 ${headerClassName}`} style={headerStyle}>
+      <div
+        className={`flex items-start gap-1.5 rounded-t-sm px-2 py-1 ${headerClassName}`}
+        style={headerStyle}
+      >
+        {Icon && <Icon size={14} className="mt-1 shrink-0 opacity-70" />}
         <CommitInput
           className="w-full bg-transparent text-sm font-bold text-text-primary outline-none"
           value={title}
