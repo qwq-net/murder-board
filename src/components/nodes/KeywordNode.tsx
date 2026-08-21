@@ -10,12 +10,13 @@ import {
   nodeAccentStyle,
   useNodeWidth,
 } from "@/components/nodes/NodeShell";
+import { StyledText } from "@/components/nodes/StyledText";
 import { useBoardStore } from "@/store";
 import type { KeywordNodeType } from "@/types/board";
 
-// キーワード付箋。操作はリスト付箋と同じで、登録された言葉が他ノードの本文中で
-// 検索リンクになる。リンク化は StyledText 側の仕事で、このノードは言葉の登録だけを担う。
-// 自ノードの行はリンク化しない。ダブルクリック編集と衝突するため。
+// キーワード付箋。操作はリスト付箋と同じで、登録された言葉が本文中で検索リンクになる。
+// リンク化は StyledText 側の仕事で、自ノードの行も同じ装飾が効くため、登録した言葉は
+// この場でもリンクとして表示される。クリックは検索で、編集はダブルクリック。
 // 配色は --node-accent 変数 1 本で決まり、data.color があれば付箋カラー、
 // 無ければキーワード既定色になる。
 export function KeywordNode({ id, data, selected }: NodeProps<KeywordNodeType>) {
@@ -71,6 +72,7 @@ export function KeywordNode({ id, data, selected }: NodeProps<KeywordNodeType>) 
               value={entry.text}
               placeholder="言葉"
               defaultEditing={entry.id === newRowId}
+              renderText={(text) => <StyledText text={text} />}
               onCommit={(text) => commitEntry(entry.id, text)}
             />
           </NodeRow>

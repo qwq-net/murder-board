@@ -8,6 +8,7 @@ import {
   NodeShell,
   useNodeWidth,
 } from "@/components/nodes/NodeShell";
+import { StyledText } from "@/components/nodes/StyledText";
 import { useBoardStore } from "@/store";
 import { STICKY_COLORS, type CharacterEntry, type CharacterNodeType } from "@/types/board";
 
@@ -17,6 +18,7 @@ const nextColor = (c: CharacterEntry["color"]) =>
 
 // 登場人物メモ。リスト付箋の各行に識別色ドットが付いた形で、ドットのクリックで色が循環する。
 // 行の追加時は前の行の次の色を割り当て、隣り合う行の色が自然にずれるようにする。
+// 行の名前自体にも本文と同じ装飾が効くため、登録した名前はその識別色で表示される。
 export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeType>) {
   const updateNodeData = useBoardStore((s) => s.updateNodeData);
   // 追加直後の行だけマウント時から編集で始めるための印
@@ -70,6 +72,7 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
               value={entry.text}
               placeholder="名前"
               defaultEditing={entry.id === newRowId}
+              renderText={(text) => <StyledText text={text} />}
               onCommit={(text) => patchEntry(entry.id, { text })}
             />
           </NodeRow>
