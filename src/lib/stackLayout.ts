@@ -5,21 +5,33 @@
  * 挿入・離脱のたびにここで y を詰め直すことで、同期すべき状態を増やさない。
  */
 import type { NodeChange } from "@xyflow/react";
+import { DEFAULT_NODE_WIDTHS } from "@/lib/nodeWidths";
 import type { BoardNode } from "@/types/board";
 
 export const STACK_PAD = 8;
 export const STACK_GAP = 8;
 export const STACK_HEADER_H = 32;
-export const STACK_EMPTY_W = 208;
 export const STACK_EMPTY_H = 96;
 const FALLBACK_CHILD_W = 192;
 const FALLBACK_CHILD_H = 80;
 
+// 空スタックの横幅。通常メモ 1 枚が入ったスタックと同じ幅に見せるための計算で、
+// stickyWidth には通常メモの横幅設定を渡す
+export const stackEmptyWidth = (stickyWidth: number): number => stickyWidth + STACK_PAD * 2;
+
+// 横幅設定に手が届かない文脈で使う空スタック幅の既定値
+export const STACK_EMPTY_W = stackEmptyWidth(DEFAULT_NODE_WIDTHS.sticky);
+
 // 指定スタックの子を相対 y の昇順に縦一列へ詰め直し、スタック自体の width/height を
 // 子の実測サイズから再計算した新しい nodes 配列を返す。実測の無い子はフォールバック
-// 寸法で扱う。子が無ければ既定の空サイズになる。位置・サイズに変化のないノードは
-// 同一参照のまま返し、stackId がスタックを指していなければ nodes をそのまま返す。
-export function relayoutStack(nodes: BoardNode[], stackId: string): BoardNode[] {
+// 寸法で扱う。子が無ければ幅 emptyWidth・高さ既定の空サイズになる。位置・サイズに
+// 変化のないノードは同一参照のまま返し、stackId がスタックを指していなければ
+// nodes をそのまま返す。
+export function relayoutStack(
+  nodes: BoardNode[],
+  stackId: string,
+  emptyWidth: number = STACK_EMPTY_W,
+): BoardNode[] {
   const stack = nodes.find((n) => n.id === stackId);
   if (stack?.type !== "stack") return nodes;
 
@@ -36,7 +48,7 @@ export function relayoutStack(nodes: BoardNode[], stackId: string): BoardNode[] 
     maxW = Math.max(maxW, child.measured?.width ?? FALLBACK_CHILD_W);
   }
 
-  const width = children.length === 0 ? STACK_EMPTY_W : maxW + STACK_PAD * 2;
+  const width = children.length === 0 ? emptyWidth : maxW + STACK_PAD * 2;
   const height = children.length === 0 ? STACK_EMPTY_H : y - STACK_GAP + STACK_PAD;
 
   return nodes.map((n) => {
@@ -87,7 +99,12 @@ function resolveDrop(nodes: BoardNode[], nodeId: string): DropOp | null {
 // （React Flow の「親は子より前」の制約を満たすため）、離脱時は絶対座標へ戻す。
 // 関係するスタックは最後にまとめて詰め直す。どのノードにも変更が無ければ null を返す。
 // 使われ方: store の onNodeDragStop からドラッグされた選択ノード全件で呼ばれる前提。
-export function applyStackDrops(nodes: BoardNode[], ids: string[]): BoardNode[] | null {
+// emptyWidth は空になったスタックの幅で、relayoutStack へそのまま渡る。
+export function applyStackDrops(
+  nodes: BoardNode[],
+  ids: string[],
+  emptyWidth: number = STACK_EMPTY_W,
+): BoardNode[] | null {
   const ops = ids.map((id) => resolveDrop(nodes, id)).filter((op) => op !== null);
   if (ops.length === 0) return null;
 
@@ -114,7 +131,7 @@ export function applyStackDrops(nodes: BoardNode[], ids: string[]): BoardNode[] 
     if (op.from !== undefined) affected.add(op.from);
     if (op.to !== undefined) affected.add(op.to);
   }
-  for (const stackId of affected) next = relayoutStack(next, stackId);
+  for (const stackId of affected) next = relayoutStack(next, stackId, emptyWidth);
   return next;
 }
 
@@ -128,9 +145,11 @@ export function applyStackDrop(nodes: BoardNode[], nodeId: string): BoardNode[] 
 // ドラッグを待たずに重なりを解消するためのもの。対象が無ければ nodes をそのまま返す。
 // 使われ方: store の onNodesChange で applyNodeChanges の適用後に毎回呼ばれる前提。
 // 詰め直しで変化が無ければ同一参照が返るため、続けて呼ばれても発散しない。
+// emptyWidth は空になったスタックの幅で、relayoutStack へそのまま渡る。
 export function relayoutOnDimensionChanges(
   nodes: BoardNode[],
   changes: NodeChange<BoardNode>[],
+  emptyWidth: number = STACK_EMPTY_W,
 ): BoardNode[] {
   const parents = new Set<string>();
   for (const c of changes) {
@@ -139,6 +158,6 @@ export function relayoutOnDimensionChanges(
     if (parentId !== undefined) parents.add(parentId);
   }
   let next = nodes;
-  for (const stackId of parents) next = relayoutStack(next, stackId);
+  for (const stackId of parents) next = relayoutStack(next, stackId, emptyWidth);
   return next;
 }

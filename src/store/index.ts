@@ -7,6 +7,7 @@ import { buildDemoSession, DEMO_VERSION } from "@/lib/demoSession";
 import * as idb from "@/lib/idb";
 import {
   clampNodeWidth,
+  DEFAULT_NODE_WIDTHS,
   loadNodeWidths,
   NODE_WIDTHS_KEY,
   saveNodeWidths,
@@ -17,7 +18,7 @@ import {
   applyStackDrops,
   relayoutOnDimensionChanges,
   STACK_EMPTY_H,
-  STACK_EMPTY_W,
+  stackEmptyWidth,
 } from "@/lib/stackLayout";
 import { THEME_KEY } from "@/lib/theme";
 import type { BoardNode, BoardNodeKind, Session, SessionMeta } from "@/types/board";
@@ -173,12 +174,13 @@ export const useBoardStore = create<Store>()(
         }
         const applied = applyNodeChanges(changes, get().nodes);
         // テキストの折り返しなどで子の高さが変わったら、その場でスタックを詰め直す
-        set({ nodes: relayoutOnDimensionChanges(applied, changes) });
+        set({ nodes: relayoutOnDimensionChanges(applied, changes, emptyStackWidth()) });
       },
       onNodeDragStop: (dragged) => {
         const next = applyStackDrops(
           get().nodes,
           dragged.map((n) => n.id),
+          emptyStackWidth(),
         );
         if (next) set({ nodes: next });
       },
@@ -234,7 +236,7 @@ export const useBoardStore = create<Store>()(
                           id: nanoid(),
                           type: "stack",
                           position,
-                          width: STACK_EMPTY_W,
+                          width: emptyStackWidth(),
                           height: STACK_EMPTY_H,
                           data: { title: "" },
                         };
@@ -364,6 +366,13 @@ export const useBoardStore = create<Store>()(
     },
   ),
 );
+
+// 空スタックの幅を通常メモの現在の横幅設定から求める。通常メモ 1 枚が入った
+// スタックと同じ見た目の幅にするためのもの。設定が無ければ既定幅で計算する
+function emptyStackWidth(): number {
+  const { nodeWidths } = useBoardStore.getState();
+  return stackEmptyWidth(nodeWidths.sticky ?? DEFAULT_NODE_WIDTHS.sticky);
+}
 
 // 現在のセッションを state から丸ごと組み立てて即座に IDB へ保存する。未ロード時は何もしない。
 function saveCurrent() {
