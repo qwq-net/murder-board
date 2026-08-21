@@ -21,22 +21,23 @@ const ac = (from: string, to: string, text: string): ActionEntry => ({
   text,
 });
 
-// 機能説明メモ。各列の最上段 y=0 に置く無彩色の付箋で、直下に実サンプルが並ぶ
-const guide = (x: number, title: string, text: string): BoardNode => ({
+// 機能説明メモ。無彩色の付箋で、各列の最上段や実サンプルの近くに置く
+const guide = (x: number, y: number, title: string, text: string): BoardNode => ({
   id: nanoid(),
   type: "sticky",
-  position: { x, y: 0 },
+  position: { x, y },
   data: { title, text, color: "gray" },
 });
 
 // デモの内容を変えたらこの数値を上げる。既存デモとの不一致を init が検知し、
 // ユーザーの編集ごと最新の内容へ置き換える
-export const DEMO_VERSION = 5;
+export const DEMO_VERSION = 6;
 
 // デモシナリオ「宇宙ステーション・整備士視点」のセッションを新規 ID で生成する。
 // 全ノード種別・時刻なしタイムライン行を含む機能ショーケース。
 // 配置は博物館形式のチュートリアル。機能ごとの列が横に並び、各列は y=0 の説明メモと
-// y=180 から始まる実サンプルで構成される。列の x は「前列の右端 + 40」を目安に取る。
+// y=150 から始まる実サンプルで構成される。列の x は「前列の右端 + 40」を目安に取る。
+// 先頭列だけは操作説明のメモを縦に積む。
 // isDemo と demoVersion が付くため、通常セッションと違い起動時の置き換え対象になる。
 // 使われ方: ストアの init から、デモ不在またはバージョン不一致のときだけ呼ばれる前提。
 export function buildDemoSession(): Session {
@@ -55,6 +56,7 @@ export function buildDemoSession(): Session {
     medic: nanoid(),
     keywords: nanoid(),
     actions: nanoid(),
+    secretTalks: nanoid(),
     stack: nanoid(),
     stackMemo1: nanoid(),
     stackMemo2: nanoid(),
@@ -64,48 +66,74 @@ export function buildDemoSession(): Session {
   const nodes: BoardNode[] = [
     guide(
       0,
+      0,
       "メモの追加方法",
       "各種メモは、右クリックをして出てくるメニューから追加することができます。",
     ),
     guide(
+      0,
+      120,
+      "操作について",
+      "各コンポーネントは左クリックまたは右クリックで選択でき、黄色の枠線が付きます。この状態でドラッグして位置を変えたり、右クリックからコピー・削除などが行えます。Ctrl+C、Ctrl+X、Ctrl+V のショートカットにも対応しています。",
+    ),
+    guide(
+      0,
+      330,
+      "各コンポーネントの横幅",
+      "横幅はコンポーネントの種別ごとに設定できます。調整したい場合は、右上の設定ボタンから変更してみてください。",
+    ),
+    guide(
       290,
+      0,
       "登場人物設定機能",
       "このメモに登録すると、各メモで設定した色でハイライトされます。",
     ),
     guide(
       580,
+      0,
       "キーワード機能",
       "このメモに登録すると、リンクとしてハイライトすることができます。リンクをクリックすると、自動で検索機能が開かれます。",
     ),
     guide(
+      580,
+      340,
+      "検索機能",
+      "キーワード登録によって表示されるリンクのほか、右上の検索ボタンや Ctrl+F でも検索を開けます。検索結果をクリックすると、対応したメモへ移動できます。",
+    ),
+    guide(
       870,
+      0,
       "タイムライン機能",
       "時系列情報を整理するのに役立つメモです。時間の入力と、テキストの入力が分かれているのが特徴です。",
     ),
     guide(
       1570,
+      0,
       "行動ログ機能",
       "登場人物設定機能と連携し、誰が・誰にといった行動ログをメモしやすい機能です。対象とテキストをセットで記録できます。",
     ),
     guide(
       1930,
+      0,
       "リスト機能",
       "リスト形式のメモ機能です。連続した情報をメモしたい時などに役立つ機能です。",
     ),
     guide(
       3030,
+      0,
       "通常メモ機能",
-      "通常メモです。単一情報や、強調して残しておきたい情報を残したい時に役立つ機能です。",
+      "通常のメモです。単一の情報や、強調して残しておきたい情報に向いています。",
     ),
     guide(
       3320,
+      0,
       "スタック機能",
-      "通常メモをまとめることが出来る機能です。通常メモが多くなった時にまとめる事ができます。",
+      "通常メモをまとめられる機能です。メモが多くなってきたときの整理に役立ちます。",
     ),
     {
       id: ids.players,
       type: "character",
-      position: { x: 290, y: 180 },
+      position: { x: 290, y: 150 },
       data: {
         title: "プレイヤー",
         entries: [
@@ -120,7 +148,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.npcs,
       type: "character",
-      position: { x: 290, y: 430 },
+      position: { x: 290, y: 370 },
       data: {
         title: "NPC",
         entries: [ch("被害者", "gray"), ch("補給船パイロット", "gray")],
@@ -129,7 +157,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.dayBefore,
       type: "timeline",
-      position: { x: 870, y: 180 },
+      position: { x: 870, y: 150 },
       data: {
         title: "前日",
         entries: [
@@ -148,7 +176,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.dayOf,
       type: "timeline",
-      position: { x: 1210, y: 180 },
+      position: { x: 1210, y: 150 },
       data: {
         title: "当日",
         entries: [
@@ -168,7 +196,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.points,
       type: "list",
-      position: { x: 2470, y: 180 },
+      position: { x: 2470, y: 150 },
       data: {
         title: "気になるポイント",
         entries: [
@@ -186,7 +214,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.theory,
       type: "list",
-      position: { x: 2740, y: 180 },
+      position: { x: 2740, y: 150 },
       data: {
         title: "推理・仮説",
         entries: [
@@ -203,7 +231,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.handout,
       type: "list",
-      position: { x: 1930, y: 180 },
+      position: { x: 1930, y: 150 },
       data: {
         title: "自分のハンドアウト",
         entries: [
@@ -219,7 +247,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.goals,
       type: "list",
-      position: { x: 2200, y: 180 },
+      position: { x: 2200, y: 150 },
       data: {
         title: "秘密の目標",
         entries: [
@@ -233,7 +261,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.researcher,
       type: "sticky",
-      position: { x: 3030, y: 340 },
+      position: { x: 3030, y: 300 },
       data: {
         title: "研究員",
         text: "データ改ざんの疑惑。報告書が届けば破滅する動機がある",
@@ -243,7 +271,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.operator,
       type: "sticky",
-      position: { x: 3030, y: 500 },
+      position: { x: 3030, y: 450 },
       data: {
         title: "通信士",
         text: "権限外の端末操作と30分の通信遮断。遠隔開放ができる立場",
@@ -253,7 +281,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.commander,
       type: "sticky",
-      position: { x: 3030, y: 660 },
+      position: { x: 3030, y: 600 },
       data: {
         title: "ステーション長",
         text: "ログ保全を止め、事故処理を急ぎすぎている。何かを隠している？",
@@ -263,7 +291,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.medic,
       type: "sticky",
-      position: { x: 3030, y: 180 },
+      position: { x: 3030, y: 150 },
       data: {
         title: "医療班長",
         text: "睡眠導入剤の在庫が合わない。単独犯行は難しいが共犯なら？",
@@ -273,7 +301,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.keywords,
       type: "keyword",
-      position: { x: 580, y: 180 },
+      position: { x: 580, y: 150 },
       data: {
         title: "キーワード",
         entries: [li("報告書"), li("エアロック"), li("睡眠導入剤"), li("記録メディア")],
@@ -283,7 +311,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.actions,
       type: "actionlog",
-      position: { x: 1570, y: 180 },
+      position: { x: 1570, y: 150 },
       data: {
         title: "やり取りの記録",
         entries: [
@@ -296,9 +324,24 @@ export function buildDemoSession(): Session {
       },
     },
     {
+      id: ids.secretTalks,
+      type: "actionlog",
+      position: { x: 1570, y: 370 },
+      data: {
+        title: "密談メモ",
+        entries: [
+          ac("ステーション長", "通信士", "また二人きり。口裏合わせでは？"),
+          ac("研究員", "", ""),
+          ac("医療班長", "", ""),
+          ac("整備士（自分）", "研究員", ""),
+          ac("通信士", "", "相手を明かさない。なぜ？"),
+        ],
+      },
+    },
+    {
       id: ids.stack,
       type: "stack",
-      position: { x: 3320, y: 180 },
+      position: { x: 3320, y: 150 },
       width: 266,
       height: 300,
       data: { title: "未整理メモ", color: "gray" },
@@ -306,7 +349,7 @@ export function buildDemoSession(): Session {
     {
       id: ids.emptyStack,
       type: "stack",
-      position: { x: 3320, y: 540 },
+      position: { x: 3320, y: 480 },
       width: STACK_EMPTY_W,
       height: STACK_EMPTY_H,
       data: { title: "" },
