@@ -20,30 +20,56 @@ function strip(n: BoardNode): BoardNode {
   } as BoardNode;
 }
 
-// rootId のノードをコピー用スナップショットにする。スタックなら子も含め、
-// 先頭が root・以降が子の並びで返す。rootId が見つからなければ null。
-// 使われ方: 右クリックメニューの「コピー」から呼ばれ、戻り値がそのまま
+// ids のノードをコピー用スナップショットにする。スタックが含まれるときは子も付いてきて、
+// 常に親が子より前に並ぶ。親も ids に含まれる子は親側に含まれるため重複しない。
+// ids が 1 つも実在しなければ空配列。
+// 使われ方: 右クリックメニューのコピーと Ctrl+C/X から呼ばれ、戻り値がそのまま
 // クリップボードとして保持される前提
-export function snapshotNodes(nodes: BoardNode[], rootId: string): BoardNode[] | null {
-  const root = nodes.find((n) => n.id === rootId);
-  if (root === undefined) return null;
-  return [root, ...nodes.filter((n) => n.parentId === rootId)].map(strip);
+export function snapshotSelection(nodes: BoardNode[], ids: ReadonlySet<string>): BoardNode[] {
+  const result: BoardNode[] = [];
+  for (const n of nodes) {
+    if (!ids.has(n.id)) continue;
+    if (n.parentId !== undefined && ids.has(n.parentId)) continue;
+    result.push(strip(n));
+    if (n.type === "stack") {
+      for (const child of nodes) {
+        if (child.parentId === n.id) result.push(strip(child));
+      }
+    }
+  }
+  return result;
 }
 
-// スナップショットを貼り付け用の新ノード列にする。先頭ノードを position へ置いて
-// parentId を外し、子は親相対の位置のまま新しい親 id へ付け替える。ノード id は
-// すべて再採番する。行 id は再採番しない。ノードをまたいで重複しても使われ方に影響しないため。
+// スナップショットを貼り付け用の新ノード列にする。トップレベルのノード群の
+// バウンディング左上が position に来るよう相対配置を保って移動し、スタックの子は
+// 親相対の位置のまま新しい親 id へ付け替える。親を伴わない子は独立ノードになる。
+// ノード id はすべて再採番する。行 id は再採番しない。重複しても使われ方に影響しないため。
 // 同じスナップショットで何度呼んでも、そのたびに独立したノード列を返す
 export function materializeNodes(
   snapshot: BoardNode[],
   position: { x: number; y: number },
 ): BoardNode[] {
-  const [root, ...children] = snapshot;
-  if (root === undefined) return [];
-  const { parentId: _parentId, ...rootRest } = strip(root);
-  const rootId = nanoid();
-  return [
-    { ...rootRest, id: rootId, position: { ...position } },
-    ...children.map((c) => ({ ...strip(c), id: nanoid(), parentId: rootId })),
-  ];
+  const snapIds = new Set(snapshot.map((n) => n.id));
+  const isRoot = (n: BoardNode) => n.parentId === undefined || !snapIds.has(n.parentId);
+  const roots = snapshot.filter(isRoot);
+  if (roots.length === 0) return [];
+  const anchor = {
+    x: Math.min(...roots.map((r) => r.position.x)),
+    y: Math.min(...roots.map((r) => r.position.y)),
+  };
+  const idMap = new Map(snapshot.map((n) => [n.id, nanoid()]));
+  return snapshot.map((n) => {
+    const { parentId, ...rest } = strip(n);
+    if (parentId !== undefined && snapIds.has(parentId)) {
+      return { ...rest, id: idMap.get(n.id)!, parentId: idMap.get(parentId)! };
+    }
+    return {
+      ...rest,
+      id: idMap.get(n.id)!,
+      position: {
+        x: position.x + n.position.x - anchor.x,
+        y: position.y + n.position.y - anchor.y,
+      },
+    };
+  });
 }

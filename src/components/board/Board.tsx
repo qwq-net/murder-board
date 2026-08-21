@@ -8,7 +8,7 @@ import {
   type NodeTypes,
 } from "@xyflow/react";
 import { ClipboardPaste, Copy, Trash2, Ungroup, type LucideIcon } from "lucide-react";
-import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { ActionLogNode } from "@/components/nodes/ActionLogNode";
 import { CharacterNode } from "@/components/nodes/CharacterNode";
 import { KeywordNode } from "@/components/nodes/KeywordNode";
@@ -17,7 +17,7 @@ import { KIND_ICONS } from "@/components/nodes/NodeShell";
 import { StackNode } from "@/components/nodes/StackNode";
 import { StickyNode } from "@/components/nodes/StickyNode";
 import { TimelineNode } from "@/components/nodes/TimelineNode";
-import { materializeNodes, snapshotNodes } from "@/lib/nodeClipboard";
+import { materializeNodes, snapshotSelection } from "@/lib/nodeClipboard";
 import type { Theme } from "@/lib/theme";
 import { useBoardStore } from "@/store";
 import { NODE_KIND_LABELS, type BoardNode, type BoardNodeKind } from "@/types/board";
@@ -84,6 +84,8 @@ export function Board({ theme }: { theme: Theme }) {
   const [menu, setMenu] = useState<{ x: number; y: number; nodeId?: string } | null>(null);
   // コピーしたノードのスナップショット。セッションを切り替えても揮発するだけで害はない
   const [clipboard, setClipboard] = useState<BoardNode[] | null>(null);
+  // Ctrl+V の貼り付け先に使う最後のカーソル画面座標。初期値は画面中央
+  const mousePos = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   // Space 押下中のパン専用モード。ノードの移動・選択を止めることで、
   // ノード上からでもドラッグが React Flow のビューポートパンに落ちる
   const [spacePanning, setSpacePanning] = useState(false);
@@ -124,6 +126,35 @@ export function Board({ theme }: { theme: Theme }) {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Ctrl/Cmd+C・X・V のコピー・切り取り・貼り付け。テキスト入力中はブラウザ標準の
+  // 編集操作を優先して発動しない。対象は選択中のノード全部で、貼り付け先は
+  // 最後のカーソル位置。切り取りはコピーと同じスナップショットを取ってから削除する
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || isTypingTarget(e.target)) return;
+      const key = e.key.toLowerCase();
+      if (key !== "c" && key !== "x" && key !== "v") return;
+
+      if (key === "v") {
+        if (!clipboard) return;
+        e.preventDefault();
+        addNodes(materializeNodes(clipboard, screenToFlowPosition(mousePos.current)));
+        return;
+      }
+
+      const current = useBoardStore.getState().nodes;
+      const selectedIds = new Set(current.filter((n) => n.selected).map((n) => n.id));
+      if (selectedIds.size === 0) return;
+      e.preventDefault();
+      setClipboard(snapshotSelection(current, selectedIds));
+      if (key === "x") {
+        onNodesChange([...selectedIds].map((id) => ({ type: "remove" as const, id })));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [clipboard, addNodes, onNodesChange, screenToFlowPosition]);
+
   // ノードの無いペイン部分のダブルクリックで付箋を追加
   const onDoubleClick = (e: ReactMouseEvent) => {
     if (!(e.target instanceof Element) || !e.target.classList.contains("react-flow__pane")) return;
@@ -159,7 +190,7 @@ export function Board({ theme }: { theme: Theme }) {
   };
 
   const copyFromMenu = (nodeId: string) => {
-    setClipboard(snapshotNodes(nodes, nodeId));
+    setClipboard(snapshotSelection(nodes, new Set([nodeId])));
     setMenu(null);
   };
 
@@ -178,7 +209,13 @@ export function Board({ theme }: { theme: Theme }) {
     menu?.nodeId !== undefined ? nodes.find((n) => n.id === menu.nodeId) : undefined;
 
   return (
-    <div className="relative min-h-0 flex-1" onDoubleClick={onDoubleClick}>
+    <div
+      className="relative min-h-0 flex-1"
+      onDoubleClick={onDoubleClick}
+      onMouseMove={(e) => {
+        mousePos.current = { x: e.clientX, y: e.clientY };
+      }}
+    >
       <ReactFlow<BoardNode>
         nodes={nodes}
         onNodesChange={onNodesChange}
