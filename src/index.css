@@ -151,57 +151,57 @@
   --sticky-yellow-bg: #fef3c7;
   --sticky-yellow-border: #fcd34d;
   --sticky-yellow-header: rgba(253, 230, 138, 0.7);
-  --sticky-yellow-accent: #fcd34d;
+  --sticky-yellow-accent: #a16207;
 
   --sticky-pink-bg: #fce7f3;
   --sticky-pink-border: #f9a8d4;
   --sticky-pink-header: rgba(251, 207, 232, 0.7);
-  --sticky-pink-accent: #f9a8d4;
+  --sticky-pink-accent: #be185d;
 
   --sticky-blue-bg: #e0f2fe;
   --sticky-blue-border: #7dd3fc;
   --sticky-blue-header: rgba(186, 230, 253, 0.7);
-  --sticky-blue-accent: #7dd3fc;
+  --sticky-blue-accent: #0369a1;
 
   --sticky-green-bg: #d1fae5;
   --sticky-green-border: #6ee7b7;
   --sticky-green-header: rgba(167, 243, 208, 0.7);
-  --sticky-green-accent: #6ee7b7;
+  --sticky-green-accent: #047857;
 
   --sticky-purple-bg: #ede9fe;
   --sticky-purple-border: #c4b5fd;
   --sticky-purple-header: rgba(221, 214, 254, 0.7);
-  --sticky-purple-accent: #c4b5fd;
+  --sticky-purple-accent: #6d28d9;
 
   --sticky-gray-bg: #f4f4f5;
   --sticky-gray-border: #d4d4d8;
   --sticky-gray-header: rgba(228, 228, 231, 0.7);
-  --sticky-gray-accent: #d4d4d8;
+  --sticky-gray-accent: #52525b;
 
   --sticky-red-bg: #fee2e2;
   --sticky-red-border: #fca5a5;
   --sticky-red-header: rgba(254, 202, 202, 0.7);
-  --sticky-red-accent: #fca5a5;
+  --sticky-red-accent: #b91c1c;
 
   --sticky-orange-bg: #ffedd5;
   --sticky-orange-border: #fdba74;
   --sticky-orange-header: rgba(254, 215, 170, 0.7);
-  --sticky-orange-accent: #fdba74;
+  --sticky-orange-accent: #c2410c;
 
   --sticky-teal-bg: #ccfbf1;
   --sticky-teal-border: #5eead4;
   --sticky-teal-header: rgba(153, 246, 228, 0.7);
-  --sticky-teal-accent: #5eead4;
+  --sticky-teal-accent: #0f766e;
 
   --sticky-indigo-bg: #e0e7ff;
   --sticky-indigo-border: #a5b4fc;
   --sticky-indigo-header: rgba(199, 210, 254, 0.7);
-  --sticky-indigo-accent: #a5b4fc;
+  --sticky-indigo-accent: #4338ca;
 
   --sticky-olive-bg: #ecfccb;
   --sticky-olive-border: #bef264;
   --sticky-olive-header: rgba(217, 249, 157, 0.7);
-  --sticky-olive-accent: #bef264;
+  --sticky-olive-accent: #4d7c0f;
 }
 
 /* ─── Reset & Base ──────────────────────────────────────────────────────────── */
