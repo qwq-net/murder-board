@@ -231,14 +231,24 @@ export const useBoardStore = create<Store>()(
                         position,
                         data: { title: "", entries: [{ id: nanoid(), text: "", color: "yellow" }] },
                       }
-                    : {
-                        id: nanoid(),
-                        type: "stack",
-                        position,
-                        width: STACK_EMPTY_W,
-                        height: STACK_EMPTY_H,
-                        data: { title: "" },
-                      };
+                    : kind === "actionlog"
+                      ? {
+                          id: nanoid(),
+                          type: "actionlog",
+                          position,
+                          data: {
+                            title: "",
+                            entries: [{ id: nanoid(), from: "", to: "", text: "" }],
+                          },
+                        }
+                      : {
+                          id: nanoid(),
+                          type: "stack",
+                          position,
+                          width: STACK_EMPTY_W,
+                          height: STACK_EMPTY_H,
+                          data: { title: "" },
+                        };
         set({ nodes: [...get().nodes, node] });
       },
 

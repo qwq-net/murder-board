@@ -4,7 +4,14 @@ import { z } from "zod";
 // セッションデータには含めない。スタックは子のサイズから自動計算されるため対象外。
 
 // 横幅を設定できるノード種別。並びは設定画面の表示順
-export const WIDTH_KINDS = ["sticky", "timeline", "list", "keyword", "character"] as const;
+export const WIDTH_KINDS = [
+  "sticky",
+  "timeline",
+  "list",
+  "keyword",
+  "character",
+  "actionlog",
+] as const;
 export type WidthKind = (typeof WIDTH_KINDS)[number];
 
 // 設定値。キーが無い種別は DEFAULT_NODE_WIDTH で描画される
@@ -32,6 +39,7 @@ const nodeWidthsSchema = z
     list: widthValueSchema,
     keyword: widthValueSchema,
     character: widthValueSchema,
+    actionlog: widthValueSchema,
   } satisfies Record<WidthKind, typeof widthValueSchema>)
   .catch({});
 

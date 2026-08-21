@@ -46,6 +46,8 @@ function nodeBody(node: BoardNode): string {
     case "keyword":
     case "character":
       return node.data.entries.map((e) => e.text).join("\n");
+    case "actionlog":
+      return node.data.entries.map((e) => `${e.from} ▶ ${e.to} ${e.text}`.trim()).join("\n");
     case "stack":
       return "";
   }

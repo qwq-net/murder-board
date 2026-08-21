@@ -34,6 +34,7 @@
   --color-panel-list-accent: #4a8fa8;
   --color-panel-keyword-accent: #a86a8a;
   --color-panel-character-accent: #4aa86a;
+  --color-panel-actionlog-accent: #b0764a;
 
   /* Functional */
   --color-danger: #b04040;
@@ -116,6 +117,7 @@
   --color-panel-list-accent: #2e7a94;
   --color-panel-keyword-accent: #94446e;
   --color-panel-character-accent: #2e8a4a;
+  --color-panel-actionlog-accent: #96562a;
 
   /* Functional */
   --color-danger: #c43030;

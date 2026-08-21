@@ -24,6 +24,12 @@ export type KeywordData = { title: string; entries: ListEntry[]; color?: StickyC
 export type CharacterEntry = { id: string; text: string; color: StickyColor };
 export type CharacterData = { title: string; entries: CharacterEntry[] };
 
+// アクションログの 1 行。「from ▶ to」の 2 人と自由記述メモを持つ。
+// from/to は登場人物の名前をそのまま持ち、識別色・略称の解決は表示時に名前で行う。
+// 未選択は空文字。登場人物メモから消えた名前も行にはそのまま残る
+export type ActionEntry = { id: string; from: string; to: string; text: string };
+export type ActionLogData = { title: string; entries: ActionEntry[]; color?: StickyColor };
+
 // スタックノードの中身。本文を持たず、タイトルだけを持つ入れ物。
 // 子ノードは parentId で所属し、順番は子の相対 y 座標の昇順そのもので表す。
 // color の意味はタイムラインと同じで、未設定なら無彩色の既定枠になる
@@ -34,6 +40,7 @@ export type TimelineNodeType = Node<TimelineData, "timeline">;
 export type ListNodeType = Node<ListData, "list">;
 export type KeywordNodeType = Node<KeywordData, "keyword">;
 export type CharacterNodeType = Node<CharacterData, "character">;
+export type ActionLogNodeType = Node<ActionLogData, "actionlog">;
 export type StackNodeType = Node<StackData, "stack">;
 export type BoardNode =
   | StickyNodeType
@@ -41,6 +48,7 @@ export type BoardNode =
   | ListNodeType
   | KeywordNodeType
   | CharacterNodeType
+  | ActionLogNodeType
   | StackNodeType;
 export type BoardNodeKind = NonNullable<BoardNode["type"]>;
 
@@ -51,6 +59,7 @@ export const NODE_KIND_LABELS = {
   list: "リストメモ",
   keyword: "キーワードメモ",
   character: "登場人物メモ",
+  actionlog: "アクションログ",
   stack: "スタック",
 } satisfies Record<BoardNodeKind, string>;
 // label を持たせない。このアプリのつながりは線だけで表現し、テキスト付与の機能は置かない

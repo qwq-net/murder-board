@@ -7,6 +7,7 @@ import {
   type NodeTypes,
 } from "@xyflow/react";
 import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from "react";
+import { ActionLogNode } from "@/components/nodes/ActionLogNode";
 import { CharacterNode } from "@/components/nodes/CharacterNode";
 import { KeywordNode } from "@/components/nodes/KeywordNode";
 import { ListNode } from "@/components/nodes/ListNode";
@@ -29,6 +30,7 @@ const nodeTypes: NodeTypes = {
   list: ListNode,
   keyword: KeywordNode,
   character: CharacterNode,
+  actionlog: ActionLogNode,
   stack: StackNode,
 };
 

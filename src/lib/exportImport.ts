@@ -68,6 +68,12 @@ const characterRowSchema = z.object({
   color: z.enum(STICKY_COLORS).catch("yellow"),
 });
 
+const actionRowSchema = z.object({
+  from: z.string().catch(""),
+  to: z.string().catch(""),
+  text: z.string().catch(""),
+});
+
 const characterDataSchema = z
   .object({
     title: z.string().catch(""),
@@ -164,6 +170,15 @@ export function parseImport(json: string, now = Date.now()): Session {
           return r.success ? [{ id: nanoid(), text: r.data.text }] : [];
         });
         return { ...base, type, data: { title, entries: rows, color } };
+      }
+
+      if (type === "actionlog") {
+        const { title, entries, color } = listDataSchema.parse(data);
+        const rows = entries.flatMap((row) => {
+          const r = actionRowSchema.safeParse(row);
+          return r.success ? [{ id: nanoid(), ...r.data }] : [];
+        });
+        return { ...base, type: "actionlog" as const, data: { title, entries: rows, color } };
       }
 
       if (type === "character") {

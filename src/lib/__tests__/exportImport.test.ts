@@ -127,6 +127,33 @@ describe("parseImport", () => {
     expect(keyword.data.entries[0]!.text).toBe("凶器");
   });
 
+  it("actionlog ノードは from/to/メモを保ち、壊れた行は捨てる", () => {
+    const s = fixture();
+    s.nodes.push({
+      id: "n11",
+      type: "actionlog",
+      position: { x: 700, y: 700 },
+      data: {
+        title: "1 日目",
+        // SAFETY: 壊れた行が捨てられることを検証するため、意図的に型を破った値を注入する
+        entries: [
+          { id: "r1", from: "ステーション長", to: "研究員", text: "密談" },
+          "broken" as never,
+        ],
+      },
+    });
+    const imported = parseImport(serializeExport(s));
+    const log = imported.nodes.find((n) => n.type === "actionlog")!;
+    expect(log.data.title).toBe("1 日目");
+    expect(log.data.entries).toHaveLength(1);
+    expect(log.data.entries[0]!.id).not.toBe("r1");
+    expect(log.data.entries[0]!).toMatchObject({
+      from: "ステーション長",
+      to: "研究員",
+      text: "密談",
+    });
+  });
+
   it("timeline / list / stack のノード色は往復し、未知の色は未設定に落ちる", () => {
     const s = fixture();
     s.nodes.push(

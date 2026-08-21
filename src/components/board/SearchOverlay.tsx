@@ -20,6 +20,7 @@ const KIND_ACCENT = {
   list: "var(--color-panel-list-accent)",
   keyword: "var(--color-panel-keyword-accent)",
   character: "var(--color-panel-character-accent)",
+  actionlog: "var(--color-panel-actionlog-accent)",
   stack: "var(--color-text-muted)",
 } satisfies Record<BoardNodeKind, string>;
 
