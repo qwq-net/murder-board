@@ -24,6 +24,7 @@ function OpsToast({ message, onExpire }: { message: string; onExpire: () => void
       className={`rounded border border-border-subtle bg-bg-elevated/95 px-2.5 py-1 text-xs text-text-secondary shadow transition-opacity duration-500 ${
         fading ? "opacity-0" : "opacity-100"
       }`}
+      style={{ animation: "ops-in 0.2s ease-out" }}
     >
       {message}
     </div>
