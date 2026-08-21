@@ -45,9 +45,11 @@ const useStyleRules = (): StyleRule[] => {
 
 // 登場人物メモの名前とキーワードメモの言葉を本文中で装飾して表示する。
 // 名前はその人物の識別色の太字、言葉はクリックでその文言入りの検索を開くリンクになる。
+// plainLinks を渡すと言葉は色付けだけになり、下線とクリックの検索は付かない。
+// キーワードメモ自身の行のような、リンクにしたくない場所向け。
 // 一致の規則は splitByRules に従う。編集用ではなく表示専用で、text が空なら何も描画しない。
-// 使われ方: 通常メモ・リスト・タイムラインの本文の表示モードから呼ばれる前提。
-export function StyledText({ text }: { text: string }) {
+// 使われ方: 各ノードの本文の表示モードから呼ばれる前提。
+export function StyledText({ text, plainLinks = false }: { text: string; plainLinks?: boolean }) {
   const rules = useStyleRules();
   const openSearch = useBoardStore((s) => s.openSearch);
   const runs = useMemo(() => splitByRules(text, rules), [text, rules]);
@@ -59,6 +61,13 @@ export function StyledText({ text }: { text: string }) {
           className="font-semibold"
           style={{ color: `var(--sticky-${run.rule.color}-accent)` }}
         >
+          {run.text}
+        </span>
+      );
+    }
+    if (run.rule?.kind === "link" && plainLinks) {
+      return (
+        <span key={i} className="font-medium text-accent">
           {run.text}
         </span>
       );
