@@ -74,7 +74,7 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
               onCommit={(time) => commitEntry(entry.id, { time })}
             />
             <CommitInput
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+              className="min-w-0 flex-1 border-l-[3px] border-(--node-accent)/45 bg-transparent pl-1.5 text-sm outline-none"
               value={entry.text}
               placeholder="出来事"
               onCommit={(text) => commitEntry(entry.id, { text })}
