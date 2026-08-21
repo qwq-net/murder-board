@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { BoardNode } from "@/types/board";
+import { NODE_KIND_LABELS, type BoardNode } from "@/types/board";
 import { buildDemoSession, DEMO_VERSION } from "../demoSession";
 import { parseImport, serializeExport } from "../exportImport";
 
@@ -11,7 +11,7 @@ describe("buildDemoSession", () => {
     expect(session.demoVersion).toBe(DEMO_VERSION);
 
     const kinds = new Set(session.nodes.map((n) => n.type));
-    expect(kinds).toEqual(new Set(["sticky", "timeline", "list", "character"]));
+    expect(kinds).toEqual(new Set(Object.keys(NODE_KIND_LABELS)));
 
     const nodeIds = new Set(session.nodes.map((n) => n.id));
     for (const edge of session.edges) {
@@ -31,11 +31,12 @@ describe("buildDemoSession", () => {
     // parseImport は壊れたエッジを黙って捨てるため、本数一致がデータの健全性の裏付けになる
     expect(imported.edges).toHaveLength(session.edges.length);
 
-    // 行 ID は parseImport が再採番するため、ID を除いた内容で一致を確認する
+    // 行 ID は parseImport が再採番するため、ID を除いた内容で一致を確認する。
+    // parseImport はスタックを配列の先頭へ寄せるため、ノードの並びは無視してソート比較する
     const dataWithoutIds = (data: BoardNode["data"]): string =>
       JSON.stringify(data, (key, value) => (key === "id" ? undefined : value));
-    expect(imported.nodes.map((n) => dataWithoutIds(n.data))).toEqual(
-      session.nodes.map((n) => dataWithoutIds(n.data)),
+    expect(imported.nodes.map((n) => dataWithoutIds(n.data)).sort()).toEqual(
+      session.nodes.map((n) => dataWithoutIds(n.data)).sort(),
     );
   });
 });

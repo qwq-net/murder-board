@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import type {
+  ActionEntry,
   BoardEdge,
   BoardNode,
   CharacterEntry,
@@ -13,10 +14,16 @@ import type {
 const tl = (time: string, text: string): TimelineEntry => ({ id: nanoid(), time, text });
 const li = (text: string): ListEntry => ({ id: nanoid(), text });
 const ch = (text: string, color: StickyColor): CharacterEntry => ({ id: nanoid(), text, color });
+const ac = (from: string, to: string, text: string): ActionEntry => ({
+  id: nanoid(),
+  from,
+  to,
+  text,
+});
 
 // デモの内容を変えたらこの数値を上げる。既存デモとの不一致を init が検知し、
 // ユーザーの編集ごと最新の内容へ置き換える
-export const DEMO_VERSION = 2;
+export const DEMO_VERSION = 3;
 
 // デモシナリオ「宇宙ステーション・整備士視点」のセッションを新規 ID で生成する。
 // 全ノード種別・エッジ・時刻なしタイムライン行を含む機能ショーケース。
@@ -36,6 +43,11 @@ export function buildDemoSession(): Session {
     operator: nanoid(),
     researcher: nanoid(),
     medic: nanoid(),
+    keywords: nanoid(),
+    actions: nanoid(),
+    stack: nanoid(),
+    stackMemo1: nanoid(),
+    stackMemo2: nanoid(),
   };
 
   const nodes: BoardNode[] = [
@@ -134,6 +146,7 @@ export function buildDemoSession(): Session {
           li("通信遮断は報告書の送信を止めるためだったのでは"),
           li("仮説：薬で昏倒 → 11:02に遠隔開放 → 事故として処理"),
         ],
+        color: "blue",
       },
     },
     {
@@ -204,6 +217,61 @@ export function buildDemoSession(): Session {
         title: "医療班長 ★",
         text: "睡眠導入剤の在庫が合わない。単独犯行は難しいが共犯なら？",
         color: "green",
+      },
+    },
+    {
+      id: ids.keywords,
+      type: "keyword",
+      position: { x: 0, y: 420 },
+      data: {
+        title: "キーワード",
+        entries: [li("報告書"), li("エアロック"), li("睡眠導入剤"), li("記録メディア")],
+        color: "purple",
+      },
+    },
+    {
+      id: ids.actions,
+      type: "actionlog",
+      position: { x: 340, y: 680 },
+      data: {
+        title: "やり取りの記録",
+        entries: [
+          ac("研究員", "被害者", "実験データの扱いを巡って口論"),
+          ac("医療班長", "被害者", "睡眠導入剤を処方"),
+          ac("ステーション長", "被害者", "管制室で二人きりの面談"),
+          ac("被害者", "整備士（自分）", "記録メディアを託す"),
+          ac("ステーション長", "整備士（自分）", "「余計なことは言うな」と釘を刺す"),
+        ],
+      },
+    },
+    {
+      id: ids.stack,
+      type: "stack",
+      position: { x: 1720, y: 0 },
+      width: 266,
+      height: 300,
+      data: { title: "未整理メモ", color: "gray" },
+    },
+    {
+      id: ids.stackMemo1,
+      type: "sticky",
+      parentId: ids.stack,
+      position: { x: 8, y: 40 },
+      data: {
+        title: "確認したいこと",
+        text: "未申告のコンテナの中身。パイロットに聞くか、貨物室を調べるか",
+        color: "yellow",
+      },
+    },
+    {
+      id: ids.stackMemo2,
+      type: "sticky",
+      parentId: ids.stack,
+      position: { x: 8, y: 170 },
+      data: {
+        title: "あとで整理",
+        text: "深夜の物音と通信士の「何も聞いていない」は矛盾しない？",
+        color: "gray",
       },
     },
   ];
