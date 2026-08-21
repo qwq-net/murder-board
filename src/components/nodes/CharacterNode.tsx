@@ -106,6 +106,7 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
             {paletteRowId === entry.id && (
               <ColorPalette
                 color={entry.color}
+                position="left"
                 onPick={(color) => {
                   if (color) patchEntry(entry.id, { color });
                   setPaletteRowId(null);
