@@ -9,6 +9,7 @@ import {
   NodeRow,
   NodeShell,
   nodeAccentStyle,
+  useNodeWidth,
 } from "@/components/nodes/NodeShell";
 import { autoCompleteTime, sortTimelineEntries } from "@/lib/timeParser";
 import { useBoardStore } from "@/store";
@@ -45,12 +46,13 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
   const accent = data.color
     ? `var(--sticky-${data.color}-accent)`
     : "var(--color-panel-timeline-accent)";
+  const width = useNodeWidth("timeline");
 
   return (
     <NodeShell
       selected={selected}
-      frameClassName="w-72 border-(--node-accent)/40 bg-bg-panel"
-      frameStyle={nodeAccentStyle(accent)}
+      frameClassName="border-(--node-accent)/40 bg-bg-panel"
+      frameStyle={{ ...nodeAccentStyle(accent), width }}
       headerClassName="bg-(--node-accent)/15"
       title={data.title}
       titlePlaceholder="タイムライン"

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { parseImport, serializeExport } from "@/lib/exportImport";
+import { DEFAULT_NODE_WIDTH, MAX_NODE_WIDTH, MIN_NODE_WIDTH, WIDTH_KINDS } from "@/lib/nodeWidths";
 import { THEMES, type Theme } from "@/lib/theme";
 import { useBoardStore } from "@/store";
+import { NODE_KIND_LABELS } from "@/types/board";
 
 const THEME_LABELS = { dark: "ダーク", light: "ライト", auto: "自動" } satisfies Record<
   Theme,
@@ -10,6 +12,7 @@ const THEME_LABELS = { dark: "ダーク", light: "ライト", auto: "自動" } s
 
 const SECTIONS = [
   { id: "theme", label: "テーマ" },
+  { id: "nodeWidth", label: "ノードのデフォルト横幅" },
   { id: "export", label: "エクスポート" },
   { id: "backup", label: "バックアップ" },
   { id: "session", label: "現在のセッション" },
@@ -50,6 +53,8 @@ export function SettingsModal({
   onClose: () => void;
 }) {
   const [section, setSection] = useState<SectionId>("theme");
+  const nodeWidths = useBoardStore((s) => s.nodeWidths);
+  const setNodeWidth = useBoardStore((s) => s.setNodeWidth);
   const importSessionData = useBoardStore((s) => s.importSessionData);
   const removeSession = useBoardStore((s) => s.removeSession);
   const resetAll = useBoardStore((s) => s.resetAll);
@@ -123,6 +128,35 @@ export function SettingsModal({
             >
               {THEME_LABELS[t]}
             </button>
+          ))}
+        </div>
+      </>
+    ),
+    nodeWidth: (
+      <>
+        <Description>
+          ノード種別ごとのデフォルト横幅をピクセルで指定します。空欄なら既定値の
+          {DEFAULT_NODE_WIDTH}px になります。スタックは子のサイズに追従するため対象外です。
+        </Description>
+        <div className="flex flex-col gap-2">
+          {WIDTH_KINDS.map((kind) => (
+            <label key={kind} className="flex items-center gap-2 text-sm text-text-primary">
+              <span className="w-36 shrink-0">{NODE_KIND_LABELS[kind]}</span>
+              {/* 確定は blur。確定時の丸め結果を入力欄へ反映させるため、確定値で強制的に再マウントする */}
+              <input
+                key={`${kind}:${nodeWidths[kind] ?? ""}`}
+                type="number"
+                min={MIN_NODE_WIDTH}
+                max={MAX_NODE_WIDTH}
+                placeholder={String(DEFAULT_NODE_WIDTH)}
+                defaultValue={nodeWidths[kind] ?? ""}
+                className="input-base w-24 text-sm"
+                onBlur={(e) =>
+                  setNodeWidth(kind, e.target.value === "" ? undefined : Number(e.target.value))
+                }
+              />
+              <span className="text-text-muted">px</span>
+            </label>
           ))}
         </div>
       </>

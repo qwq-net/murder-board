@@ -1,7 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { useEffect, useRef, useState } from "react";
 import { StyledText } from "@/components/nodes/StyledText";
-import { ColorPalette, NodeShell } from "@/components/nodes/NodeShell";
+import { ColorPalette, NodeShell, useNodeWidth } from "@/components/nodes/NodeShell";
 import { useBoardStore } from "@/store";
 import { type StickyColor, type StickyNodeType } from "@/types/board";
 
@@ -41,11 +41,13 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
     if (draft !== data.text) updateNodeData(id, "sticky", { text: draft });
   };
 
+  const width = useNodeWidth("sticky");
+
   return (
     <NodeShell
       selected={selected}
-      frameClassName="w-48 text-text-primary"
-      frameStyle={noteStyle(data.color)}
+      frameClassName="text-text-primary"
+      frameStyle={{ ...noteStyle(data.color), width }}
       headerStyle={{ background: `var(--sticky-${data.color}-header)` }}
       title={data.title}
       titlePlaceholder="タイトル"

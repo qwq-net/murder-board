@@ -1,7 +1,13 @@
 import type { NodeProps } from "@xyflow/react";
 import { nanoid } from "nanoid";
 import { useState } from "react";
-import { AddRowButton, CommitInput, NodeRow, NodeShell } from "@/components/nodes/NodeShell";
+import {
+  AddRowButton,
+  CommitInput,
+  NodeRow,
+  NodeShell,
+  useNodeWidth,
+} from "@/components/nodes/NodeShell";
 import { useBoardStore } from "@/store";
 import { STICKY_COLORS, type CharacterEntry, type CharacterNodeType } from "@/types/board";
 
@@ -36,10 +42,13 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
   const removeRow = (entryId: string) =>
     updateNodeData(id, "character", { entries: data.entries.filter((e) => e.id !== entryId) });
 
+  const width = useNodeWidth("character");
+
   return (
     <NodeShell
       selected={selected}
-      frameClassName="w-72 border-panel-character-accent/40 bg-bg-panel"
+      frameClassName="border-panel-character-accent/40 bg-bg-panel"
+      frameStyle={{ width }}
       headerClassName="bg-panel-character-accent/15"
       title={data.title}
       titlePlaceholder="登場人物"

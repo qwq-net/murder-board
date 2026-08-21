@@ -13,6 +13,14 @@ import { debounce, throttleLeading } from "@/lib/debounce";
 import { buildDemoSession, DEMO_VERSION } from "@/lib/demoSession";
 import * as idb from "@/lib/idb";
 import {
+  clampNodeWidth,
+  loadNodeWidths,
+  NODE_WIDTHS_KEY,
+  saveNodeWidths,
+  type NodeWidths,
+  type WidthKind,
+} from "@/lib/nodeWidths";
+import {
   applyStackDrops,
   relayoutOnDimensionChanges,
   STACK_EMPTY_H,
@@ -37,6 +45,11 @@ type Store = {
   searchSeed: string | null;
   openSearch: (seed: string) => void;
   closeSearch: () => void;
+
+  // ノード種別ごとのデフォルト横幅。localStorage と同期するアプリ設定でセッションに属さない
+  nodeWidths: NodeWidths;
+  // 種別の横幅を更新して永続化する。範囲外は丸め、undefined でその種別を既定値へ戻す
+  setNodeWidth: (kind: WidthKind, width: number | undefined) => void;
 
   // IDB からセッション一覧を読み、前回のセッションを開く。前回のセッションが無ければ新規作成する。
   // 多重呼び出しは無視。
@@ -99,6 +112,18 @@ export const useBoardStore = create<Store>()(
       searchSeed: null,
       openSearch: (seed) => set({ searchSeed: seed }),
       closeSearch: () => set({ searchSeed: null }),
+
+      nodeWidths: loadNodeWidths(),
+      setNodeWidth: (kind, width) => {
+        const next = { ...get().nodeWidths };
+        if (width === undefined || !Number.isFinite(width)) {
+          delete next[kind];
+        } else {
+          next[kind] = clampNodeWidth(width);
+        }
+        saveNodeWidths(next);
+        set({ nodeWidths: next });
+      },
 
       init: async () => {
         if (initStarted) return;
@@ -303,6 +328,7 @@ export const useBoardStore = create<Store>()(
         await idb.deleteDatabase();
         localStorage.removeItem(LAST_SESSION_KEY);
         localStorage.removeItem(THEME_KEY);
+        localStorage.removeItem(NODE_WIDTHS_KEY);
         location.reload();
       },
     }),
