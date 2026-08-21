@@ -58,7 +58,10 @@ export function BoardControls() {
         title="元に戻す"
         aria-label="元に戻す"
         disabled={!canUndo}
-        onClick={() => useBoardStore.temporal.getState().undo()}
+        onClick={() => {
+          useBoardStore.temporal.getState().undo();
+          useBoardStore.getState().logOp("元に戻す");
+        }}
       >
         <Undo2 size={14} />
       </ControlButton>
@@ -66,7 +69,10 @@ export function BoardControls() {
         title="やり直す"
         aria-label="やり直す"
         disabled={!canRedo}
-        onClick={() => useBoardStore.temporal.getState().redo()}
+        onClick={() => {
+          useBoardStore.temporal.getState().redo();
+          useBoardStore.getState().logOp("やり直す");
+        }}
       >
         <Redo2 size={14} />
       </ControlButton>

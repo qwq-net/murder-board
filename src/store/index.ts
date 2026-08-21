@@ -23,6 +23,7 @@ import {
 import { THEME_KEY } from "@/lib/theme";
 import {
   DEFAULT_NODE_COLORS,
+  NODE_KIND_LABELS,
   type BoardNode,
   type BoardNodeKind,
   type Session,
@@ -44,6 +45,12 @@ type Store = {
   searchSeed: string | null;
   openSearch: (seed: string) => void;
   closeSearch: () => void;
+
+  // 直近操作の表示用ログ。揮発状態で、セッションにも Undo 履歴にも含めない。
+  // 各エントリは一意の id を持ち、UI 側が表示済みの判定に使う
+  opsLog: { id: number; message: string }[];
+  // 操作ログへ 1 件追記する。保持は直近 8 件まで
+  logOp: (message: string) => void;
 
   // ノード種別ごとのデフォルト横幅。localStorage と同期するアプリ設定でセッションに属さない
   nodeWidths: NodeWidths;
@@ -102,6 +109,9 @@ function toMeta(session: Session): SessionMeta {
 
 let initStarted = false;
 
+// 操作ログの採番。表示済み判定に使うだけの連番で、永続化しない
+let opSeq = 0;
+
 export const useBoardStore = create<Store>()(
   temporal(
     (set, get) => ({
@@ -112,6 +122,9 @@ export const useBoardStore = create<Store>()(
       searchSeed: null,
       openSearch: (seed) => set({ searchSeed: seed }),
       closeSearch: () => set({ searchSeed: null }),
+
+      opsLog: [],
+      logOp: (message) => set({ opsLog: [...get().opsLog, { id: ++opSeq, message }].slice(-8) }),
 
       nodeWidths: loadNodeWidths(),
       setNodeWidth: (kind, width) => {
@@ -177,12 +190,14 @@ export const useBoardStore = create<Store>()(
             (n) => n.parentId && removed.has(n.parentId) && !removed.has(n.id),
           );
           changes = [...changes, ...orphans.map((n) => ({ type: "remove" as const, id: n.id }))];
+          get().logOp(removed.size === 1 ? "メモを削除" : `${removed.size}件を削除`);
         }
         const applied = applyNodeChanges(changes, get().nodes);
         // テキストの折り返しなどで子の高さが変わったら、その場でスタックを詰め直す
         set({ nodes: relayoutOnDimensionChanges(applied, changes, emptyStackWidth()) });
       },
       onNodeDragStop: (dragged) => {
+        get().logOp(dragged.length === 1 ? "メモを移動" : `${dragged.length}件を移動`);
         const next = applyStackDrops(
           get().nodes,
           dragged.map((n) => n.id),
@@ -252,13 +267,18 @@ export const useBoardStore = create<Store>()(
                           data: { title: "" },
                         };
         set({ nodes: [...get().nodes, node] });
+        get().logOp(`${NODE_KIND_LABELS[kind]}を追加`);
       },
 
-      addNodes: (added) => set({ nodes: [...get().nodes, ...added] }),
+      addNodes: (added) => {
+        set({ nodes: [...get().nodes, ...added] });
+        get().logOp(added.length === 1 ? "1件を貼り付け" : `${added.length}件を貼り付け`);
+      },
 
       dissolveStack: (id) => {
         const stackNode = get().nodes.find((n) => n.id === id);
         if (stackNode?.type !== "stack") return;
+        get().logOp("スタックを解除");
         set({
           nodes: get().nodes.flatMap((n) => {
             if (n.id === id) return [];
@@ -279,7 +299,8 @@ export const useBoardStore = create<Store>()(
         });
       },
 
-      updateNodeData: (id, type, patch) =>
+      updateNodeData: (id, type, patch) => {
+        if (!get().nodes.some((n) => n.id === id && n.type === type)) return;
         set({
           nodes: get().nodes.map((n) => {
             if (n.id !== id || n.type !== type) return n;
@@ -287,7 +308,9 @@ export const useBoardStore = create<Store>()(
             // ジェネリクス越しの相関を TS が追えないためだけの表明で、実行時の形は変わらない
             return { ...n, data: { ...n.data, ...patch } } as BoardNode;
           }),
-        }),
+        });
+        get().logOp(`${NODE_KIND_LABELS[type]}を編集`);
+      },
 
       createSession: async () => {
         scheduleSave.flush();

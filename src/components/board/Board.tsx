@@ -9,6 +9,7 @@ import {
 import { ClipboardPaste, Copy, Trash2, Ungroup, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { BoardControls } from "@/components/board/BoardControls";
+import { OpsLog } from "@/components/board/OpsLog";
 import { ActionLogNode } from "@/components/nodes/ActionLogNode";
 import { CharacterNode } from "@/components/nodes/CharacterNode";
 import { KeywordNode } from "@/components/nodes/KeywordNode";
@@ -119,8 +120,15 @@ export function Board({ theme }: { theme: Theme }) {
       if (isTypingTarget(e.target)) return;
       e.preventDefault();
       const temporal = useBoardStore.temporal.getState();
-      if (e.shiftKey) temporal.redo();
-      else temporal.undo();
+      if (e.shiftKey) {
+        if (temporal.futureStates.length === 0) return;
+        temporal.redo();
+        useBoardStore.getState().logOp("やり直す");
+      } else {
+        if (temporal.pastStates.length === 0) return;
+        temporal.undo();
+        useBoardStore.getState().logOp("元に戻す");
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -243,6 +251,7 @@ export function Board({ theme }: { theme: Theme }) {
         <Background variant={BackgroundVariant.Dots} gap={48} size={2} />
         <BoardControls />
       </ReactFlow>
+      <OpsLog />
       {menu && (
         <div
           className="fixed z-50 min-w-40 rounded border border-border-default bg-bg-elevated py-1 shadow-lg"
