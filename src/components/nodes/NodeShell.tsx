@@ -1,4 +1,4 @@
-import { Handle, Position, useNodeId, type NodeProps } from "@xyflow/react";
+import { useNodeId, type NodeProps } from "@xyflow/react";
 import {
   useEffect,
   useRef,
@@ -16,7 +16,7 @@ import { STICKY_COLORS, type StickyColor } from "@/types/board";
 export const useNodeWidth = (kind: WidthKind): number =>
   useBoardStore((s) => s.nodeWidths[kind] ?? DEFAULT_NODE_WIDTHS[kind]);
 
-// 全ノード種別共通の外枠。枠・タイトルヘッダ・接続ハンドル 4 方向・選択リングを持つ。
+// 全ノード種別共通の外枠。枠・タイトルヘッダ・選択リングを持つ。
 // 幅や配色は frameClassName / frameStyle / headerClassName / headerStyle で種別ごとに与える。
 // 枠は relative なので、children 内の absolute 配置はこの枠を基準にできる。
 // タイトルは blur で確定し、変更があったときだけ onTitleCommit が呼ばれる。
@@ -71,10 +71,6 @@ export function NodeShell({
         />
       </div>
       {children}
-      <Handle type="target" position={Position.Top} id="t" />
-      <Handle type="target" position={Position.Left} id="l" />
-      <Handle type="source" position={Position.Bottom} id="b" />
-      <Handle type="source" position={Position.Right} id="r" />
     </div>
   );
 }

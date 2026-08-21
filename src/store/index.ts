@@ -1,11 +1,4 @@
-import {
-  addEdge,
-  applyEdgeChanges,
-  applyNodeChanges,
-  type Connection,
-  type EdgeChange,
-  type NodeChange,
-} from "@xyflow/react";
+import { applyNodeChanges, type NodeChange } from "@xyflow/react";
 import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { temporal } from "zundo";
@@ -27,7 +20,7 @@ import {
   STACK_EMPTY_W,
 } from "@/lib/stackLayout";
 import { THEME_KEY } from "@/lib/theme";
-import type { BoardEdge, BoardNode, BoardNodeKind, Session, SessionMeta } from "@/types/board";
+import type { BoardNode, BoardNodeKind, Session, SessionMeta } from "@/types/board";
 
 const LAST_SESSION_KEY = "murder-memo2-last-session";
 
@@ -39,7 +32,6 @@ type Store = {
   sessions: SessionMeta[];
   currentId: string | null;
   nodes: BoardNode[];
-  edges: BoardEdge[];
   // 検索オーバーレイの状態。null なら閉、文字列なら開でその値が検索欄の初期値。
   // 本文中の検索リンクが「その文言入りで検索を開く」ために文字列を持つ
   searchSeed: string | null;
@@ -56,8 +48,6 @@ type Store = {
   init: () => Promise<void>;
 
   onNodesChange: (changes: NodeChange<BoardNode>[]) => void;
-  onEdgesChange: (changes: EdgeChange<BoardEdge>[]) => void;
-  onConnect: (connection: Connection) => void;
   // ドラッグ終了した選択ノード群のスタック所属を applyStackDrops で解決する。変更が無ければ何もしない。
   onNodeDragStop: (dragged: BoardNode[]) => void;
   // 指定位置に空のノードを追加する。position はフロー座標。sticky は作成直後に編集状態になり、
@@ -88,14 +78,13 @@ function newSession(): Session {
     createdAt: now,
     updatedAt: now,
     nodes: [],
-    edges: [],
   };
 }
 
-// nodes/edges 以外を丸ごと残す。isDemo/demoVersion を落とすと自動保存で
+// nodes 以外を丸ごと残す。isDemo/demoVersion を落とすと自動保存で
 // デモの印が消え、次回起動時にデモが二重作成されるため、フィールドを列挙しない
 function toMeta(session: Session): SessionMeta {
-  const { nodes: _nodes, edges: _edges, ...meta } = session;
+  const { nodes: _nodes, ...meta } = session;
   return meta;
 }
 
@@ -108,7 +97,6 @@ export const useBoardStore = create<Store>()(
       sessions: [],
       currentId: null,
       nodes: [],
-      edges: [],
       searchSeed: null,
       openSearch: (seed) => set({ searchSeed: seed }),
       closeSearch: () => set({ searchSeed: null }),
@@ -164,7 +152,6 @@ export const useBoardStore = create<Store>()(
           sessions: metas,
           currentId: session.id,
           nodes: session.nodes,
-          edges: session.edges,
         });
         useBoardStore.temporal.getState().clear();
       },
@@ -183,9 +170,6 @@ export const useBoardStore = create<Store>()(
         // テキストの折り返しなどで子の高さが変わったら、その場でスタックを詰め直す
         set({ nodes: relayoutOnDimensionChanges(applied, changes) });
       },
-      onEdgesChange: (changes) => set({ edges: applyEdgeChanges(changes, get().edges) }),
-      onConnect: (connection) =>
-        set({ edges: addEdge({ ...connection, id: nanoid() }, get().edges) }),
       onNodeDragStop: (dragged) => {
         const next = applyStackDrops(
           get().nodes,
@@ -271,7 +255,6 @@ export const useBoardStore = create<Store>()(
           sessions: [...get().sessions, toMeta(session)],
           currentId: session.id,
           nodes: [],
-          edges: [],
         });
         useBoardStore.temporal.getState().clear();
       },
@@ -282,7 +265,7 @@ export const useBoardStore = create<Store>()(
         const session = await idb.getSession(id);
         if (!session) return;
         localStorage.setItem(LAST_SESSION_KEY, id);
-        set({ currentId: id, nodes: session.nodes, edges: session.edges });
+        set({ currentId: id, nodes: session.nodes });
         useBoardStore.temporal.getState().clear();
       },
 
@@ -302,7 +285,7 @@ export const useBoardStore = create<Store>()(
         const rest = sessions.filter((m) => m.id !== currentId);
         const next = rest.length > 0 ? await idb.getSession(rest[rest.length - 1]!.id) : undefined;
         if (next) {
-          set({ sessions: rest, currentId: next.id, nodes: next.nodes, edges: next.edges });
+          set({ sessions: rest, currentId: next.id, nodes: next.nodes });
         } else {
           const session = newSession();
           await idb.putSession(session);
@@ -310,7 +293,6 @@ export const useBoardStore = create<Store>()(
             sessions: [...rest, toMeta(session)],
             currentId: session.id,
             nodes: [],
-            edges: [],
           });
         }
         localStorage.setItem(LAST_SESSION_KEY, get().currentId!);
@@ -325,7 +307,6 @@ export const useBoardStore = create<Store>()(
           sessions: [...get().sessions, toMeta(session)],
           currentId: session.id,
           nodes: session.nodes,
-          edges: session.edges,
         });
         useBoardStore.temporal.getState().clear();
       },
@@ -343,8 +324,8 @@ export const useBoardStore = create<Store>()(
       },
     }),
     {
-      partialize: (s) => ({ nodes: s.nodes, edges: s.edges }),
-      equality: (past, cur) => past.nodes === cur.nodes && past.edges === cur.edges,
+      partialize: (s) => ({ nodes: s.nodes }),
+      equality: (past, cur) => past.nodes === cur.nodes,
       // ドラッグ中の連続更新で履歴が溢れないよう、記録を 500ms に 1 回へ間引く。
       // SAFETY: throttleLeading は受けた関数の引数をそのまま素通しするため、間引き後も
       // handleSet と同じシグネチャのまま。汎用の関数型を経由するための表明
@@ -364,15 +345,15 @@ function saveCurrent() {
   useBoardStore.setState({
     sessions: s.sessions.map((m) => (m === meta ? { ...m, updatedAt } : m)),
   });
-  void idb.putSession({ ...meta, updatedAt, nodes: s.nodes, edges: s.edges });
+  void idb.putSession({ ...meta, updatedAt, nodes: s.nodes });
 }
 
 const scheduleSave = debounce(saveCurrent, 500);
 
-// nodes/edges の変更を自動保存につなぐ。Undo/Redo による変更も対象になる
+// nodes の変更を自動保存につなぐ。Undo/Redo による変更も対象になる
 useBoardStore.subscribe((state, prev) => {
   if (!state.loaded) return;
-  if (state.nodes !== prev.nodes || state.edges !== prev.edges) scheduleSave();
+  if (state.nodes !== prev.nodes) scheduleSave();
 });
 
 window.addEventListener("beforeunload", () => scheduleSave.flush());

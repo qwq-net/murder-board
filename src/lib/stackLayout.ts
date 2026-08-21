@@ -5,7 +5,7 @@
  * 挿入・離脱のたびにここで y を詰め直すことで、同期すべき状態を増やさない。
  */
 import type { NodeChange } from "@xyflow/react";
-import type { BoardEdge, BoardNode } from "@/types/board";
+import type { BoardNode } from "@/types/board";
 
 export const STACK_PAD = 8;
 export const STACK_GAP = 8;
@@ -141,29 +141,4 @@ export function relayoutOnDimensionChanges(
   let next = nodes;
   for (const stackId of parents) next = relayoutStack(next, stackId);
   return next;
-}
-
-// 子ノードに付いた線を親スタックへ付け替えた表示用の edges を返す。id とハンドルは
-// 元のまま保つため、表示上の線への削除・選択は元の線にそのまま効く。同じスタック内の
-// 子同士を結ぶ線は自己ループになるため表示から除く（データとしては残り、離脱で再び現れる）。
-// 子が絡まない線は同一参照のまま返し、子が 1 つも無ければ edges をそのまま返す。
-// 使われ方: Board が描画のたびに store の edges から導出する前提。store の edges は変更しない。
-export function delegateEdgesToStacks(nodes: BoardNode[], edges: BoardEdge[]): BoardEdge[] {
-  const parentOf = new Map<string, string>();
-  for (const n of nodes) {
-    if (n.parentId) parentOf.set(n.id, n.parentId);
-  }
-  if (parentOf.size === 0) return edges;
-
-  const result: BoardEdge[] = [];
-  for (const edge of edges) {
-    const source = parentOf.get(edge.source) ?? edge.source;
-    const target = parentOf.get(edge.target) ?? edge.target;
-    if (source === edge.source && target === edge.target) {
-      result.push(edge);
-    } else if (source !== target) {
-      result.push({ ...edge, source, target });
-    }
-  }
-  return result;
 }

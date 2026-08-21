@@ -1,7 +1,6 @@
 import { nanoid } from "nanoid";
 import type {
   ActionEntry,
-  BoardEdge,
   BoardNode,
   CharacterEntry,
   ListEntry,
@@ -23,10 +22,10 @@ const ac = (from: string, to: string, text: string): ActionEntry => ({
 
 // デモの内容を変えたらこの数値を上げる。既存デモとの不一致を init が検知し、
 // ユーザーの編集ごと最新の内容へ置き換える
-export const DEMO_VERSION = 3;
+export const DEMO_VERSION = 4;
 
 // デモシナリオ「宇宙ステーション・整備士視点」のセッションを新規 ID で生成する。
-// 全ノード種別・エッジ・時刻なしタイムライン行を含む機能ショーケース。
+// 全ノード種別・時刻なしタイムライン行を含む機能ショーケース。
 // isDemo と demoVersion が付くため、通常セッションと違い起動時の置き換え対象になる。
 // 使われ方: ストアの init から、デモ不在またはバージョン不一致のときだけ呼ばれる前提。
 export function buildDemoSession(): Session {
@@ -184,7 +183,7 @@ export function buildDemoSession(): Session {
       type: "sticky",
       position: { x: 340, y: 460 },
       data: {
-        title: "研究員 ★★",
+        title: "研究員",
         text: "データ改ざんの疑惑。報告書が届けば破滅する動機がある",
         color: "blue",
       },
@@ -194,7 +193,7 @@ export function buildDemoSession(): Session {
       type: "sticky",
       position: { x: 620, y: 460 },
       data: {
-        title: "通信士 ★★★",
+        title: "通信士",
         text: "権限外の端末操作と30分の通信遮断。遠隔開放ができる立場",
         color: "yellow",
       },
@@ -204,7 +203,7 @@ export function buildDemoSession(): Session {
       type: "sticky",
       position: { x: 860, y: 460 },
       data: {
-        title: "ステーション長 ★★",
+        title: "ステーション長",
         text: "ログ保全を止め、事故処理を急ぎすぎている。何かを隠している？",
         color: "pink",
       },
@@ -214,7 +213,7 @@ export function buildDemoSession(): Session {
       type: "sticky",
       position: { x: 1090, y: 740 },
       data: {
-        title: "医療班長 ★",
+        title: "医療班長",
         text: "睡眠導入剤の在庫が合わない。単独犯行は難しいが共犯なら？",
         color: "green",
       },
@@ -276,23 +275,6 @@ export function buildDemoSession(): Session {
     },
   ];
 
-  const edge = (source: string, target: string): BoardEdge => ({
-    id: nanoid(),
-    source,
-    target,
-    sourceHandle: "b",
-    targetHandle: "t",
-  });
-
-  const edges: BoardEdge[] = [
-    edge(ids.dayBefore, ids.researcher),
-    edge(ids.dayOf, ids.operator),
-    edge(ids.dayOf, ids.commander),
-    edge(ids.points, ids.theory),
-    edge(ids.theory, ids.medic),
-    edge(ids.handout, ids.goals),
-  ];
-
   const now = Date.now();
   return {
     id: nanoid(),
@@ -302,6 +284,5 @@ export function buildDemoSession(): Session {
     isDemo: true,
     demoVersion: DEMO_VERSION,
     nodes,
-    edges,
   };
 }

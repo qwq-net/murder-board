@@ -22,7 +22,6 @@ function fixture(): Session {
         data: { title: "", text: "い", color: "blue" },
       },
     ],
-    edges: [{ id: "e1", source: "n1", target: "n2" }],
   };
 }
 
@@ -39,12 +38,6 @@ describe("parseImport", () => {
     expect(ids).not.toContain("n1");
     expect(imported.nodes[0]!.data).toEqual({ title: "手がかり", text: "あ", color: "pink" });
     expect(imported.nodes[1]!.position).toEqual({ x: 100, y: 50 });
-
-    expect(imported.edges).toHaveLength(1);
-    const edge = imported.edges[0]!;
-    expect(edge.id).not.toBe("e1");
-    expect(ids).toContain(edge.source);
-    expect(ids).toContain(edge.target);
   });
 
   it("timeline ノードは行 ID を再採番しつつ中身を保つ", () => {
@@ -228,11 +221,15 @@ describe("parseImport", () => {
     expect(childIndex).toBeGreaterThan(stackIndex);
   });
 
-  it("存在しないノードを参照する edge は捨てる", () => {
-    const s = fixture();
-    s.edges.push({ id: "e2", source: "n1", target: "ghost" });
-    const imported = parseImport(serializeExport(s));
-    expect(imported.edges).toHaveLength(1);
+  it("旧バージョンの edges が残っていても読み捨てて取り込める", () => {
+    const legacy = {
+      app: "murder-memo2",
+      version: 1,
+      session: { ...fixture(), edges: [{ id: "e1", source: "n1", target: "n2" }] },
+    };
+    const imported = parseImport(JSON.stringify(legacy));
+    expect(imported.nodes).toHaveLength(2);
+    expect("edges" in imported).toBe(false);
   });
 
   it("未知の色は yellow に落とす", () => {
@@ -255,7 +252,7 @@ describe("parseImport", () => {
     const broken = {
       app: "murder-memo2",
       version: 1,
-      session: { name: "x", nodes: [{ id: 1 }], edges: [] },
+      session: { name: "x", nodes: [{ id: 1 }] },
     };
     expect(() => parseImport(JSON.stringify(broken))).toThrow("ノード");
   });

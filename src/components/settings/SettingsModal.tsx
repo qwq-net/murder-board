@@ -68,7 +68,7 @@ export function SettingsModal({
     const s = useBoardStore.getState();
     const meta = s.sessions.find((m) => m.id === s.currentId);
     if (!meta) return;
-    const blob = new Blob([serializeExport({ ...meta, nodes: s.nodes, edges: s.edges })], {
+    const blob = new Blob([serializeExport({ ...meta, nodes: s.nodes })], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);

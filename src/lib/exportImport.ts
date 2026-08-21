@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { STACK_EMPTY_H, STACK_EMPTY_W } from "@/lib/stackLayout";
-import { STICKY_COLORS, type BoardEdge, type BoardNode, type Session } from "@/types/board";
+import { STICKY_COLORS, type BoardNode, type Session } from "@/types/board";
 
 export const EXPORT_APP = "murder-memo2";
 export const EXPORT_VERSION = 1;
@@ -18,10 +18,10 @@ const envelopeSchema = z.object({
   session: z.unknown(),
 });
 
+// edges は旧バージョンのエクスポートに残っている場合があるが、機能の廃止に伴い読み捨てる
 const sessionSchema = z.object({
   name: z.string(),
   nodes: z.array(z.unknown()),
-  edges: z.array(z.unknown()),
 });
 
 // ノードの必須部分だけを検証する。type と data は種別ごとに後段で解釈する
@@ -93,19 +93,11 @@ const stackDataSchema = z
   .object({ title: z.string().catch(""), color: nodeColorSchema })
   .catch({ title: "" });
 
-const edgeSchema = z.object({
-  source: z.string(),
-  target: z.string(),
-  sourceHandle: z.string().optional().catch(undefined),
-  targetHandle: z.string().optional().catch(undefined),
-});
-
 // エクスポート JSON を検証し、全 ID を再採番した新しい Session を返す。
 // - JSON 不正・app/version 不一致・セッション/ノードの必須フィールド欠落は Error を throw
-// - node/edge の ID はすべて再採番し、edge の source/target も追随させる
-// - 存在しないノードを参照する edge、形の壊れた edge は黙って捨てる
+// - node の ID はすべて再採番する
 // - 未知の色は、必須の色（付箋・登場人物の行）は 'yellow'、任意のノード色は未設定に落とす。
-//   未知のフィールドは保持しない
+//   未知のフィールドは保持しない。旧バージョンの edges は読み捨てる
 // - createdAt/updatedAt は now で上書きし、インポート時点を新規作成として扱う
 // 使われ方: 信頼境界であるファイル入力から呼ばれる。失敗は throw で伝え、呼び手が通知を出す。
 export function parseImport(json: string, now = Date.now()): Session {
@@ -200,7 +192,7 @@ export function parseImport(json: string, now = Date.now()): Session {
         };
       }
 
-      // 未知の type は付箋として救出する。黙って捨てると edge の参照ごと消えるため
+      // 未知の type は付箋として救出する。黙って捨てるとメモの中身ごと消えるため
       return { ...base, type: "sticky" as const, data: stickyDataSchema.parse(data) };
     },
   );
@@ -211,25 +203,11 @@ export function parseImport(json: string, now = Date.now()): Session {
     ...nodes.filter((n) => n.type !== "stack"),
   ];
 
-  const edges: BoardEdge[] = [];
-  for (const value of session.data.edges) {
-    const parsed = edgeSchema.safeParse(value);
-    if (!parsed.success) continue;
-    const source = idMap.get(parsed.data.source);
-    const target = idMap.get(parsed.data.target);
-    if (!source || !target) continue;
-    const edge: BoardEdge = { id: nanoid(), source, target };
-    if (parsed.data.sourceHandle !== undefined) edge.sourceHandle = parsed.data.sourceHandle;
-    if (parsed.data.targetHandle !== undefined) edge.targetHandle = parsed.data.targetHandle;
-    edges.push(edge);
-  }
-
   return {
     id: nanoid(),
     name: session.data.name,
     createdAt: now,
     updatedAt: now,
     nodes: orderedNodes,
-    edges,
   };
 }

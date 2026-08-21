@@ -3,7 +3,6 @@ import type { NodeChange } from "@xyflow/react";
 import {
   applyStackDrop,
   applyStackDrops,
-  delegateEdgesToStacks,
   relayoutOnDimensionChanges,
   relayoutStack,
   STACK_EMPTY_H,
@@ -12,7 +11,7 @@ import {
   STACK_HEADER_H,
   STACK_PAD,
 } from "@/lib/stackLayout";
-import type { BoardEdge, BoardNode } from "@/types/board";
+import type { BoardNode } from "@/types/board";
 
 function stack(
   id: string,
@@ -232,45 +231,5 @@ describe("relayoutOnDimensionChanges", () => {
     ];
     const change: NodeChange<BoardNode> = { id: "a", type: "select", selected: true };
     expect(relayoutOnDimensionChanges(nodes, [change])).toBe(nodes);
-  });
-});
-
-describe("delegateEdgesToStacks", () => {
-  const nodes = [
-    stack("st", { x: 0, y: 0 }),
-    sticky("a", { x: 0, y: 0 }, { parentId: "st" }),
-    sticky("b", { x: 0, y: 1 }, { parentId: "st" }),
-    sticky("out", { x: 900, y: 900 }),
-  ];
-
-  it("子に付いた線を id とハンドルを保ったまま親スタックへ付け替える", () => {
-    const edges: BoardEdge[] = [{ id: "e1", source: "a", target: "out", sourceHandle: "r" }];
-    const result = delegateEdgesToStacks(nodes, edges);
-    expect(result).toEqual([{ id: "e1", source: "st", target: "out", sourceHandle: "r" }]);
-  });
-
-  it("target 側が子の場合も親スタックへ付け替える", () => {
-    const edges: BoardEdge[] = [{ id: "e1", source: "out", target: "b" }];
-    expect(delegateEdgesToStacks(nodes, edges)[0]).toMatchObject({
-      source: "out",
-      target: "st",
-    });
-  });
-
-  it("同じスタック内の子同士を結ぶ線は表示から除く", () => {
-    const edges: BoardEdge[] = [{ id: "e1", source: "a", target: "b" }];
-    expect(delegateEdgesToStacks(nodes, edges)).toEqual([]);
-  });
-
-  it("子が絡まない線は同一参照のまま返す", () => {
-    const edges: BoardEdge[] = [{ id: "e1", source: "out", target: "st" }];
-    const result = delegateEdgesToStacks(nodes, edges);
-    expect(result[0]).toBe(edges[0]);
-  });
-
-  it("子が無ければ edges をそのまま返す", () => {
-    const plain = [sticky("x", { x: 0, y: 0 }), sticky("y", { x: 10, y: 10 })];
-    const edges: BoardEdge[] = [{ id: "e1", source: "x", target: "y" }];
-    expect(delegateEdgesToStacks(plain, edges)).toBe(edges);
   });
 });

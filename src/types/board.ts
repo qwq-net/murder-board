@@ -1,4 +1,4 @@
-import type { Edge, Node } from "@xyflow/react";
+import type { Node } from "@xyflow/react";
 
 export const STICKY_COLORS = ["yellow", "pink", "blue", "green", "purple", "gray"] as const;
 export type StickyColor = (typeof STICKY_COLORS)[number];
@@ -62,10 +62,7 @@ export const NODE_KIND_LABELS = {
   actionlog: "アクションログ",
   stack: "スタック",
 } satisfies Record<BoardNodeKind, string>;
-// label を持たせない。このアプリのつながりは線だけで表現し、テキスト付与の機能は置かない
-export type BoardEdge = Omit<Edge, "label">;
-
-// 1 セッション = IndexedDB の 1 レコード。nodes/edges を正規化せず丸ごと持つ。
+// 1 セッション = IndexedDB の 1 レコード。nodes を正規化せず丸ごと持つ。
 // isDemo は自動生成されるデモセッションの印。demoVersion が DEMO_VERSION と
 // 一致しないデモは、起動時に最新の内容へ丸ごと置き換えられる
 export type Session = {
@@ -76,7 +73,6 @@ export type Session = {
   isDemo?: boolean;
   demoVersion?: number;
   nodes: BoardNode[];
-  edges: BoardEdge[];
 };
 
-export type SessionMeta = Omit<Session, "nodes" | "edges">;
+export type SessionMeta = Omit<Session, "nodes">;

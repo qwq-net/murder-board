@@ -30,11 +30,16 @@ export async function deleteDatabase(): Promise<void> {
   });
 }
 
-// 全セッションのメタ情報を作成日時の昇順で返す。nodes/edges は含まない。
+// 全セッションのメタ情報を作成日時の昇順で返す。nodes は含まない。
 export async function listSessionMetas(): Promise<SessionMeta[]> {
   const all = await (await getDb()).getAll("sessions");
   return all
-    .map(({ nodes: _nodes, edges: _edges, ...meta }) => meta)
+    .map(({ nodes: _nodes, ...meta }) => {
+      // SAFETY: 機能の廃止前に保存されたレコードに残る edges を落とすだけの表明。
+      // ここで落とさないと、メタ経由の再保存で廃止済みデータが残り続ける
+      delete (meta as { edges?: unknown }).edges;
+      return meta;
+    })
     .sort((a, b) => a.createdAt - b.createdAt);
 }
 

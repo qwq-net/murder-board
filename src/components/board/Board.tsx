@@ -6,7 +6,7 @@ import {
   useReactFlow,
   type NodeTypes,
 } from "@xyflow/react";
-import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from "react";
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { ActionLogNode } from "@/components/nodes/ActionLogNode";
 import { CharacterNode } from "@/components/nodes/CharacterNode";
 import { KeywordNode } from "@/components/nodes/KeywordNode";
@@ -14,15 +14,9 @@ import { ListNode } from "@/components/nodes/ListNode";
 import { StackNode } from "@/components/nodes/StackNode";
 import { StickyNode } from "@/components/nodes/StickyNode";
 import { TimelineNode } from "@/components/nodes/TimelineNode";
-import { delegateEdgesToStacks } from "@/lib/stackLayout";
 import type { Theme } from "@/lib/theme";
 import { useBoardStore } from "@/store";
-import {
-  NODE_KIND_LABELS,
-  type BoardEdge,
-  type BoardNode,
-  type BoardNodeKind,
-} from "@/types/board";
+import { NODE_KIND_LABELS, type BoardNode, type BoardNodeKind } from "@/types/board";
 
 const nodeTypes: NodeTypes = {
   sticky: StickyNode,
@@ -45,15 +39,10 @@ const isTypingTarget = (t: EventTarget | null): boolean =>
 
 export function Board({ theme }: { theme: Theme }) {
   const nodes = useBoardStore((s) => s.nodes);
-  const edges = useBoardStore((s) => s.edges);
   const onNodesChange = useBoardStore((s) => s.onNodesChange);
-  const onEdgesChange = useBoardStore((s) => s.onEdgesChange);
-  const onConnect = useBoardStore((s) => s.onConnect);
   const onNodeDragStop = useBoardStore((s) => s.onNodeDragStop);
   const addNode = useBoardStore((s) => s.addNode);
   const { screenToFlowPosition } = useReactFlow();
-  // スタック内の子に付いた線は、表示上だけ親スタックへ付け替える。store の edges は元のまま
-  const displayEdges = useMemo(() => delegateEdgesToStacks(nodes, edges), [nodes, edges]);
   // 右クリックメニューの表示位置。画面座標で持ち、null なら非表示
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   // Space 押下中のパン専用モード。ノードの移動・選択を止めることで、
@@ -115,12 +104,9 @@ export function Board({ theme }: { theme: Theme }) {
 
   return (
     <div className="relative min-h-0 flex-1" onDoubleClick={onDoubleClick}>
-      <ReactFlow<BoardNode, BoardEdge>
+      <ReactFlow<BoardNode>
         nodes={nodes}
-        edges={displayEdges}
         onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
         onNodeDragStop={(_, _node, dragged) => onNodeDragStop(dragged)}
         onPaneContextMenu={onPaneContextMenu}
         onPaneClick={() => setMenu(null)}
