@@ -1,7 +1,6 @@
 import {
   Background,
   BackgroundVariant,
-  Controls,
   ReactFlow,
   SelectionMode,
   useReactFlow,
@@ -9,6 +8,7 @@ import {
 } from "@xyflow/react";
 import { ClipboardPaste, Copy, Trash2, Ungroup, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
+import { BoardControls } from "@/components/board/BoardControls";
 import { ActionLogNode } from "@/components/nodes/ActionLogNode";
 import { CharacterNode } from "@/components/nodes/CharacterNode";
 import { KeywordNode } from "@/components/nodes/KeywordNode";
@@ -241,7 +241,7 @@ export function Board({ theme }: { theme: Theme }) {
       >
         {/* 薄い + パターン。色は colorMode 連動の既定値に任せ、テーマ切替に追従させる */}
         <Background variant={BackgroundVariant.Dots} gap={48} size={2} />
-        <Controls />
+        <BoardControls />
       </ReactFlow>
       {menu && (
         <div
