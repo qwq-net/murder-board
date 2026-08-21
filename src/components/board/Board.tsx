@@ -7,6 +7,7 @@ import {
   useReactFlow,
   type NodeTypes,
 } from "@xyflow/react";
+import { ClipboardPaste, Copy, Trash2, Ungroup, type LucideIcon } from "lucide-react";
 import { useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { ActionLogNode } from "@/components/nodes/ActionLogNode";
 import { CharacterNode } from "@/components/nodes/CharacterNode";
@@ -16,6 +17,7 @@ import { KIND_ICONS } from "@/components/nodes/NodeShell";
 import { StackNode } from "@/components/nodes/StackNode";
 import { StickyNode } from "@/components/nodes/StickyNode";
 import { TimelineNode } from "@/components/nodes/TimelineNode";
+import { materializeNodes, snapshotNodes } from "@/lib/nodeClipboard";
 import type { Theme } from "@/lib/theme";
 import { useBoardStore } from "@/store";
 import { NODE_KIND_LABELS, type BoardNode, type BoardNodeKind } from "@/types/board";
@@ -43,14 +45,45 @@ const isTypingTarget = (t: EventTarget | null): boolean =>
   t instanceof HTMLElement &&
   (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
 
+// コンテキストメニューの 1 項目。アイコン + ラベルの横並びで、danger は削除系の赤文字
+function MenuItem({
+  icon: Icon,
+  label,
+  danger,
+  onClick,
+}: {
+  icon: LucideIcon;
+  label: string;
+  danger?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-bg-hover ${
+        danger ? "text-danger" : ""
+      }`}
+      onClick={onClick}
+    >
+      <Icon size={14} className="shrink-0 opacity-70" />
+      {label}
+    </button>
+  );
+}
+
 export function Board({ theme }: { theme: Theme }) {
   const nodes = useBoardStore((s) => s.nodes);
   const onNodesChange = useBoardStore((s) => s.onNodesChange);
   const onNodeDragStop = useBoardStore((s) => s.onNodeDragStop);
   const addNode = useBoardStore((s) => s.addNode);
+  const addNodes = useBoardStore((s) => s.addNodes);
+  const dissolveStack = useBoardStore((s) => s.dissolveStack);
   const { screenToFlowPosition } = useReactFlow();
-  // 右クリックメニューの表示位置。画面座標で持ち、null なら非表示
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  // 右クリックメニューの表示位置。画面座標で持ち、null なら非表示。
+  // nodeId があればノード用メニュー、無ければペイン用の追加メニューになる
+  const [menu, setMenu] = useState<{ x: number; y: number; nodeId?: string } | null>(null);
+  // コピーしたノードのスナップショット。セッションを切り替えても揮発するだけで害はない
+  const [clipboard, setClipboard] = useState<BoardNode[] | null>(null);
   // Space 押下中のパン専用モード。ノードの移動・選択を止めることで、
   // ノード上からでもドラッグが React Flow のビューポートパンに落ちる
   const [spacePanning, setSpacePanning] = useState(false);
@@ -102,11 +135,47 @@ export function Board({ theme }: { theme: Theme }) {
     setMenu({ x: e.clientX, y: e.clientY });
   };
 
+  // ノードの右クリック。左クリック同様に対象だけを選択状態にしてからメニューを開く
+  const onNodeContextMenu = (e: ReactMouseEvent, node: BoardNode) => {
+    e.preventDefault();
+    onNodesChange(
+      nodes
+        .filter((n) => n.selected || n.id === node.id)
+        .map((n) => ({ id: n.id, type: "select" as const, selected: n.id === node.id })),
+    );
+    setMenu({ x: e.clientX, y: e.clientY, nodeId: node.id });
+  };
+
   const addFromMenu = (kind: BoardNodeKind) => {
     if (!menu) return;
     addNode(kind, screenToFlowPosition(menu));
     setMenu(null);
   };
+
+  const pasteFromMenu = () => {
+    if (!menu || !clipboard) return;
+    addNodes(materializeNodes(clipboard, screenToFlowPosition(menu)));
+    setMenu(null);
+  };
+
+  const copyFromMenu = (nodeId: string) => {
+    setClipboard(snapshotNodes(nodes, nodeId));
+    setMenu(null);
+  };
+
+  const deleteFromMenu = (nodeId: string) => {
+    onNodesChange([{ type: "remove", id: nodeId }]);
+    setMenu(null);
+  };
+
+  const dissolveFromMenu = (nodeId: string) => {
+    dissolveStack(nodeId);
+    setMenu(null);
+  };
+
+  // メニューの対象ノード。nodeId が残っていてもノードが消えていれば null 扱い
+  const menuTarget =
+    menu?.nodeId !== undefined ? nodes.find((n) => n.id === menu.nodeId) : undefined;
 
   return (
     <div className="relative min-h-0 flex-1" onDoubleClick={onDoubleClick}>
@@ -115,7 +184,10 @@ export function Board({ theme }: { theme: Theme }) {
         onNodesChange={onNodesChange}
         onNodeDragStop={(_, _node, dragged) => onNodeDragStop(dragged)}
         onPaneContextMenu={onPaneContextMenu}
+        onNodeContextMenu={onNodeContextMenu}
         onPaneClick={() => setMenu(null)}
+        onNodeClick={() => setMenu(null)}
+        onNodeDragStart={() => setMenu(null)}
         onMoveStart={() => setMenu(null)}
         onSelectionStart={() => setMenu(null)}
         nodeTypes={nodeTypes}
@@ -131,7 +203,7 @@ export function Board({ theme }: { theme: Theme }) {
         panOnDrag={spacePanning ? true : [1]}
       >
         {/* 薄い + パターン。色は colorMode 連動の既定値に任せ、テーマ切替に追従させる */}
-        <Background variant={BackgroundVariant.Dots} gap={48} size={2}/>
+        <Background variant={BackgroundVariant.Dots} gap={48} size={2} />
         <Controls />
       </ReactFlow>
       {menu && (
@@ -139,25 +211,49 @@ export function Board({ theme }: { theme: Theme }) {
           className="fixed z-50 min-w-40 rounded border border-border-default bg-bg-elevated py-1 shadow-lg"
           style={{ left: menu.x, top: menu.y }}
         >
-          {MENU_GROUPS.map((group, gi) => (
-            <div key={group[0]}>
-              {gi > 0 && <div className="my-1 border-t border-border-subtle" />}
-              {group.map((kind) => {
-                const Icon = KIND_ICONS[kind];
-                return (
-                  <button
-                    key={kind}
-                    type="button"
-                    className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-bg-hover"
-                    onClick={() => addFromMenu(kind)}
-                  >
-                    <Icon size={14} className="shrink-0 opacity-70" />
-                    {NODE_KIND_LABELS[kind]}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+          {menu.nodeId === undefined ? (
+            <>
+              {clipboard !== null && (
+                <>
+                  <MenuItem icon={ClipboardPaste} label="貼り付け" onClick={pasteFromMenu} />
+                  <div className="my-1 border-t border-border-subtle" />
+                </>
+              )}
+              {MENU_GROUPS.map((group, gi) => (
+                <div key={group[0]}>
+                  {gi > 0 && <div className="my-1 border-t border-border-subtle" />}
+                  {group.map((kind) => (
+                    <MenuItem
+                      key={kind}
+                      icon={KIND_ICONS[kind]}
+                      label={NODE_KIND_LABELS[kind]}
+                      onClick={() => addFromMenu(kind)}
+                    />
+                  ))}
+                </div>
+              ))}
+            </>
+          ) : (
+            menuTarget && (
+              <>
+                <MenuItem icon={Copy} label="コピー" onClick={() => copyFromMenu(menuTarget.id)} />
+                {menuTarget.type === "stack" && (
+                  <MenuItem
+                    icon={Ungroup}
+                    label="スタックを解除"
+                    onClick={() => dissolveFromMenu(menuTarget.id)}
+                  />
+                )}
+                <div className="my-1 border-t border-border-subtle" />
+                <MenuItem
+                  icon={Trash2}
+                  label="削除"
+                  danger
+                  onClick={() => deleteFromMenu(menuTarget.id)}
+                />
+              </>
+            )
+          )}
         </div>
       )}
     </div>

@@ -53,6 +53,11 @@ type Store = {
   // 指定位置に空のノードを追加する。position はフロー座標。sticky は作成直後に編集状態になり、
   // 行を持つ種別は空行 1 つ付きで作られる。
   addNode: (kind: BoardNodeKind, position: { x: number; y: number }) => void;
+  // 組み立て済みのノード列を末尾へ追加する。貼り付け用。親子を含むときは親が先に並んでいる前提。
+  addNodes: (added: BoardNode[]) => void;
+  // スタックだけを削除し、子をその場の絶対位置で盤面直下に残す。見た目の位置と順序は
+  // 変わらない。id がスタック以外を指すときは何もしない。
+  dissolveStack: (id: string) => void;
   // 指定 id かつ指定種別のノードの data を部分更新する。id が存在しても種別が一致しなければ何もしない。
   updateNodeData: <K extends BoardNodeKind>(id: string, type: K, patch: Partial<DataOf<K>>) => void;
 
@@ -234,6 +239,31 @@ export const useBoardStore = create<Store>()(
                           data: { title: "" },
                         };
         set({ nodes: [...get().nodes, node] });
+      },
+
+      addNodes: (added) => set({ nodes: [...get().nodes, ...added] }),
+
+      dissolveStack: (id) => {
+        const stackNode = get().nodes.find((n) => n.id === id);
+        if (stackNode?.type !== "stack") return;
+        set({
+          nodes: get().nodes.flatMap((n) => {
+            if (n.id === id) return [];
+            if (n.parentId !== id) return [n];
+            const { parentId: _parentId, ...detached } = n;
+            // SAFETY: parentId を除き position を絶対座標へ差し替えただけで、type と data の
+            // 相関は変わらない。ユニオンをまたぐ再構築を TS が追えないためだけの表明
+            return [
+              {
+                ...detached,
+                position: {
+                  x: stackNode.position.x + n.position.x,
+                  y: stackNode.position.y + n.position.y,
+                },
+              } as BoardNode,
+            ];
+          }),
+        });
       },
 
       updateNodeData: (id, type, patch) =>
