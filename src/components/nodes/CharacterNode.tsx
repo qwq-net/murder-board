@@ -10,7 +10,12 @@ import {
 } from "@/components/nodes/NodeShell";
 import { StyledText } from "@/components/nodes/StyledText";
 import { useBoardStore } from "@/store";
-import { STICKY_COLORS, type CharacterEntry, type CharacterNodeType } from "@/types/board";
+import {
+  DEFAULT_NODE_COLORS,
+  STICKY_COLORS,
+  type CharacterEntry,
+  type CharacterNodeType,
+} from "@/types/board";
 
 // 付箋 6 色の中で次の色を返す。末尾の次は先頭に戻る
 const nextColor = (c: CharacterEntry["color"]) =>
@@ -36,7 +41,11 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
     updateNodeData(id, "character", {
       entries: [
         ...data.entries,
-        { id: rowId, text: "", color: last ? nextColor(last.color) : "yellow" },
+        {
+          id: rowId,
+          text: "",
+          color: last ? nextColor(last.color) : DEFAULT_NODE_COLORS.character,
+        },
       ],
     });
   };

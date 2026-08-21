@@ -21,7 +21,13 @@ import {
   stackEmptyWidth,
 } from "@/lib/stackLayout";
 import { THEME_KEY } from "@/lib/theme";
-import type { BoardNode, BoardNodeKind, Session, SessionMeta } from "@/types/board";
+import {
+  DEFAULT_NODE_COLORS,
+  type BoardNode,
+  type BoardNodeKind,
+  type Session,
+  type SessionMeta,
+} from "@/types/board";
 
 const LAST_SESSION_KEY = "murder-memo2-last-session";
 
@@ -192,7 +198,7 @@ export const useBoardStore = create<Store>()(
                 id: nanoid(),
                 type: "sticky",
                 position,
-                data: { title: "", text: "", color: "yellow" },
+                data: { title: "", text: "", color: DEFAULT_NODE_COLORS.sticky },
               }
             : kind === "timeline"
               ? {
@@ -220,7 +226,12 @@ export const useBoardStore = create<Store>()(
                         id: nanoid(),
                         type: "character",
                         position,
-                        data: { title: "", entries: [{ id: nanoid(), text: "", color: "yellow" }] },
+                        data: {
+                          title: "",
+                          entries: [
+                            { id: nanoid(), text: "", color: DEFAULT_NODE_COLORS.character },
+                          ],
+                        },
                       }
                     : kind === "actionlog"
                       ? {
