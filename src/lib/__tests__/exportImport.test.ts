@@ -232,10 +232,11 @@ describe("parseImport", () => {
     expect("edges" in imported).toBe(false);
   });
 
-  it("未知の色は yellow に落とす", () => {
+  it("付箋の未知の色は未設定に落とす", () => {
     const json = serializeExport(fixture()).replace('"pink"', '"neon"');
     const imported = parseImport(json);
-    expect(imported.nodes[0]!.data).toMatchObject({ color: "yellow" });
+    const sticky = imported.nodes.find((n) => n.type === "sticky")!;
+    expect(sticky.data.color).toBeUndefined();
   });
 
   it("壊れた JSON は throw する", () => {

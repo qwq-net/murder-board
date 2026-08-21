@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { StyledText } from "@/components/nodes/StyledText";
 import { ColorPalette, NodeShell, useNodeWidth } from "@/components/nodes/NodeShell";
 import { useBoardStore } from "@/store";
-import { type StickyColor, type StickyNodeType } from "@/types/board";
+import { DEFAULT_NODE_COLORS, type StickyColor, type StickyNodeType } from "@/types/board";
 
 // 付箋カラーは index.css の --sticky-* 変数で定義され、テーマに応じて値が切り替わる。
 // クラスマップではなく CSS 変数参照にすることで、テーマ切替時のロジック変更を不要にする。
@@ -42,21 +42,22 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
   };
 
   const width = useNodeWidth("sticky");
+  const color = data.color ?? DEFAULT_NODE_COLORS.sticky;
 
   return (
     <NodeShell
       selected={selected}
       frameClassName="text-text-primary"
-      frameStyle={{ ...noteStyle(data.color), width }}
-      headerStyle={{ background: `var(--sticky-${data.color}-header)` }}
+      frameStyle={{ ...noteStyle(color), width }}
+      headerStyle={{ background: `var(--sticky-${color}-header)` }}
       title={data.title}
       titlePlaceholder="メモ"
       onTitleCommit={(title) => updateNodeData(id, "sticky", { title })}
     >
       {selected && !editing && (
         <ColorPalette
-          color={data.color}
-          onPick={(color) => color && updateNodeData(id, "sticky", { color })}
+          color={color}
+          onPick={(picked) => picked && updateNodeData(id, "sticky", { color: picked })}
         />
       )}
       {editing ? (

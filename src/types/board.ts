@@ -33,8 +33,9 @@ export const STICKY_COLORS_BY_HUE: readonly StickyColor[] = [
   "gray",
 ];
 
-// 付箋ノードの中身。title/text は空文字を許す。作成直後は空で、付箋側が自動的に編集状態になる
-export type StickyData = { title: string; text: string; color: StickyColor };
+// 付箋ノードの中身。title/text は空文字を許す。作成直後は空で、付箋側が自動的に編集状態になる。
+// color 未設定は種別既定色で描画される
+export type StickyData = { title: string; text: string; color?: StickyColor };
 
 // タイムラインの 1 行。time は "HH:MM" を想定するが自由入力を許し、不正な時刻の行は末尾に並ぶ。
 // color は付箋と同じ 6 色で、未設定なら種別既定のアクセント色で描画される

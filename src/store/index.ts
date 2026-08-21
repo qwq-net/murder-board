@@ -198,7 +198,7 @@ export const useBoardStore = create<Store>()(
                 id: nanoid(),
                 type: "sticky",
                 position,
-                data: { title: "", text: "", color: DEFAULT_NODE_COLORS.sticky },
+                data: { title: "", text: "" },
               }
             : kind === "timeline"
               ? {

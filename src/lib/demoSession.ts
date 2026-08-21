@@ -21,17 +21,19 @@ const ac = (from: string, to: string, text: string): ActionEntry => ({
   text,
 });
 
-// 機能説明メモ。無彩色の付箋で、各列の最上段や実サンプルの近くに置く
+// 機能説明メモ。各列の最上段や実サンプルの近くに置く。色は指定せず種別既定色に任せる。
+// デモ全体でも、人物の識別そのものである登場人物の行以外は色を指定しない方針。
+// 既定色の変更へ自動で追従させ、デモの追随修正を不要にするため
 const guide = (x: number, y: number, title: string, text: string): BoardNode => ({
   id: nanoid(),
   type: "sticky",
   position: { x, y },
-  data: { title, text, color: "gray" },
+  data: { title, text },
 });
 
 // デモの内容を変えたらこの数値を上げる。既存デモとの不一致を init が検知し、
 // ユーザーの編集ごと最新の内容へ置き換える
-export const DEMO_VERSION = 7;
+export const DEMO_VERSION = 8;
 
 // デモシナリオ「宇宙ステーション・整備士視点」のセッションを新規 ID で生成する。
 // 全ノード種別・時刻なしタイムライン行を含む機能ショーケース。
@@ -225,7 +227,6 @@ export function buildDemoSession(): Session {
           li("通信遮断は報告書の送信を止めるためだったのでは"),
           li("仮説：薬で昏倒 → 11:02に遠隔開放 → 事故として処理"),
         ],
-        color: "blue",
       },
     },
     {
@@ -265,7 +266,6 @@ export function buildDemoSession(): Session {
       data: {
         title: "研究員",
         text: "データ改ざんの疑惑。報告書が届けば破滅する動機がある",
-        color: "blue",
       },
     },
     {
@@ -275,7 +275,6 @@ export function buildDemoSession(): Session {
       data: {
         title: "通信士",
         text: "権限外の端末操作と30分の通信遮断。遠隔開放ができる立場",
-        color: "yellow",
       },
     },
     {
@@ -285,7 +284,6 @@ export function buildDemoSession(): Session {
       data: {
         title: "ステーション長",
         text: "ログ保全を止め、事故処理を急ぎすぎている。何かを隠している？",
-        color: "pink",
       },
     },
     {
@@ -295,7 +293,6 @@ export function buildDemoSession(): Session {
       data: {
         title: "医療班長",
         text: "睡眠導入剤の在庫が合わない。単独犯行は難しいが共犯なら？",
-        color: "green",
       },
     },
     {
@@ -305,7 +302,6 @@ export function buildDemoSession(): Session {
       data: {
         title: "キーワード",
         entries: [li("報告書"), li("エアロック"), li("睡眠導入剤"), li("記録メディア")],
-        color: "purple",
       },
     },
     {
@@ -346,7 +342,7 @@ export function buildDemoSession(): Session {
       position: { x: 3320, y: 150 },
       width: 266,
       height: 300,
-      data: { title: "未整理メモ", color: "gray" },
+      data: { title: "未整理メモ" },
     },
     {
       id: ids.emptyStack,
@@ -364,7 +360,6 @@ export function buildDemoSession(): Session {
       data: {
         title: "確認したいこと",
         text: "未申告のコンテナの中身。パイロットに聞くか、貨物室を調べるか",
-        color: "yellow",
       },
     },
     {
@@ -375,7 +370,6 @@ export function buildDemoSession(): Session {
       data: {
         title: "あとで整理",
         text: "深夜の物音と通信士の「何も聞いていない」は矛盾しない？",
-        color: "gray",
       },
     },
   ];

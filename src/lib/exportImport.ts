@@ -85,9 +85,9 @@ const stickyDataSchema = z
   .object({
     title: z.string().catch(""),
     text: z.string().catch(""),
-    color: z.enum(STICKY_COLORS).catch("yellow"),
+    color: nodeColorSchema,
   })
-  .catch({ title: "", text: "", color: "yellow" });
+  .catch({ title: "", text: "" });
 
 const stackDataSchema = z
   .object({ title: z.string().catch(""), color: nodeColorSchema })
@@ -96,7 +96,7 @@ const stackDataSchema = z
 // エクスポート JSON を検証し、全 ID を再採番した新しい Session を返す。
 // - JSON 不正・app/version 不一致・セッション/ノードの必須フィールド欠落は Error を throw
 // - node の ID はすべて再採番する
-// - 未知の色は、必須の色（付箋・登場人物の行）は 'yellow'、任意のノード色は未設定に落とす。
+// - 未知の色は、必須の色（登場人物の行）は 'yellow'、任意の色は「未設定 = 種別既定色」に落とす。
 //   未知のフィールドは保持しない。旧バージョンの edges は読み捨てる
 // - createdAt/updatedAt は now で上書きし、インポート時点を新規作成として扱う
 // 使われ方: 信頼境界であるファイル入力から呼ばれる。失敗は throw で伝え、呼び手が通知を出す。
