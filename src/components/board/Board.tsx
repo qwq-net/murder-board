@@ -1,5 +1,6 @@
 import {
   Background,
+  BackgroundVariant,
   Controls,
   ReactFlow,
   SelectionMode,
@@ -129,7 +130,8 @@ export function Board({ theme }: { theme: Theme }) {
         selectionMode={SelectionMode.Partial}
         panOnDrag={spacePanning ? true : [1]}
       >
-        <Background />
+        {/* 薄い + パターン。色は colorMode 連動の既定値に任せ、テーマ切替に追従させる */}
+        <Background variant={BackgroundVariant.Dots} gap={48} size={2}/>
         <Controls />
       </ReactFlow>
       {menu && (
