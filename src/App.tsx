@@ -1,5 +1,6 @@
 import { ReactFlowProvider } from "@xyflow/react";
 import { useEffect, useState } from "react";
+import { AppDialog } from "@/components/AppDialog";
 import { Board } from "@/components/board/Board";
 import { SearchOverlay } from "@/components/board/SearchOverlay";
 import { Toolbar } from "@/components/board/Toolbar";
@@ -51,6 +52,7 @@ export function App() {
       {settingsOpen && (
         <SettingsModal theme={theme} onSetTheme={setTheme} onClose={() => setSettingsOpen(false)} />
       )}
+      <AppDialog />
     </ReactFlowProvider>
   );
 }

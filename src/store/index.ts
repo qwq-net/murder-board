@@ -52,6 +52,16 @@ type Store = {
   // 操作ログへ 1 件追記する。保持は直近 8 件まで
   logOp: (message: string) => void;
 
+  // ブラウザ標準の alert/confirm の置き換えに使う自前ダイアログの状態。null なら閉。
+  // resolve はダイアログを出した Promise を解決するためのもので、closeDialog だけが呼ぶ
+  dialog: { message: string; kind: "alert" | "confirm"; resolve: (ok: boolean) => void } | null;
+  // メッセージを自前モーダルで表示し、閉じられたら解決する。多重に開いた場合は後勝ち
+  showAlert: (message: string) => Promise<void>;
+  // 確認ダイアログを表示し、実行なら true・キャンセルなら false で解決する
+  showConfirm: (message: string) => Promise<boolean>;
+  // 開いているダイアログを閉じて resolve を呼ぶ。alert では ok の値は使われない
+  closeDialog: (ok: boolean) => void;
+
   // ノード種別ごとのデフォルト横幅。localStorage と同期するアプリ設定でセッションに属さない
   nodeWidths: NodeWidths;
   // 種別の横幅を更新して永続化する。範囲外は丸め、undefined でその種別を既定値へ戻す
@@ -125,6 +135,22 @@ export const useBoardStore = create<Store>()(
 
       opsLog: [],
       logOp: (message) => set({ opsLog: [...get().opsLog, { id: ++opSeq, message }].slice(-8) }),
+
+      dialog: null,
+      showAlert: (message) =>
+        new Promise((resolve) => {
+          set({ dialog: { message, kind: "alert", resolve: () => resolve() } });
+        }),
+      showConfirm: (message) =>
+        new Promise((resolve) => {
+          set({ dialog: { message, kind: "confirm", resolve } });
+        }),
+      closeDialog: (ok) => {
+        const { dialog } = get();
+        if (!dialog) return;
+        set({ dialog: null });
+        dialog.resolve(ok);
+      },
 
       nodeWidths: loadNodeWidths(),
       setNodeWidth: (kind, width) => {

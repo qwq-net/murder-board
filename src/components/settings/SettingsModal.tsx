@@ -55,6 +55,8 @@ export function SettingsModal({
   const [section, setSection] = useState<SectionId>("theme");
   const nodeWidths = useBoardStore((s) => s.nodeWidths);
   const setNodeWidth = useBoardStore((s) => s.setNodeWidth);
+  const showAlert = useBoardStore((s) => s.showAlert);
+  const showConfirm = useBoardStore((s) => s.showConfirm);
   const importSessionData = useBoardStore((s) => s.importSessionData);
   const removeSession = useBoardStore((s) => s.removeSession);
   const resetAll = useBoardStore((s) => s.resetAll);
@@ -79,24 +81,24 @@ export function SettingsModal({
     URL.revokeObjectURL(url);
   };
 
-  // 選択された JSON を検証して新規セッションとして取り込む。不正な内容は alert で通知
+  // 選択された JSON を検証して新規セッションとして取り込む。不正な内容は自前モーダルで通知
   const importJson = async (file: File) => {
     try {
       await importSessionData(parseImport(await file.text()));
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "インポートに失敗しました");
+      void showAlert(err instanceof Error ? err.message : "インポートに失敗しました");
     }
   };
 
-  const remove = () => {
-    if (window.confirm("このセッションを削除しますか？この操作は取り消せません。")) {
+  const remove = async () => {
+    if (await showConfirm("このセッションを削除しますか？この操作は取り消せません。")) {
       void removeSession();
     }
   };
 
-  const reset = () => {
+  const reset = async () => {
     if (
-      window.confirm(
+      await showConfirm(
         "すべてのセッション・設定・保存データを削除して初期状態に戻しますか？この操作は取り消せません。",
       )
     ) {
@@ -199,7 +201,7 @@ export function SettingsModal({
           disabled={isDemoSession}
           title={isDemoSession ? "デモセッションは削除できません" : undefined}
           className="btn-ghost btn-sm w-fit text-sm text-danger"
-          onClick={remove}
+          onClick={() => void remove()}
         >
           セッションを削除
         </button>
@@ -213,7 +215,7 @@ export function SettingsModal({
         <button
           type="button"
           className="btn-ghost btn-sm w-fit text-sm text-danger"
-          onClick={reset}
+          onClick={() => void reset()}
         >
           完全リセット
         </button>
