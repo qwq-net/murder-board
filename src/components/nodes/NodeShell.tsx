@@ -1,4 +1,4 @@
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Handle, Position, useNodeId, type NodeProps } from "@xyflow/react";
 import {
   useEffect,
   useRef,
@@ -22,6 +22,8 @@ export const useNodeWidth = (kind: WidthKind): number =>
 // タイトルは blur で確定し、変更があったときだけ onTitleCommit が呼ばれる。
 // タイトルは既定で折り返して全文表示する。titleSingleLine はヘッダの高さを固定したい
 // ノード（スタック）だけが渡し、1 行に省略する。
+// 選択リングは親スタックも選択中なら表示しない。矩形選択でスタックごと選んだとき、
+// スタックだけを光らせるための見た目上の抑制で、選択状態そのものは変えない。
 // 使われ方: 各ノードコンポーネントが body だけを children として渡す前提。
 // 新しいノード種別を追加するときはこのシェルに body を載せる。
 export function NodeShell({
@@ -47,10 +49,15 @@ export function NodeShell({
   onTitleCommit: (title: string) => void;
   children: ReactNode;
 }) {
+  const id = useNodeId();
+  const parentSelected = useBoardStore((s) => {
+    const parentId = s.nodes.find((n) => n.id === id)?.parentId;
+    return parentId !== undefined && s.nodes.some((n) => n.id === parentId && n.selected === true);
+  });
   return (
     <div
       className={`relative rounded-sm border shadow-md ${frameClassName} ${
-        selected ? "ring-2 ring-accent" : ""
+        selected && !parentSelected ? "ring-2 ring-accent" : ""
       }`}
       style={frameStyle}
     >
