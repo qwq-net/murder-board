@@ -147,6 +147,18 @@ describe("parseImport", () => {
     });
   });
 
+  it("character ノードの色も往復する", () => {
+    const s = fixture();
+    s.nodes.push({
+      id: "n12",
+      type: "character",
+      position: { x: 0, y: 0 },
+      data: { title: "", entries: [], color: "teal" },
+    });
+    const imported = parseImport(serializeExport(s));
+    expect(imported.nodes.find((n) => n.type === "character")!.data.color).toBe("teal");
+  });
+
   it("timeline / list / stack のノード色は往復し、未知の色は未設定に落ちる", () => {
     const s = fixture();
     s.nodes.push(

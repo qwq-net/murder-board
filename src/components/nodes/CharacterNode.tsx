@@ -7,6 +7,7 @@ import {
   CommitInput,
   NodeRow,
   NodeShell,
+  nodeAccentStyle,
   useNodeWidth,
 } from "@/components/nodes/NodeShell";
 import { StyledText } from "@/components/nodes/StyledText";
@@ -66,17 +67,27 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
     updateNodeData(id, "character", { entries: data.entries.filter((e) => e.id !== entryId) });
 
   const width = useNodeWidth("character");
+  const accent = data.color
+    ? `var(--sticky-${data.color}-accent)`
+    : "var(--color-panel-character-accent)";
 
   return (
     <NodeShell
       selected={selected}
-      frameClassName="border-panel-character-accent/40 bg-bg-panel"
-      frameStyle={{ width }}
-      headerClassName="bg-panel-character-accent/15"
+      frameClassName="border-(--node-accent)/40 bg-bg-panel"
+      frameStyle={{ ...nodeAccentStyle(accent), width }}
+      headerClassName="bg-(--node-accent)/15"
       title={data.title}
       titlePlaceholder="登場人物"
       onTitleCommit={(title) => updateNodeData(id, "character", { title })}
     >
+      {selected && (
+        <ColorPalette
+          color={data.color}
+          defaultSwatch="var(--color-panel-character-accent)"
+          onPick={(color) => updateNodeData(id, "character", { color })}
+        />
+      )}
       <div className="p-1">
         {data.entries.map((entry) => (
           <NodeRow key={entry.id} onRemove={() => removeRow(entry.id)}>
@@ -111,7 +122,7 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
             />
           </NodeRow>
         ))}
-        <AddRowButton className="text-panel-character-accent" onClick={addRow} />
+        <AddRowButton className="text-(--node-accent)" onClick={addRow} />
       </div>
     </NodeShell>
   );

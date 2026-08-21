@@ -51,9 +51,10 @@ export type ListData = { title: string; entries: ListEntry[]; color?: StickyColo
 // 他ノードの本文中で完全一致の検索リンクに置き換わる
 export type KeywordData = { title: string; entries: ListEntry[]; color?: StickyColor };
 
-// 登場人物メモの 1 行。color がその人物の識別色で、付箋と同じ 6 色を使う
+// 登場人物メモの 1 行。color がその人物の識別色で、付箋と同じパレットを使う
 export type CharacterEntry = { id: string; text: string; color: StickyColor };
-export type CharacterData = { title: string; entries: CharacterEntry[] };
+// ノード自体の color の意味はタイムラインと同じで、未設定なら種別既定のアクセント色
+export type CharacterData = { title: string; entries: CharacterEntry[]; color?: StickyColor };
 
 // アクションログの 1 行。「from ▶ to」の 2 人と自由記述メモを持つ。
 // from/to は登場人物の名前をそのまま持ち、識別色・略称の解決は表示時に名前で行う。

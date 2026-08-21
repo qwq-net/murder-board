@@ -78,6 +78,7 @@ const characterDataSchema = z
   .object({
     title: z.string().catch(""),
     entries: z.array(z.unknown()).catch([]),
+    color: nodeColorSchema,
   })
   .catch({ title: "", entries: [] });
 
@@ -174,12 +175,12 @@ export function parseImport(json: string, now = Date.now()): Session {
       }
 
       if (type === "character") {
-        const { title, entries } = characterDataSchema.parse(data);
+        const { title, entries, color } = characterDataSchema.parse(data);
         const rows = entries.flatMap((row) => {
           const r = characterRowSchema.safeParse(row);
           return r.success ? [{ id: nanoid(), ...r.data }] : [];
         });
-        return { ...base, type: "character" as const, data: { title, entries: rows } };
+        return { ...base, type: "character" as const, data: { title, entries: rows, color } };
       }
 
       if (type === "stack") {
