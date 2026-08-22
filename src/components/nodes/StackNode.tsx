@@ -1,5 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
-import { ColorPalette, NodeShell, nodeAccentStyle } from "@/components/nodes/NodeShell";
+import { ColorPalette } from "@/components/nodes/ColorPalette";
+import { nodeAccentStyle } from "@/components/nodes/nodeMeta";
+import { NodeShell } from "@/components/nodes/NodeShell";
 import { useBoardStore } from "@/store";
 import type { StackNodeType } from "@/types/board";
 

@@ -2,15 +2,8 @@ import type { NodeProps } from "@xyflow/react";
 import { nanoid } from "nanoid";
 import { useState } from "react";
 import { StyledText } from "@/components/nodes/StyledText";
-import {
-  AddRowButton,
-  ColorPalette,
-  CommitInput,
-  NodeRow,
-  NodeShell,
-  nodeAccentStyle,
-  useNodeWidth,
-} from "@/components/nodes/NodeShell";
+import { AddRowButton, CommitInput, NodeRow } from "@/components/nodes/CommitInput";
+import { PanelNodeShell } from "@/components/nodes/PanelNodeShell";
 import { autoCompleteTime, sortTimelineEntries } from "@/lib/timeParser";
 import { useBoardStore } from "@/store";
 import type { TimelineEntry, TimelineNodeType } from "@/types/board";
@@ -19,7 +12,6 @@ import type { TimelineEntry, TimelineNodeType } from "@/types/board";
 // 確定のタイミングは blur。時刻を解釈できない行は末尾に並ぶ。空欄や自由記述がこれにあたる。
 // 配色は --node-accent 変数 1 本で決まり、data.color があれば付箋カラー、
 // 無ければタイムライン既定色になる。
-// レイアウトは仮。
 export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>) {
   const updateNodeData = useBoardStore((s) => s.updateNodeData);
   // 追加直後の行だけマウント時から編集で始めるための印
@@ -43,28 +35,15 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
   const removeRow = (entryId: string) =>
     updateNodeData(id, "timeline", { entries: data.entries.filter((e) => e.id !== entryId) });
 
-  const accent = data.color
-    ? `var(--sticky-${data.color}-accent)`
-    : "var(--color-panel-timeline-accent)";
-  const width = useNodeWidth("timeline");
-
   return (
-    <NodeShell
+    <PanelNodeShell
+      kind="timeline"
       selected={selected}
-      frameClassName="border-(--node-accent)/40 bg-bg-panel"
-      frameStyle={{ ...nodeAccentStyle(accent), width }}
-      headerClassName="bg-(--node-accent)/15"
+      color={data.color}
       title={data.title}
-      titlePlaceholder="タイムライン"
       onTitleCommit={(title) => updateNodeData(id, "timeline", { title })}
+      onColorPick={(color) => updateNodeData(id, "timeline", { color })}
     >
-      {selected && (
-        <ColorPalette
-          color={data.color}
-          defaultSwatch="var(--color-panel-timeline-accent)"
-          onPick={(color) => updateNodeData(id, "timeline", { color })}
-        />
-      )}
       <div className="p-1">
         {data.entries.map((entry) => (
           <NodeRow key={entry.id} onRemove={() => removeRow(entry.id)}>
@@ -87,6 +66,6 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
         ))}
         <AddRowButton className="text-(--node-accent)" onClick={addRow} />
       </div>
-    </NodeShell>
+    </PanelNodeShell>
   );
 }

@@ -2,49 +2,23 @@ import type { NodeProps } from "@xyflow/react";
 import { nanoid } from "nanoid";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { useShallow } from "zustand/react/shallow";
-import {
-  AddRowButton,
-  ColorPalette,
-  CommitInput,
-  NodeRow,
-  NodeShell,
-  nodeAccentStyle,
-  useNodeWidth,
-} from "@/components/nodes/NodeShell";
+import { AddRowButton, CommitInput, NodeRow } from "@/components/nodes/CommitInput";
+import { PanelNodeShell } from "@/components/nodes/PanelNodeShell";
 import { StyledText } from "@/components/nodes/StyledText";
+import { useCharacterEntries } from "@/components/nodes/useCharacterEntries";
 import { useBoardStore } from "@/store";
 import type { ActionEntry, ActionLogNodeType, StickyColor } from "@/types/board";
 
 // 選択肢になる登場人物。名前と識別色だけの表示用ビュー
 type CharacterChoice = { name: string; color: StickyColor };
 
-// 全登場人物メモの行を選択肢一覧として購読する。同名は先に登録された行だけを残す。
-// プリミティブ列へのエンコードの理由は StyledText の useStyleRules と同じで、
-// 名前・色の変更以外のノード更新では再レンダーさせない。
+// 全登場人物メモの行を選択肢一覧として購読する。同名は先に登録された行だけを残す
 const useCharacterChoices = (): CharacterChoice[] => {
-  const encoded = useBoardStore(
-    useShallow((s) =>
-      s.nodes.flatMap((n) =>
-        n.type === "character"
-          ? n.data.entries.filter((e) => e.text !== "").map((e) => `${e.color}:${e.text}`)
-          : [],
-      ),
-    ),
-  );
+  const entries = useCharacterEntries();
   return useMemo(() => {
     const seen = new Set<string>();
-    const choices: CharacterChoice[] = [];
-    for (const pair of encoded) {
-      const sep = pair.indexOf(":");
-      const name = pair.slice(sep + 1);
-      if (seen.has(name)) continue;
-      seen.add(name);
-      // SAFETY: encoded の要素は上の selector が `${StickyColor}:` 形式で組み立てている
-      choices.push({ name, color: pair.slice(0, sep) as StickyColor });
-    }
-    return choices;
-  }, [encoded]);
+    return entries.filter((e) => !seen.has(e.name) && seen.add(e.name));
+  }, [entries]);
 };
 
 // 登場人物チップ。識別色ドット + 名前の頭 2 文字で、クリックでチップの画面上の
@@ -180,28 +154,15 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
     />
   );
 
-  const accent = data.color
-    ? `var(--sticky-${data.color}-accent)`
-    : "var(--color-panel-actionlog-accent)";
-  const width = useNodeWidth("actionlog");
-
   return (
-    <NodeShell
+    <PanelNodeShell
+      kind="actionlog"
       selected={selected}
-      frameClassName="border-(--node-accent)/40 bg-bg-panel"
-      frameStyle={{ ...nodeAccentStyle(accent), width }}
-      headerClassName="bg-(--node-accent)/15"
+      color={data.color}
       title={data.title}
-      titlePlaceholder="行動ログ"
       onTitleCommit={(title) => updateNodeData(id, "actionlog", { title })}
+      onColorPick={(color) => updateNodeData(id, "actionlog", { color })}
     >
-      {selected && (
-        <ColorPalette
-          color={data.color}
-          defaultSwatch="var(--color-panel-actionlog-accent)"
-          onPick={(color) => updateNodeData(id, "actionlog", { color })}
-        />
-      )}
       <div className="p-1">
         {data.entries.map((entry) => (
           <NodeRow key={entry.id} onRemove={() => removeRow(entry.id)}>
@@ -231,6 +192,6 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
           />,
           document.body,
         )}
-    </NodeShell>
+    </PanelNodeShell>
   );
 }

@@ -2,15 +2,8 @@ import type { NodeProps } from "@xyflow/react";
 import { nanoid } from "nanoid";
 import { useState } from "react";
 import { StyledText } from "@/components/nodes/StyledText";
-import {
-  AddRowButton,
-  ColorPalette,
-  CommitInput,
-  NodeRow,
-  NodeShell,
-  nodeAccentStyle,
-  useNodeWidth,
-} from "@/components/nodes/NodeShell";
+import { AddRowButton, CommitInput, NodeRow } from "@/components/nodes/CommitInput";
+import { PanelNodeShell } from "@/components/nodes/PanelNodeShell";
 import { useBoardStore } from "@/store";
 import type { ListNodeType } from "@/types/board";
 
@@ -37,28 +30,15 @@ export function ListNode({ id, data, selected }: NodeProps<ListNodeType>) {
   const removeRow = (entryId: string) =>
     updateNodeData(id, "list", { entries: data.entries.filter((e) => e.id !== entryId) });
 
-  const accent = data.color
-    ? `var(--sticky-${data.color}-accent)`
-    : "var(--color-panel-list-accent)";
-  const width = useNodeWidth("list");
-
   return (
-    <NodeShell
+    <PanelNodeShell
+      kind="list"
       selected={selected}
-      frameClassName="border-(--node-accent)/40 bg-bg-panel"
-      frameStyle={{ ...nodeAccentStyle(accent), width }}
-      headerClassName="bg-(--node-accent)/15"
+      color={data.color}
       title={data.title}
-      titlePlaceholder="リスト"
       onTitleCommit={(title) => updateNodeData(id, "list", { title })}
+      onColorPick={(color) => updateNodeData(id, "list", { color })}
     >
-      {selected && (
-        <ColorPalette
-          color={data.color}
-          defaultSwatch="var(--color-panel-list-accent)"
-          onPick={(color) => updateNodeData(id, "list", { color })}
-        />
-      )}
       <div className="p-1">
         {data.entries.map((entry) => (
           <NodeRow
@@ -78,6 +58,6 @@ export function ListNode({ id, data, selected }: NodeProps<ListNodeType>) {
         ))}
         <AddRowButton className="text-(--node-accent)" onClick={addRow} />
       </div>
-    </NodeShell>
+    </PanelNodeShell>
   );
 }

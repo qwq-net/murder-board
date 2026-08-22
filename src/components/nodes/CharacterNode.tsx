@@ -1,15 +1,9 @@
 import type { NodeProps } from "@xyflow/react";
 import { nanoid } from "nanoid";
 import { useEffect, useState } from "react";
-import {
-  AddRowButton,
-  ColorPalette,
-  CommitInput,
-  NodeRow,
-  NodeShell,
-  nodeAccentStyle,
-  useNodeWidth,
-} from "@/components/nodes/NodeShell";
+import { ColorPalette } from "@/components/nodes/ColorPalette";
+import { AddRowButton, CommitInput, NodeRow } from "@/components/nodes/CommitInput";
+import { PanelNodeShell } from "@/components/nodes/PanelNodeShell";
 import { StyledText } from "@/components/nodes/StyledText";
 import { useBoardStore } from "@/store";
 import {
@@ -66,28 +60,15 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
   const removeRow = (entryId: string) =>
     updateNodeData(id, "character", { entries: data.entries.filter((e) => e.id !== entryId) });
 
-  const width = useNodeWidth("character");
-  const accent = data.color
-    ? `var(--sticky-${data.color}-accent)`
-    : "var(--color-panel-character-accent)";
-
   return (
-    <NodeShell
+    <PanelNodeShell
+      kind="character"
       selected={selected}
-      frameClassName="border-(--node-accent)/40 bg-bg-panel"
-      frameStyle={{ ...nodeAccentStyle(accent), width }}
-      headerClassName="bg-(--node-accent)/15"
+      color={data.color}
       title={data.title}
-      titlePlaceholder="登場人物"
       onTitleCommit={(title) => updateNodeData(id, "character", { title })}
+      onColorPick={(color) => updateNodeData(id, "character", { color })}
     >
-      {selected && (
-        <ColorPalette
-          color={data.color}
-          defaultSwatch="var(--color-panel-character-accent)"
-          onPick={(color) => updateNodeData(id, "character", { color })}
-        />
-      )}
       <div className="p-1">
         {data.entries.map((entry) => (
           <NodeRow key={entry.id} onRemove={() => removeRow(entry.id)}>
@@ -125,6 +106,6 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
         ))}
         <AddRowButton className="text-(--node-accent)" onClick={addRow} />
       </div>
-    </NodeShell>
+    </PanelNodeShell>
   );
 }

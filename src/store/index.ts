@@ -5,15 +5,7 @@ import { temporal } from "zundo";
 import { debounce, throttleLeading } from "@/lib/debounce";
 import { buildDemoSession, DEMO_VERSION } from "@/lib/demoSession";
 import * as idb from "@/lib/idb";
-import {
-  clampNodeWidth,
-  DEFAULT_NODE_WIDTHS,
-  loadNodeWidths,
-  NODE_WIDTHS_KEY,
-  saveNodeWidths,
-  type NodeWidths,
-  type WidthKind,
-} from "@/lib/nodeWidths";
+import { DEFAULT_NODE_WIDTHS, NODE_WIDTHS_KEY } from "@/lib/nodeWidths";
 import {
   applyStackDrops,
   relayoutOnDimensionChanges,
@@ -21,6 +13,7 @@ import {
   stackEmptyWidth,
 } from "@/lib/stackLayout";
 import { THEME_KEY } from "@/lib/theme";
+import { createUiSlice, type UiSlice } from "@/store/uiSlice";
 import {
   DEFAULT_NODE_COLORS,
   NODE_KIND_LABELS,
@@ -35,37 +28,11 @@ const LAST_SESSION_KEY = "murder-memo2-last-session";
 // ノード種別からその data 型を引く。updateNodeData の patch を種別ごとに型付けるために使う
 type DataOf<K extends BoardNodeKind> = Extract<BoardNode, { type: K }>["data"];
 
-type Store = {
+type Store = UiSlice & {
   loaded: boolean;
   sessions: SessionMeta[];
   currentId: string | null;
   nodes: BoardNode[];
-  // 検索オーバーレイの状態。null なら閉、文字列なら開でその値が検索欄の初期値。
-  // 本文中の検索リンクが「その文言入りで検索を開く」ために文字列を持つ
-  searchSeed: string | null;
-  openSearch: (seed: string) => void;
-  closeSearch: () => void;
-
-  // 直近操作の表示用ログ。揮発状態で、セッションにも Undo 履歴にも含めない。
-  // 各エントリは一意の id を持ち、UI 側が表示済みの判定に使う
-  opsLog: { id: number; message: string }[];
-  // 操作ログへ 1 件追記する。保持は直近 8 件まで
-  logOp: (message: string) => void;
-
-  // ブラウザ標準の alert/confirm の置き換えに使う自前ダイアログの状態。null なら閉。
-  // resolve はダイアログを出した Promise を解決するためのもので、closeDialog だけが呼ぶ
-  dialog: { message: string; kind: "alert" | "confirm"; resolve: (ok: boolean) => void } | null;
-  // メッセージを自前モーダルで表示し、閉じられたら解決する。多重に開いた場合は後勝ち
-  showAlert: (message: string) => Promise<void>;
-  // 確認ダイアログを表示し、実行なら true・キャンセルなら false で解決する
-  showConfirm: (message: string) => Promise<boolean>;
-  // 開いているダイアログを閉じて resolve を呼ぶ。alert では ok の値は使われない
-  closeDialog: (ok: boolean) => void;
-
-  // ノード種別ごとのデフォルト横幅。localStorage と同期するアプリ設定でセッションに属さない
-  nodeWidths: NodeWidths;
-  // 種別の横幅を更新して永続化する。範囲外は丸め、undefined でその種別を既定値へ戻す
-  setNodeWidth: (kind: WidthKind, width: number | undefined) => void;
 
   // IDB からセッション一覧を読み、前回のセッションを開く。前回のセッションが無ければ新規作成する。
   // 多重呼び出しは無視。
@@ -119,50 +86,14 @@ function toMeta(session: Session): SessionMeta {
 
 let initStarted = false;
 
-// 操作ログの採番。表示済み判定に使うだけの連番で、永続化しない
-let opSeq = 0;
-
 export const useBoardStore = create<Store>()(
   temporal(
     (set, get) => ({
+      ...createUiSlice(set, get),
       loaded: false,
       sessions: [],
       currentId: null,
       nodes: [],
-      searchSeed: null,
-      openSearch: (seed) => set({ searchSeed: seed }),
-      closeSearch: () => set({ searchSeed: null }),
-
-      opsLog: [],
-      logOp: (message) => set({ opsLog: [...get().opsLog, { id: ++opSeq, message }].slice(-8) }),
-
-      dialog: null,
-      showAlert: (message) =>
-        new Promise((resolve) => {
-          set({ dialog: { message, kind: "alert", resolve: () => resolve() } });
-        }),
-      showConfirm: (message) =>
-        new Promise((resolve) => {
-          set({ dialog: { message, kind: "confirm", resolve } });
-        }),
-      closeDialog: (ok) => {
-        const { dialog } = get();
-        if (!dialog) return;
-        set({ dialog: null });
-        dialog.resolve(ok);
-      },
-
-      nodeWidths: loadNodeWidths(),
-      setNodeWidth: (kind, width) => {
-        const next = { ...get().nodeWidths };
-        if (width === undefined || !Number.isFinite(width)) {
-          delete next[kind];
-        } else {
-          next[kind] = clampNodeWidth(width);
-        }
-        saveNodeWidths(next);
-        set({ nodeWidths: next });
-      },
 
       init: async () => {
         if (initStarted) return;

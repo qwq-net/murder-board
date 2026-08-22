@@ -1,15 +1,8 @@
 import type { NodeProps } from "@xyflow/react";
 import { nanoid } from "nanoid";
 import { useState } from "react";
-import {
-  AddRowButton,
-  ColorPalette,
-  CommitInput,
-  NodeRow,
-  NodeShell,
-  nodeAccentStyle,
-  useNodeWidth,
-} from "@/components/nodes/NodeShell";
+import { AddRowButton, CommitInput, NodeRow } from "@/components/nodes/CommitInput";
+import { PanelNodeShell } from "@/components/nodes/PanelNodeShell";
 import { StyledText } from "@/components/nodes/StyledText";
 import { useBoardStore } from "@/store";
 import type { KeywordNodeType } from "@/types/board";
@@ -38,28 +31,15 @@ export function KeywordNode({ id, data, selected }: NodeProps<KeywordNodeType>) 
   const removeRow = (entryId: string) =>
     updateNodeData(id, "keyword", { entries: data.entries.filter((e) => e.id !== entryId) });
 
-  const accent = data.color
-    ? `var(--sticky-${data.color}-accent)`
-    : "var(--color-panel-keyword-accent)";
-  const width = useNodeWidth("keyword");
-
   return (
-    <NodeShell
+    <PanelNodeShell
+      kind="keyword"
       selected={selected}
-      frameClassName="border-(--node-accent)/40 bg-bg-panel"
-      frameStyle={{ ...nodeAccentStyle(accent), width }}
-      headerClassName="bg-(--node-accent)/15"
+      color={data.color}
       title={data.title}
-      titlePlaceholder="キーワード"
       onTitleCommit={(title) => updateNodeData(id, "keyword", { title })}
+      onColorPick={(color) => updateNodeData(id, "keyword", { color })}
     >
-      {selected && (
-        <ColorPalette
-          color={data.color}
-          defaultSwatch="var(--color-panel-keyword-accent)"
-          onPick={(color) => updateNodeData(id, "keyword", { color })}
-        />
-      )}
       <div className="p-1">
         {data.entries.map((entry) => (
           <NodeRow
@@ -79,6 +59,6 @@ export function KeywordNode({ id, data, selected }: NodeProps<KeywordNodeType>) 
         ))}
         <AddRowButton className="text-(--node-accent)" onClick={addRow} />
       </div>
-    </NodeShell>
+    </PanelNodeShell>
   );
 }

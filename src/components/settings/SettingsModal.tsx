@@ -192,7 +192,7 @@ export function SettingsModal({
     session: (
       <>
         <Description>
-          現在のセッションのすべての付箋と接続線を削除します。セッション自体は残ります。
+          現在のセッションのすべてのメモを削除します。セッション自体は残ります。
         </Description>
         <PendingButton label="初期化する" danger />
         <Description>現在のセッションそのものを削除します。この操作は取り消せません。</Description>

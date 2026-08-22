@@ -1,7 +1,9 @@
 import type { NodeProps } from "@xyflow/react";
 import { useEffect, useRef, useState } from "react";
 import { StyledText } from "@/components/nodes/StyledText";
-import { ColorPalette, NodeShell, useNodeWidth } from "@/components/nodes/NodeShell";
+import { ColorPalette } from "@/components/nodes/ColorPalette";
+import { useNodeWidth } from "@/components/nodes/nodeMeta";
+import { NodeShell } from "@/components/nodes/NodeShell";
 import { useBoardStore } from "@/store";
 import { DEFAULT_NODE_COLORS, type StickyColor, type StickyNodeType } from "@/types/board";
 
