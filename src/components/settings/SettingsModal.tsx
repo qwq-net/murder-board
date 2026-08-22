@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { parseImport, serializeExport } from "@/lib/exportImport";
+import { serializeMarkdown } from "@/lib/exportMarkdown";
 import { DEFAULT_NODE_WIDTHS, MAX_NODE_WIDTH, MIN_NODE_WIDTH, WIDTH_KINDS } from "@/lib/nodeWidths";
 import { THEMES, type Theme } from "@/lib/theme";
 import { useBoardStore } from "@/store";
@@ -26,22 +27,8 @@ function Description({ children }: { children: React.ReactNode }) {
   return <p className="text-sm leading-relaxed text-text-secondary">{children}</p>;
 }
 
-// 未実装の操作ボタン。押せない状態で表示だけ行う
-function PendingButton({ label, danger }: { label: string; danger?: boolean }) {
-  return (
-    <button
-      type="button"
-      disabled
-      title="未実装"
-      className={`btn-ghost btn-sm w-fit text-sm ${danger ? "text-danger" : ""}`}
-    >
-      {label}
-    </button>
-  );
-}
-
 // 設定モーダル。左のメニューで項目を選び、右にその内容を表示する。
-// テーマ選択は onSetTheme で即時反映する。未実装の操作は PendingButton で表示のみ。
+// テーマ選択は onSetTheme で即時反映する。
 // Escape・背景クリック・× ボタンで onClose を呼ぶ。開閉のたびにマウントし直す前提。
 export function SettingsModal({
   theme,
@@ -58,6 +45,7 @@ export function SettingsModal({
   const showAlert = useBoardStore((s) => s.showAlert);
   const showConfirm = useBoardStore((s) => s.showConfirm);
   const importSessionData = useBoardStore((s) => s.importSessionData);
+  const clearNodes = useBoardStore((s) => s.clearNodes);
   const removeSession = useBoardStore((s) => s.removeSession);
   const resetAll = useBoardStore((s) => s.resetAll);
   const isDemoSession = useBoardStore(
@@ -87,6 +75,24 @@ export function SettingsModal({
       await importSessionData(parseImport(await file.text()));
     } catch (err) {
       void showAlert(err instanceof Error ? err.message : "インポートに失敗しました");
+    }
+  };
+
+  // 全メモを Markdown テキストとしてクリップボードへコピーし、結果を自前モーダルで通知する
+  const copyMarkdown = async () => {
+    const s = useBoardStore.getState();
+    const name = s.sessions.find((m) => m.id === s.currentId)?.name ?? "";
+    try {
+      await navigator.clipboard.writeText(serializeMarkdown(name, s.nodes));
+      void showAlert("全メモを Markdown としてコピーしました");
+    } catch {
+      void showAlert("クリップボードへのコピーに失敗しました");
+    }
+  };
+
+  const clear = async () => {
+    if (await showConfirm("現在のセッションのすべてのメモを削除しますか？")) {
+      clearNodes();
     }
   };
 
@@ -166,7 +172,13 @@ export function SettingsModal({
     export: (
       <>
         <Description>メモ内容を Markdown テキストとしてクリップボードにコピーします。</Description>
-        <PendingButton label="全メモをコピー" />
+        <button
+          type="button"
+          className="btn-ghost btn-sm w-fit text-sm"
+          onClick={() => void copyMarkdown()}
+        >
+          全メモをコピー
+        </button>
       </>
     ),
     backup: (
@@ -194,7 +206,13 @@ export function SettingsModal({
         <Description>
           現在のセッションのすべてのメモを削除します。セッション自体は残ります。
         </Description>
-        <PendingButton label="初期化する" danger />
+        <button
+          type="button"
+          className="btn-ghost btn-sm w-fit text-sm text-danger"
+          onClick={() => void clear()}
+        >
+          初期化する
+        </button>
         <Description>現在のセッションそのものを削除します。この操作は取り消せません。</Description>
         <button
           type="button"

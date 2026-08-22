@@ -51,6 +51,9 @@ type Store = UiSlice & {
   dissolveStack: (id: string) => void;
   // 指定 id かつ指定種別のノードの data を部分更新する。id が存在しても種別が一致しなければ何もしない。
   updateNodeData: <K extends BoardNodeKind>(id: string, type: K, patch: Partial<DataOf<K>>) => void;
+  // 現在のセッションのメモを全削除する。セッション自体は残り、Undo で戻せる。
+  // 既に空なら履歴も操作ログも汚さず何もしない。
+  clearNodes: () => void;
 
   createSession: () => Promise<void>;
   // 未保存の変更を flush してから切り替える。切替後は Undo 履歴をクリアする。
@@ -267,6 +270,12 @@ export const useBoardStore = create<Store>()(
           }),
         });
         get().logOp(`${NODE_KIND_LABELS[type]}を編集`);
+      },
+
+      clearNodes: () => {
+        if (get().nodes.length === 0) return;
+        set({ nodes: [] });
+        get().logOp("すべてのメモを削除");
       },
 
       createSession: async () => {

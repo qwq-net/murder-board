@@ -35,8 +35,11 @@ export function tokenizeQuery(query: string): string[] {
   return query.toLowerCase().split(/\s+/).filter(Boolean);
 }
 
-// ノードの本文をスニペット・検索用の複数行テキストに平坦化する
-function nodeBody(node: BoardNode): string {
+// ノードの本文を複数行テキストに平坦化する。sticky は本文そのまま、行を持つ種別は
+// 1 行 1 エントリで、timeline は「時刻 テキスト」・actionlog は「from ▶ to テキスト」形式。
+// 空行の除去はしない。stack は本文を持たないため常に空文字。
+// 使われ方: 検索・スニペットのほか Markdown 化にも使われる、表示向け平坦化の共通形。
+export function nodeBody(node: BoardNode): string {
   switch (node.type) {
     case "sticky":
       return node.data.text;
