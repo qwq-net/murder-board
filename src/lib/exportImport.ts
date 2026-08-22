@@ -3,8 +3,8 @@ import { z } from "zod";
 import { STACK_EMPTY_H, STACK_EMPTY_W } from "@/lib/stackLayout";
 import { STICKY_COLORS, type BoardNode, type Session } from "@/types/board";
 
-export const EXPORT_APP = "murder-memo2";
-export const EXPORT_VERSION = 1;
+const EXPORT_APP = "murder-memo2";
+const EXPORT_VERSION = 1;
 
 // セッションをエクスポート用の整形済み JSON 文字列にする。
 export function serializeExport(session: Session): string {
@@ -45,7 +45,9 @@ const timelineRowSchema = z.object({
 // ノード単位の色は任意フィールド。未知の値は「色未設定 = 種別既定色」へ落とす
 const nodeColorSchema = z.enum(STICKY_COLORS).optional().catch(undefined);
 
-const timelineDataSchema = z
+// 行を積む種別（timeline / list / keyword / character / actionlog）共通の外形。
+// 行の形の違いは rows の解釈側が行スキーマで吸収する
+const panelDataSchema = z
   .object({
     title: z.string().catch(""),
     entries: z.array(z.unknown()).catch([]),
@@ -54,14 +56,6 @@ const timelineDataSchema = z
   .catch({ title: "", entries: [] });
 
 const listRowSchema = z.object({ text: z.string().catch("") });
-
-const listDataSchema = z
-  .object({
-    title: z.string().catch(""),
-    entries: z.array(z.unknown()).catch([]),
-    color: nodeColorSchema,
-  })
-  .catch({ title: "", entries: [] });
 
 const characterRowSchema = z.object({
   text: z.string().catch(""),
@@ -73,14 +67,6 @@ const actionRowSchema = z.object({
   to: z.string().catch(""),
   text: z.string().catch(""),
 });
-
-const characterDataSchema = z
-  .object({
-    title: z.string().catch(""),
-    entries: z.array(z.unknown()).catch([]),
-    color: nodeColorSchema,
-  })
-  .catch({ title: "", entries: [] });
 
 const stickyDataSchema = z
   .object({
@@ -148,7 +134,7 @@ export function parseImport(json: string, now = Date.now()): Session {
           : { id: newId, position };
 
       if (type === "timeline") {
-        const { title, entries, color } = timelineDataSchema.parse(data);
+        const { title, entries, color } = panelDataSchema.parse(data);
         const rows = entries.flatMap((row) => {
           const r = timelineRowSchema.safeParse(row);
           return r.success ? [{ id: nanoid(), ...r.data }] : [];
@@ -157,7 +143,7 @@ export function parseImport(json: string, now = Date.now()): Session {
       }
 
       if (type === "list" || type === "keyword") {
-        const { title, entries, color } = listDataSchema.parse(data);
+        const { title, entries, color } = panelDataSchema.parse(data);
         const rows = entries.flatMap((row) => {
           const r = listRowSchema.safeParse(row);
           return r.success ? [{ id: nanoid(), text: r.data.text }] : [];
@@ -166,7 +152,7 @@ export function parseImport(json: string, now = Date.now()): Session {
       }
 
       if (type === "actionlog") {
-        const { title, entries, color } = listDataSchema.parse(data);
+        const { title, entries, color } = panelDataSchema.parse(data);
         const rows = entries.flatMap((row) => {
           const r = actionRowSchema.safeParse(row);
           return r.success ? [{ id: nanoid(), ...r.data }] : [];
@@ -175,7 +161,7 @@ export function parseImport(json: string, now = Date.now()): Session {
       }
 
       if (type === "character") {
-        const { title, entries, color } = characterDataSchema.parse(data);
+        const { title, entries, color } = panelDataSchema.parse(data);
         const rows = entries.flatMap((row) => {
           const r = characterRowSchema.safeParse(row);
           return r.success ? [{ id: nanoid(), ...r.data }] : [];

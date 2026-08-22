@@ -13,7 +13,7 @@ import {
   type CharacterNodeType,
 } from "@/types/board";
 
-// 付箋 6 色の中で次の色を返す。末尾の次は先頭に戻る
+// 付箋パレットの中で次の色を返す。末尾の次は先頭に戻る
 const nextColor = (c: CharacterEntry["color"]) =>
   STICKY_COLORS[(STICKY_COLORS.indexOf(c) + 1) % STICKY_COLORS.length]!;
 

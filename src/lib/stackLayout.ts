@@ -135,11 +135,6 @@ export function applyStackDrops(
   return next;
 }
 
-// 1 ノードだけのドラッグ終了を applyStackDrops に委譲する。挙動はそちらの契約に従う。
-export function applyStackDrop(nodes: BoardNode[], nodeId: string): BoardNode[] | null {
-  return applyStackDrops(nodes, [nodeId]);
-}
-
 // changes にスタックの子のサイズ変化（type: "dimensions"）が含まれていたら、その親
 // スタックを詰め直した nodes を返す。テキストの折り返しなどで子の高さが変わっても、
 // ドラッグを待たずに重なりを解消するためのもの。対象が無ければ nodes をそのまま返す。

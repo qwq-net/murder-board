@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentPropsWithoutRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 // ダブルクリックで編集に入るテキスト。通常は表示テキストで、その領域はノードの
 // ドラッグや選択にそのまま使える。編集中は blur / Enter で確定して表示に戻り、
@@ -18,7 +18,6 @@ export function CommitInput({
   className = "",
   placeholder,
   renderText,
-  ...rest
 }: {
   value: string;
   onCommit: (value: string) => void;
@@ -28,10 +27,7 @@ export function CommitInput({
   className?: string;
   placeholder?: string;
   renderText?: (text: string) => ReactNode;
-} & Omit<
-  ComponentPropsWithoutRef<"textarea">,
-  "value" | "onChange" | "onBlur" | "onKeyDown" | "className" | "placeholder" | "rows"
->) {
+}) {
   const [editing, setEditing] = useState(defaultEditing);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -64,7 +60,6 @@ export function CommitInput({
   }
   return (
     <textarea
-      {...rest}
       ref={inputRef}
       rows={1}
       className={`nodrag field-sizing-content resize-none break-words ${className}`}

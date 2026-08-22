@@ -7,7 +7,7 @@ import type { WidthKind } from "@/lib/nodeWidths";
 import { NODE_KIND_LABELS, type StickyColor } from "@/types/board";
 
 // 行を積むパネル系のノード種別
-export type PanelKind = Exclude<WidthKind, "sticky">;
+type PanelKind = Exclude<WidthKind, "sticky">;
 
 // パネル系ノード共通の外枠。NodeShell に加えて、種別から決まる定型をまとめて持つ。
 // 配色は --node-accent 変数 1 本で決まり、color があれば付箋カラー、

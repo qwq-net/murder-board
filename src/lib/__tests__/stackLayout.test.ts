@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { NodeChange } from "@xyflow/react";
 import {
-  applyStackDrop,
   applyStackDrops,
   relayoutOnDimensionChanges,
   relayoutStack,
@@ -94,13 +93,13 @@ describe("relayoutStack", () => {
   });
 });
 
-describe("applyStackDrop", () => {
+describe("applyStackDrops: 単体ドロップ", () => {
   it("スタックに重ねた通常ノードが子になり相対座標へ変わる", () => {
     const nodes = [
       stack("st", { x: 100, y: 100 }, { width: 200, height: 300 }),
       sticky("a", { x: 150, y: 150 }, { measured: { width: 100, height: 50 } }),
     ];
-    const result = applyStackDrop(nodes, "a")!;
+    const result = applyStackDrops(nodes, ["a"])!;
     const a = byId(result, "a");
     expect(a.parentId).toBe("st");
     expect(a.position.x).toBe(STACK_PAD);
@@ -120,7 +119,7 @@ describe("applyStackDrop", () => {
         { parentId: "st", measured: { width: 100, height: 50 } },
       ),
     ];
-    const result = applyStackDrop(nodes, "a")!;
+    const result = applyStackDrops(nodes, ["a"])!;
     const a = byId(result, "a");
     expect(a.parentId).toBeUndefined();
     expect(a.position).toEqual({ x: 1000, y: 1000 });
@@ -147,7 +146,7 @@ describe("applyStackDrop", () => {
     const dragged = nodes.map((n) =>
       n.id === "a" ? { ...n, position: { x: STACK_PAD, y: y1 + 200 } } : n,
     );
-    const result = applyStackDrop(dragged, "a")!;
+    const result = applyStackDrops(dragged, ["a"])!;
     expect(byId(result, "b").position.y).toBe(y1);
     expect(byId(result, "a").position.y).toBe(y1 + 50 + STACK_GAP);
   });
@@ -157,7 +156,7 @@ describe("applyStackDrop", () => {
       stack("st", { x: 0, y: 0 }, { width: 200, height: 300 }),
       sticky("a", { x: 900, y: 900 }, { measured: { width: 100, height: 50 } }),
     ];
-    expect(applyStackDrop(nodes, "a")).toBeNull();
+    expect(applyStackDrops(nodes, ["a"])).toBeNull();
   });
 
   it("スタック自身のドラッグは null を返す", () => {
@@ -165,7 +164,7 @@ describe("applyStackDrop", () => {
       stack("st", { x: 0, y: 0 }, { width: 200, height: 300 }),
       stack("st2", { x: 10, y: 10 }),
     ];
-    expect(applyStackDrop(nodes, "st2")).toBeNull();
+    expect(applyStackDrops(nodes, ["st2"])).toBeNull();
   });
 });
 
