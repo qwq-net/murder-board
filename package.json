@@ -11,13 +11,13 @@
     "lint": "oxlint",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "check": "npm run lint && npm run fmt:check && npm run typecheck"
+    "check": "npm run lint && npm run fmt:check && npm run typecheck && npm run test"
   },
   "dependencies": {
     "@xyflow/react": "^12.8.2",
     "idb": "^8.0.3",
-    "lucide-react": "^1.31.0",
-    "nanoid": "^5.1.7",
+    "lucide-react": "^1.33.0",
+    "nanoid": "^6.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "zod": "^4.4.3",
@@ -25,17 +25,17 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@oxlint/plugins": "^1.78.0",
+    "@oxlint/plugins": "^1.79.0",
     "@tailwindcss/vite": "^4.1.18",
-    "@types/node": "^24.10.1",
+    "@types/node": "^26.2.0",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
-    "oxfmt": "^0.63.0",
-    "oxlint": "^1.78.0",
+    "@vitejs/plugin-react": "^6.1.0",
+    "oxfmt": "^0.64.0",
+    "oxlint": "^1.79.0",
     "tailwindcss": "^4.1.18",
-    "typescript": "^6.0.3",
-    "vite": "^7.2.4",
-    "vitest": "^4.1.0"
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
   }
 }

@@ -37,7 +37,7 @@ export function relayoutStack(
 
   const children = nodes
     .filter((n) => n.parentId === stackId)
-    .sort((a, b) => a.position.y - b.position.y);
+    .toSorted((a, b) => a.position.y - b.position.y);
 
   let y = STACK_HEADER_H + STACK_PAD;
   let maxW = 0;

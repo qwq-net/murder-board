@@ -3,6 +3,10 @@ import { NODE_KIND_LABELS, type BoardNode } from "@/types/board";
 import { buildDemoSession, DEMO_VERSION } from "../demoSession";
 import { parseImport, serializeExport } from "../exportImport";
 
+// 行 ID は parseImport が再採番するため、ID を除いた内容で一致を確認するための整形
+const dataWithoutIds = (data: BoardNode["data"]): string =>
+  JSON.stringify(data, (key, value) => (key === "id" ? undefined : value));
+
 describe("buildDemoSession", () => {
   it("全ノード種別を含む", () => {
     const session = buildDemoSession();
@@ -23,12 +27,9 @@ describe("buildDemoSession", () => {
     expect(imported.isDemo).toBeUndefined();
     expect(imported.nodes).toHaveLength(session.nodes.length);
 
-    // 行 ID は parseImport が再採番するため、ID を除いた内容で一致を確認する。
     // parseImport はスタックを配列の先頭へ寄せるため、ノードの並びは無視してソート比較する
-    const dataWithoutIds = (data: BoardNode["data"]): string =>
-      JSON.stringify(data, (key, value) => (key === "id" ? undefined : value));
-    expect(imported.nodes.map((n) => dataWithoutIds(n.data)).sort()).toEqual(
-      session.nodes.map((n) => dataWithoutIds(n.data)).sort(),
+    expect(imported.nodes.map((n) => dataWithoutIds(n.data)).toSorted()).toEqual(
+      session.nodes.map((n) => dataWithoutIds(n.data)).toSorted(),
     );
   });
 });

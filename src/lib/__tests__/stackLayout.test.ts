@@ -191,13 +191,13 @@ describe("applyStackDrops", () => {
   });
 });
 
-describe("relayoutOnDimensionChanges", () => {
-  const dims = (id: string): NodeChange<BoardNode> => ({
-    id,
-    type: "dimensions",
-    dimensions: { width: 100, height: 90 },
-  });
+const dims = (id: string): NodeChange<BoardNode> => ({
+  id,
+  type: "dimensions",
+  dimensions: { width: 100, height: 90 },
+});
 
+describe("relayoutOnDimensionChanges", () => {
   it("サイズが変わった子を持つスタックを詰め直す", () => {
     const y1 = STACK_HEADER_H + STACK_PAD;
     const nodes = [

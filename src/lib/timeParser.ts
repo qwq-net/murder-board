@@ -42,7 +42,7 @@ export function parseEventTime(input: string): number | undefined {
 // タイムラインの行を時刻の昇順に並べ替えて返す。元配列は変更しない。
 // 空欄・自由記述のような時刻を解釈できない行は末尾に、互いの元の順序を保って並ぶ。
 export function sortTimelineEntries(entries: TimelineEntry[]): TimelineEntry[] {
-  return [...entries].sort(
+  return entries.toSorted(
     (a, b) => (parseEventTime(a.time) ?? Infinity) - (parseEventTime(b.time) ?? Infinity),
   );
 }

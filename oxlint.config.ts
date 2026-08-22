@@ -16,7 +16,13 @@ export default defineConfig({
     "tools/oxlint/anti-slop/**",
   ],
   jsPlugins: [{ name: "anti-slop", specifier: "./tools/oxlint/anti-slop/index.ts" }],
+  categories: {
+    suspicious: "error",
+    perf: "error",
+  },
   rules: {
+    // イミュータブル志向のコードベースなので map 内の spread は意図的。効率より一貫性を取る
+    "oxc/no-map-spread": "off",
     "anti-slop/no-chained-type-assertions": "error",
     "anti-slop/no-conditional-empty-object-spread": "error",
     "anti-slop/no-known-value-widening": "error",

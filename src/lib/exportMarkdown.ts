@@ -29,7 +29,7 @@ export function serializeMarkdown(name: string, nodes: BoardNode[]): string {
     if (node.type === "stack") {
       const children = nodes
         .filter((c) => c.parentId === node.id)
-        .sort((a, b) => a.position.y - b.position.y);
+        .toSorted((a, b) => a.position.y - b.position.y);
       sections.push(...children.map((c) => nodeSection(c, 3)));
     }
   }

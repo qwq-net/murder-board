@@ -11,7 +11,7 @@ export type TextRun<R> = { text: string; rule?: R };
 // - 一致済みの区間は再走査しない。key 同士の部分的な重なりは先に一致した方が取る
 // - 空の key は無視する。text が空か有効なルールが無ければ全体を 1 区間で返す
 export function splitByRules<R extends { key: string }>(text: string, rules: R[]): TextRun<R>[] {
-  const pool = rules.filter((r) => r.key !== "").sort((a, b) => b.key.length - a.key.length);
+  const pool = rules.filter((r) => r.key !== "").toSorted((a, b) => b.key.length - a.key.length);
   if (text === "" || pool.length === 0) return [{ text }];
 
   const runs: TextRun<R>[] = [];

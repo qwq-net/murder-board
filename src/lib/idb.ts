@@ -25,8 +25,8 @@ export async function deleteDatabase(): Promise<void> {
   dbPromise = undefined;
   await new Promise<void>((resolve, reject) => {
     const req = indexedDB.deleteDatabase(DB_NAME);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error ?? new Error("deleteDatabase failed"));
+    req.addEventListener("success", () => resolve());
+    req.addEventListener("error", () => reject(req.error ?? new Error("deleteDatabase failed")));
   });
 }
 
@@ -40,7 +40,7 @@ export async function listSessionMetas(): Promise<SessionMeta[]> {
       delete (meta as { edges?: unknown }).edges;
       return meta;
     })
-    .sort((a, b) => a.createdAt - b.createdAt);
+    .toSorted((a, b) => a.createdAt - b.createdAt);
 }
 
 // 見つからなければ undefined を返す。

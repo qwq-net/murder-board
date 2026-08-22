@@ -27,6 +27,22 @@ function Description({ children }: { children: React.ReactNode }) {
   return <p className="text-sm leading-relaxed text-text-secondary">{children}</p>;
 }
 
+// 現在のセッションを JSON ファイルとしてダウンロードさせる。ファイル名はセッション名
+function exportJson(): void {
+  const s = useBoardStore.getState();
+  const meta = s.sessions.find((m) => m.id === s.currentId);
+  if (!meta) return;
+  const blob = new Blob([serializeExport({ ...meta, nodes: s.nodes })], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${meta.name}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // 設定モーダル。左のメニューで項目を選び、右にその内容を表示する。
 // テーマ選択は onSetTheme で即時反映する。
 // Escape・背景クリック・× ボタンで onClose を呼ぶ。開閉のたびにマウントし直す前提。
@@ -52,22 +68,6 @@ export function SettingsModal({
     (s) => s.sessions.find((m) => m.id === s.currentId)?.isDemo === true,
   );
   const fileRef = useRef<HTMLInputElement>(null);
-
-  // 現在のセッションを JSON ファイルとしてダウンロードさせる。ファイル名はセッション名
-  const exportJson = () => {
-    const s = useBoardStore.getState();
-    const meta = s.sessions.find((m) => m.id === s.currentId);
-    if (!meta) return;
-    const blob = new Blob([serializeExport({ ...meta, nodes: s.nodes })], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${meta.name}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
   // 選択された JSON を検証して新規セッションとして取り込む。不正な内容は自前モーダルで通知
   const importJson = async (file: File) => {
