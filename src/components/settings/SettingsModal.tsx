@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { parseImport, serializeExport } from "@/lib/exportImport";
 import { serializeMarkdown } from "@/lib/exportMarkdown";
@@ -263,7 +264,7 @@ export function SettingsModal({
               className="cursor-pointer px-1 text-text-muted hover:text-text-primary"
               onClick={onClose}
             >
-              ×
+              <X size={18} />
             </button>
           </div>
 

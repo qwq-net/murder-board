@@ -1,4 +1,5 @@
 import { useReactFlow } from "@xyflow/react";
+import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   buildSnippetSegments,
@@ -130,7 +131,7 @@ export function SearchOverlay({
                 className="shrink-0 cursor-pointer px-1 text-text-muted hover:text-text-primary"
                 onClick={() => setQuery("")}
               >
-                ×
+                <X size={16} />
               </button>
             )}
           </div>

@@ -1,4 +1,5 @@
 import type { NodeProps } from "@xyflow/react";
+import { ArrowRight, CircleHelp } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -23,8 +24,8 @@ const useCharacterChoices = (): CharacterChoice[] => {
 
 // 登場人物チップ。識別色ドット + 名前の頭 2 文字で、クリックでチップの画面上の
 // 矩形を onClick に渡す。ピッカーの表示位置決めに使う。ラベルは全角 2 文字分の
-// 固定幅で、名前の文字数や未選択の「？」に左右されず行のレイアウトが揃う。
-// 未選択（空文字）は「？」、登場人物メモに見つからない名前は無彩色ドットで示す
+// 固定幅で、名前の文字数や未選択に左右されず行のレイアウトが揃う。
+// 未選択は空文字で、疑問符アイコンで示す。登場人物メモに見つからない名前は無彩色ドットで示す
 function CharacterChip({
   name,
   color,
@@ -52,9 +53,9 @@ function CharacterChip({
         }}
       />
       <span
-        className={`inline-block w-7 truncate text-left text-sm ${name === "" ? "text-text-muted" : ""}`}
+        className={`inline-flex h-5 w-7 items-center text-left text-sm ${name === "" ? "text-text-muted" : ""}`}
       >
-        {name === "" ? "？" : [...name].slice(0, 2).join("")}
+        {name === "" ? <CircleHelp size={12} /> : [...name].slice(0, 2).join("")}
       </span>
     </button>
   );
@@ -192,7 +193,7 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
         {data.entries.map((entry) => (
           <NodeRow key={entry.id} onRemove={() => removeRow(entry.id)}>
             {chipSlot(entry, "from")}
-            <span className="shrink-0 self-start text-[10px] leading-5 text-text-muted">▶</span>
+            <ArrowRight size={12} className="mt-1 shrink-0 self-start text-text-muted" />
             {chipSlot(entry, "to")}
             <CommitInput
               className="min-w-0 flex-1 border-l-[3px] border-(--node-accent)/45 bg-transparent pl-1.5 text-sm outline-none"

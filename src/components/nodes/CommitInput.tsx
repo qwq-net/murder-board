@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 // ノード内で Tab 巡回と編集開始連鎖の対象になるテキスト要素を示すセレクタ。
@@ -178,15 +178,16 @@ export function NodeRow({
   );
 }
 
-// 行リスト末尾の「＋ 行を追加」ボタン。文字色は className でノード種別のアクセントを与える。
+// 行リスト末尾の「行を追加」ボタン。文字色は className でノード種別のアクセントを与える。
 export function AddRowButton({ className, onClick }: { className: string; onClick: () => void }) {
   return (
     <button
       type="button"
-      className={`nodrag w-full cursor-pointer rounded px-2 py-0.5 text-left text-xs hover:bg-bg-hover ${className}`}
+      className={`nodrag flex w-full cursor-pointer items-center gap-1 rounded px-2 py-0.5 text-left text-xs hover:bg-bg-hover ${className}`}
       onClick={onClick}
     >
-      ＋ 行を追加
+      <Plus size={13} />
+      行を追加
     </button>
   );
 }
