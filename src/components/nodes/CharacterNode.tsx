@@ -19,6 +19,7 @@ const nextColor = (c: CharacterEntry["color"]) =>
 
 // 登場人物メモ。リスト付箋の各行に識別色ドットが付いた形で、ドットのクリックで
 // その行の上にカラーパレットが開き、任意の色を選べる。
+// 行の Enter 連鎖と空行の自動削除はリスト付箋と同じ。
 // 行の追加時は前の行の次の色を割り当て、隣り合う行の色が自然にずれるようにする。
 // 行の名前自体にも本文と同じ装飾が効くため、登録した名前はその識別色で表示される。
 export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeType>) {
@@ -40,6 +41,25 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
     updateNodeData(id, "character", {
       entries: data.entries.map((e) => (e.id === entryId ? { ...e, ...patch } : e)),
     });
+
+  // Enter 確定を 1 回の更新で反映する。名前を確定しつつ直後へ次の色の空行を挿入して
+  // 編集を始める。空の確定では挿入せず false を返し、既定の確定処理に任せる
+  const commitAndAddNext = (entryId: string, text: string) => {
+    if (text === "") return false;
+    const rowId = nanoid();
+    setNewRowId(rowId);
+    updateNodeData(id, "character", {
+      entries: data.entries.flatMap((e) =>
+        e.id === entryId
+          ? [
+              { ...e, text },
+              { id: rowId, text: "", color: nextColor(e.color) },
+            ]
+          : [e],
+      ),
+    });
+    return true;
+  };
 
   const addRow = () => {
     const last = data.entries[data.entries.length - 1];
@@ -66,6 +86,7 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
       selected={selected}
       color={data.color}
       title={data.title}
+      titleEnterToBody={data.entries.every((e) => e.text === "")}
       onTitleCommit={(title) => updateNodeData(id, "character", { title })}
       onColorPick={(color) => updateNodeData(id, "character", { color })}
     >
@@ -101,6 +122,8 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
               defaultEditing={entry.id === newRowId}
               renderText={(text) => <StyledText text={text} />}
               onCommit={(text) => patchEntry(entry.id, { text })}
+              onEnter={(text) => commitAndAddNext(entry.id, text)}
+              onEmptyExit={() => removeRow(entry.id)}
             />
           </NodeRow>
         ))}

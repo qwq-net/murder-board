@@ -10,6 +10,8 @@ import type { TimelineEntry, TimelineNodeType } from "@/types/board";
 
 // タイムライン付箋。行は「時刻 + 出来事」で、時刻の確定時に自動補完・昇順ソートされる。
 // 確定のタイミングは blur。時刻を解釈できない行は末尾に並ぶ。空欄や自由記述がこれにあたる。
+// 出来事の Enter 確定は末尾に空行を足してその時刻の編集を始め、時刻・出来事とも
+// 空のままフォーカスが行の外へ出た行は自動で消える。
 // 配色は --node-accent 変数 1 本で決まり、data.color があれば付箋カラー、
 // 無ければタイムライン既定色になる。
 export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>) {
@@ -23,6 +25,21 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
         data.entries.map((e) => (e.id === entryId ? { ...e, ...patch } : e)),
       ),
     });
+
+  // Enter 確定を 1 回の更新で反映する。出来事を確定してソートしつつ末尾へ空行を足し、
+  // その時刻の編集を始める。空の確定では足さず false を返し、既定の確定処理に任せる
+  const commitAndAddNext = (entryId: string, text: string) => {
+    if (text === "") return false;
+    const rowId = nanoid();
+    setNewRowId(rowId);
+    updateNodeData(id, "timeline", {
+      entries: [
+        ...sortTimelineEntries(data.entries.map((e) => (e.id === entryId ? { ...e, text } : e))),
+        { id: rowId, time: "", text: "" },
+      ],
+    });
+    return true;
+  };
 
   const addRow = () => {
     const rowId = nanoid();
@@ -41,6 +58,7 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
       selected={selected}
       color={data.color}
       title={data.title}
+      titleEnterToBody={data.entries.every((e) => e.time === "" && e.text === "")}
       onTitleCommit={(title) => updateNodeData(id, "timeline", { title })}
       onColorPick={(color) => updateNodeData(id, "timeline", { color })}
     >
@@ -54,6 +72,9 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
               normalize={autoCompleteTime}
               defaultEditing={entry.id === newRowId}
               onCommit={(time) => commitEntry(entry.id, { time })}
+              onEmptyExit={() => {
+                if (entry.text === "") removeRow(entry.id);
+              }}
             />
             <CommitInput
               className="min-w-0 flex-1 border-l-[3px] border-(--node-accent)/45 bg-transparent pl-1.5 text-sm outline-none"
@@ -61,6 +82,10 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
               placeholder="出来事"
               renderText={(text) => <StyledText text={text} />}
               onCommit={(text) => commitEntry(entry.id, { text })}
+              onEnter={(text) => commitAndAddNext(entry.id, text)}
+              onEmptyExit={() => {
+                if (entry.time === "") removeRow(entry.id);
+              }}
             />
           </NodeRow>
         ))}

@@ -1,6 +1,6 @@
 import { useNodeId, type NodeProps } from "@xyflow/react";
-import type { CSSProperties, ReactNode } from "react";
-import { CommitInput } from "@/components/nodes/CommitInput";
+import { useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { CommitInput, NODE_TEXT_SELECTOR, requestTextEdit } from "@/components/nodes/CommitInput";
 import { KIND_ICONS } from "@/components/nodes/nodeMeta";
 import { useBoardStore } from "@/store";
 
@@ -9,6 +9,10 @@ import { useBoardStore } from "@/store";
 // 幅や配色は frameClassName / frameStyle / headerClassName / headerStyle で種別ごとに与える。
 // 枠は relative なので、children 内の absolute 配置はこの枠を基準にできる。
 // タイトルは blur で確定し、変更があったときだけ onTitleCommit が呼ばれる。
+// タイトルの Enter は確定に続けて最初の本文テキストの編集を開始する。titleEnterToBody を
+// 偽にするか本文テキストが無ければ、この連鎖は起きず確定だけになる。
+// Tab / Shift+Tab はノード内のテキスト要素だけを巡回し、ノードの外や色パレット等の
+// ボタンへは移らない。
 // 既定で折り返して全文表示し、ヘッダの高さを固定したいノードだけが titleSingleLine で
 // 1 行に省略する。
 // 選択リングは親スタックも選択中なら表示しない。スタックごと選んだときにスタックだけを
@@ -23,6 +27,7 @@ export function NodeShell({
   title,
   titlePlaceholder,
   titleSingleLine,
+  titleEnterToBody = true,
   onTitleCommit,
   children,
 }: {
@@ -34,6 +39,7 @@ export function NodeShell({
   title: string;
   titlePlaceholder: string;
   titleSingleLine?: boolean;
+  titleEnterToBody?: boolean;
   onTitleCommit: (title: string) => void;
   children: ReactNode;
 }) {
@@ -44,8 +50,44 @@ export function NodeShell({
   });
   const kind = useBoardStore((s) => s.nodes.find((n) => n.id === id)?.type);
   const Icon = kind !== undefined ? KIND_ICONS[kind] : null;
+  const frameRef = useRef<HTMLDivElement>(null);
+
+  // 枠内のテキスト要素を DOM 順で返す。ヘッダが先頭にあるため先頭は常にタイトル
+  const textTargets = () =>
+    Array.from(frameRef.current?.querySelectorAll<HTMLElement>(NODE_TEXT_SELECTOR) ?? []);
+
+  // タイトルの Enter で確定値を反映してから最初の本文テキストの編集を開始する。
+  // 連鎖しなかったら false を返し、確定とフォーカスはタイトル側の既定動作に任せる
+  const advanceToBody = (committed: string) => {
+    if (!titleEnterToBody) return false;
+    const target = textTargets()[1];
+    if (!target) return false;
+    if (committed !== title) onTitleCommit(committed);
+    requestTextEdit(target);
+    return true;
+  };
+
+  // Tab のフォーカス移動をノード内のテキスト要素の巡回に閉じ込める。
+  // 端では反対側へ折り返し、テキスト以外から押されたときは端のテキストへ入る
+  const cycleTextFocus = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Tab") return;
+    const texts = textTargets();
+    if (texts.length === 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const current = e.target instanceof Element ? e.target.closest(NODE_TEXT_SELECTOR) : null;
+    const i = texts.findIndex((t) => t === current);
+    const next =
+      i < 0
+        ? texts[e.shiftKey ? texts.length - 1 : 0]
+        : texts[(i + (e.shiftKey ? -1 : 1) + texts.length) % texts.length];
+    next?.focus();
+  };
+
   return (
     <div
+      ref={frameRef}
+      onKeyDown={cycleTextFocus}
       className={`relative rounded-sm border shadow-md ${frameClassName} ${
         selected && !parentSelected ? "ring-2 ring-accent" : ""
       }`}
@@ -62,6 +104,7 @@ export function NodeShell({
           placeholder={titlePlaceholder}
           singleLine={titleSingleLine}
           onCommit={onTitleCommit}
+          onEnter={advanceToBody}
         />
       </div>
       {children}

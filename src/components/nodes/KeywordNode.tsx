@@ -7,7 +7,8 @@ import { StyledText } from "@/components/nodes/StyledText";
 import { useBoardStore } from "@/store";
 import type { KeywordNodeType } from "@/types/board";
 
-// キーワード付箋。操作はリスト付箋と同じで、登録された言葉が本文中で検索リンクになる。
+// キーワード付箋。操作は行の Enter 連鎖・空行の自動削除を含めリスト付箋と同じで、
+// 登録された言葉が本文中で検索リンクになる。
 // リンク化は StyledText 側の仕事。自ノードの行は plainLinks で色付けだけにし、
 // 下線とクリックの検索は付けない。登録の場では一覧性と編集のしやすさを優先するため。
 // 配色は --node-accent 変数 1 本で決まり、data.color があれば付箋カラー、
@@ -21,6 +22,25 @@ export function KeywordNode({ id, data, selected }: NodeProps<KeywordNodeType>) 
     updateNodeData(id, "keyword", {
       entries: data.entries.map((e) => (e.id === entryId ? { ...e, text } : e)),
     });
+
+  // Enter 確定を 1 回の更新で反映する。テキストを確定しつつ直後へ空行を挿入して
+  // 編集を始める。空の確定では挿入せず false を返し、既定の確定処理に任せる
+  const commitAndAddNext = (entryId: string, text: string) => {
+    if (text === "") return false;
+    const rowId = nanoid();
+    setNewRowId(rowId);
+    updateNodeData(id, "keyword", {
+      entries: data.entries.flatMap((e) =>
+        e.id === entryId
+          ? [
+              { ...e, text },
+              { id: rowId, text: "" },
+            ]
+          : [e],
+      ),
+    });
+    return true;
+  };
 
   const addRow = () => {
     const rowId = nanoid();
@@ -37,6 +57,7 @@ export function KeywordNode({ id, data, selected }: NodeProps<KeywordNodeType>) 
       selected={selected}
       color={data.color}
       title={data.title}
+      titleEnterToBody={data.entries.every((e) => e.text === "")}
       onTitleCommit={(title) => updateNodeData(id, "keyword", { title })}
       onColorPick={(color) => updateNodeData(id, "keyword", { color })}
     >
@@ -54,6 +75,8 @@ export function KeywordNode({ id, data, selected }: NodeProps<KeywordNodeType>) 
               defaultEditing={entry.id === newRowId}
               renderText={(text) => <StyledText text={text} plainLinks />}
               onCommit={(text) => commitEntry(entry.id, text)}
+              onEnter={(text) => commitAndAddNext(entry.id, text)}
+              onEmptyExit={() => removeRow(entry.id)}
             />
           </NodeRow>
         ))}

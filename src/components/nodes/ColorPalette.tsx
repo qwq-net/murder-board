@@ -3,7 +3,8 @@ import { STICKY_COLORS_BY_HUE, type StickyColor } from "@/types/board";
 // 基準要素の近くに浮かべる色パレット。position が "top" なら基準要素の上に中央揃えで、
 // "left" なら左横に縦中央で出る。ノードの横幅設定が変わっても位置が偏らないよう、
 // どちらも基準要素からの相対配置で決まる。
-// スワッチは色相環の順に並ぶ。クリックで onPick に色を渡す。defaultSwatch を渡すと
+// スワッチは色相環の順に並び、Tab のフォーカス対象にはならない。
+// クリックで onPick に色を渡す。defaultSwatch を渡すと
 // 先頭に「既定色へ戻す」スワッチが付き、そのクリックでは onPick(undefined) が呼ばれる。
 // 付箋のように既定色の概念が無いノードは defaultSwatch を渡さないことで
 // undefined が来ないことを保証できる。
@@ -22,6 +23,7 @@ export function ColorPalette({
     <button
       key={label}
       type="button"
+      tabIndex={-1}
       aria-label={`色: ${label}`}
       className={`h-4 w-4 shrink-0 cursor-pointer rounded-full ${
         current ? "ring-2 ring-accent" : ""

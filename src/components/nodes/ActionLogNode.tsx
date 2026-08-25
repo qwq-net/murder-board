@@ -107,13 +107,18 @@ type Picking = { rowId: string; side: "from" | "to"; x: number; y: number } | nu
 
 // アクションログ付箋。行は「人物 ▶ 人物 ｜メモ」で、人物は登場人物メモ全体から
 // クリックで選ぶ。素早い記録を想定し、行の追加もチップの選択もクリックだけで完結する。
-// メモは後からダブルクリックで書ける。人物は名前で持つため、登場人物側の改名には追従しない。
+// メモは後からダブルクリックで書ける。メモの Enter 確定は直後に空行を挿入して
+// そのメモの編集を始め、人物もメモも空のままフォーカスが行の外へ出た行は自動で消える。
+// 人物は名前で持つため、登場人物側の改名には追従しない。
 // 配色は --node-accent 変数 1 本で決まり、data.color があれば付箋カラー、
 // 無ければアクションログ既定色になる。
 export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeType>) {
   const updateNodeData = useBoardStore((s) => s.updateNodeData);
   const choices = useCharacterChoices();
   const [picking, setPicking] = useState<Picking>(null);
+  // Enter 連鎖で挿入した行だけメモをマウント時から編集で始めるための印。
+  // 追加ボタンの行はチップ選択を先に想定するため編集では始めない
+  const [newRowId, setNewRowId] = useState<string | null>(null);
 
   // ピッカーの外側クリックで閉じる。チップ・選択肢のクリックは stopPropagation か
   // 明示的な setPicking で先に処理されるため、ここに届くのは外側のクリックだけ
@@ -128,6 +133,25 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
     updateNodeData(id, "actionlog", {
       entries: data.entries.map((e) => (e.id === entryId ? { ...e, ...patch } : e)),
     });
+
+  // Enter 確定を 1 回の更新で反映する。メモを確定しつつ直後へ空行を挿入して
+  // 編集を始める。空の確定では挿入せず false を返し、既定の確定処理に任せる
+  const commitAndAddNext = (entryId: string, text: string) => {
+    if (text === "") return false;
+    const rowId = nanoid();
+    setNewRowId(rowId);
+    updateNodeData(id, "actionlog", {
+      entries: data.entries.flatMap((e) =>
+        e.id === entryId
+          ? [
+              { ...e, text },
+              { id: rowId, from: "", to: "", text: "" },
+            ]
+          : [e],
+      ),
+    });
+    return true;
+  };
 
   const addRow = () =>
     updateNodeData(id, "actionlog", {
@@ -160,6 +184,7 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
       selected={selected}
       color={data.color}
       title={data.title}
+      titleEnterToBody={data.entries.every((e) => e.from === "" && e.to === "" && e.text === "")}
       onTitleCommit={(title) => updateNodeData(id, "actionlog", { title })}
       onColorPick={(color) => updateNodeData(id, "actionlog", { color })}
     >
@@ -173,8 +198,13 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
               className="min-w-0 flex-1 border-l-[3px] border-(--node-accent)/45 bg-transparent pl-1.5 text-sm outline-none"
               value={entry.text}
               placeholder="メモ"
+              defaultEditing={entry.id === newRowId}
               renderText={(text) => <StyledText text={text} />}
               onCommit={(text) => commitEntry(entry.id, { text })}
+              onEnter={(text) => commitAndAddNext(entry.id, text)}
+              onEmptyExit={() => {
+                if (entry.from === "" && entry.to === "") removeRow(entry.id);
+              }}
             />
           </NodeRow>
         ))}

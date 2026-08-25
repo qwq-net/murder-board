@@ -42,21 +42,21 @@ export function Toolbar({
       </select>
       <button
         type="button"
-        title="新規セッション"
-        aria-label="新規セッション"
-        className={ICON_BUTTON_CLASS}
-        onClick={() => void createSession()}
-      >
-        <Plus className="mr" size={14} strokeWidth={2.5} />
-      </button>
-      <button
-        type="button"
         title="セッション名を変更"
         aria-label="セッション名を変更"
         className={ICON_BUTTON_CLASS}
         onClick={rename}
       >
         <SquarePen size={14} />
+      </button>
+      <button
+        type="button"
+        title="新規セッション"
+        aria-label="新規セッション"
+        className={ICON_BUTTON_CLASS}
+        onClick={() => void createSession()}
+      >
+        <Plus className="mr" size={14} strokeWidth={2.5} />
       </button>
       <button
         type="button"
