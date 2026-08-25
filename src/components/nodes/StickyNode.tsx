@@ -5,6 +5,7 @@ import { ColorPalette } from "@/components/nodes/ColorPalette";
 import { TEXT_EDIT_EVENT } from "@/components/nodes/CommitInput";
 import { useNodeWidth } from "@/components/nodes/nodeMeta";
 import { NodeShell } from "@/components/nodes/NodeShell";
+import { useRetryFocus } from "@/components/nodes/useRetryFocus";
 import { useBoardStore } from "@/store";
 import { DEFAULT_NODE_COLORS, type StickyColor, type StickyNodeType } from "@/types/board";
 
@@ -30,21 +31,7 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
   // Escape で編集を破棄したとき、blur 側の確定を防ぐ印
   const skipCommitRef = useRef(false);
 
-  // React Flow は計測前のノードを visibility:hidden で描画するため autoFocus が効かない。
-  // 表示されてフォーカスが通るまで数フレーム再試行する
-  useEffect(() => {
-    if (!editing) return;
-    let tries = 0;
-    const timer = setInterval(() => {
-      const el = taRef.current;
-      if (el && document.activeElement !== el) {
-        el.focus();
-        el.setSelectionRange(el.value.length, el.value.length);
-      }
-      if (++tries >= 10 || document.activeElement === taRef.current) clearInterval(timer);
-    }, 16);
-    return () => clearInterval(timer);
-  }, [editing]);
+  useRetryFocus(editing, taRef);
 
   // キー操作の確定後に表示へフォーカスを戻し、Tab 巡回を途切れさせない
   useEffect(() => {

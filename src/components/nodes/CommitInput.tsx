@@ -1,5 +1,6 @@
 import { GripVertical, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRetryFocus } from "@/components/nodes/useRetryFocus";
 
 // ノード内で Tab 巡回と編集開始連鎖の対象になるテキスト要素を示すセレクタ。
 // 表示・編集のどちらの状態の要素にも付く。NodeShell が枠内をこれで集めて移動先を決める。
@@ -15,7 +16,7 @@ export const requestTextEdit = (el: Element) => el.dispatchEvent(new Event(TEXT_
 // ドラッグや選択にそのまま使える。表示はフォーカス可能な Tab 巡回の対象で、
 // フォーカス中の Enter か requestTextEdit でも編集に入る。
 // 編集中は blur / Enter で確定して表示に戻り、Enter 確定では表示へフォーカスも戻す。
-// Escape は編集を破棄して表示に戻る。破棄した値が空なら onEmptyExit も呼ぶ。
+// Escape は編集を破棄して表示に戻るだけで、onEmptyExit は呼ばない。破棄は行を保存する操作。
 // onEnter を渡すと Enter のとき確定値と編集中の textarea 要素を添えて呼ぶ。要素は
 // 同じ行の別入力へ移る連鎖の DOM 起点用。true が返ったら確定とフォーカスの後始末は
 // 呼び手が引き受けた扱いになり、onCommit も表示への復帰フォーカスも行わない。
@@ -60,21 +61,7 @@ export function CommitInput({
   // onEnter が確定まで引き受けたとき、blur 側の二重確定を防ぐ印
   const handledRef = useRef(false);
 
-  // React Flow は計測前のノードを visibility:hidden で描画するためフォーカスが通らない
-  // ことがある。作成直後のタイトル編集に備え、通るまで数フレーム再試行する
-  useEffect(() => {
-    if (!editing) return;
-    let tries = 0;
-    const timer = setInterval(() => {
-      const el = inputRef.current;
-      if (el && document.activeElement !== el) {
-        el.focus();
-        el.setSelectionRange(el.value.length, el.value.length);
-      }
-      if (++tries >= 10 || document.activeElement === inputRef.current) clearInterval(timer);
-    }, 16);
-    return () => clearInterval(timer);
-  }, [editing]);
+  useRetryFocus(editing, inputRef);
 
   // Enter 確定後に表示要素へフォーカスを戻し、Tab 巡回を途切れさせない
   useEffect(() => {
@@ -153,7 +140,6 @@ export function CommitInput({
           refocusRef.current = true;
           setDraft(value);
           setEditing(false);
-          if (value === "") onEmptyExit?.();
           return;
         }
         if (e.key !== "Enter") return;
@@ -177,8 +163,9 @@ let rowDrag: { group: string; index: number } | null = null;
 // 行の div には data-node-row が付き、CommitInput の onEmptyExit が
 // フォーカスの行内移動と行外への離脱を見分けるのに使う。
 // reorder を渡すと hover 時に削除ボタンの左へ並び替えグリップが出る。同じ group の
-// 行の上へのドロップだけを受け、onMove にドラッグ元と先の添字を渡す。ノードを跨いだ
-// ドロップは受け付けない。並びが自動で決まるノードは reorder を渡さない想定。
+// 行の上へのドロップだけを受け、onMove にドラッグ元と先の添字を渡す。元と同じ位置への
+// ドロップでは onMove を呼ばない。ノードを跨いだドロップは受け付けない。
+// 並びが自動で決まるノードは reorder を渡さない想定。
 // className はノード種別ごとの装飾の追加用。行の div は relative なので、
 // before 疑似要素などの absolute 配置は行を基準にできる。
 export function NodeRow({
@@ -202,7 +189,7 @@ export function NodeRow({
       onDrop={(e) => {
         if (!reorder || rowDrag?.group !== reorder.group) return;
         e.preventDefault();
-        reorder.onMove(rowDrag.index, reorder.index);
+        if (rowDrag.index !== reorder.index) reorder.onMove(rowDrag.index, reorder.index);
         rowDrag = null;
       }}
     >

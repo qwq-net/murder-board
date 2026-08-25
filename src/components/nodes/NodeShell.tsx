@@ -1,5 +1,5 @@
 import { useNodeId, type NodeProps } from "@xyflow/react";
-import { useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { CommitInput, NODE_TEXT_SELECTOR, requestTextEdit } from "@/components/nodes/CommitInput";
 import { KIND_ICONS } from "@/components/nodes/nodeMeta";
 import { useBoardStore } from "@/store";
@@ -59,6 +59,12 @@ export function NodeShell({
   const Icon = kind !== undefined ? KIND_ICONS[kind] : null;
   const isNew = useBoardStore((s) => s.newNodeId === id);
   const frameRef = useRef<HTMLDivElement>(null);
+
+  // 編集開始の印は一度消費したら消す。Undo/Redo やセッション往復での再マウント時に
+  // タイトル編集が再発火してフォーカスを奪わないようにする
+  useEffect(() => {
+    if (isNew) useBoardStore.getState().clearNewNode();
+  }, [isNew]);
 
   // 枠内のテキスト要素を DOM 順で返す。ヘッダが先頭にあるため先頭は常にタイトル
   const textTargets = () =>

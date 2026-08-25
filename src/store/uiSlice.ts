@@ -18,6 +18,9 @@ export type UiSlice = {
   // addNode で直近に追加されたノードの id。NodeShell がマウント時に自ノードと一致したら
   // タイトルを編集状態で始めるための印で、貼り付けや複製では更新しない
   newNodeId: string | null;
+  // newNodeId を消す。NodeShell が編集開始を消費した時点で呼び、Undo/Redo や
+  // セッション切替での再マウント時に編集開始が再発火しないようにする
+  clearNewNode: () => void;
 
   // 直近操作の表示用ログ。各エントリは一意の id を持ち、UI 側が表示済みの判定に使う
   opsLog: { id: number; message: string }[];
@@ -54,6 +57,7 @@ export const createUiSlice = (
   closeSearch: () => set({ searchSeed: null }),
 
   newNodeId: null,
+  clearNewNode: () => set({ newNodeId: null }),
 
   opsLog: [],
   logOp: (message) => set({ opsLog: [...get().opsLog, { id: ++opSeq, message }].slice(-8) }),

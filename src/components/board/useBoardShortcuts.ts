@@ -1,6 +1,6 @@
 import { useReactFlow } from "@xyflow/react";
 import { useEffect, type RefObject } from "react";
-import { materializeNodes, selectionAnchor, snapshotSelection } from "@/lib/nodeClipboard";
+import { duplicateSelection, materializeNodes, snapshotSelection } from "@/lib/nodeClipboard";
 import { useBoardStore } from "@/store";
 import type { BoardNode } from "@/types/board";
 
@@ -63,23 +63,17 @@ export function useBoardShortcuts(
 
       const current = useBoardStore.getState().nodes;
       const selectedIds = new Set(current.filter((n) => n.selected).map((n) => n.id));
-      if (selectedIds.size === 0) return;
-      e.preventDefault();
 
       if (key === "d") {
-        const anchor = selectionAnchor(current, selectedIds);
-        if (anchor) {
-          addNodes(
-            materializeNodes(snapshotSelection(current, selectedIds), {
-              x: anchor.x + 24,
-              y: anchor.y + 24,
-            }),
-            selectedIds.size === 1 ? "1件を複製" : `${selectedIds.size}件を複製`,
-          );
-        }
+        // 未選択でもブラウザのブックマークダイアログを開かせない
+        e.preventDefault();
+        const dup = duplicateSelection(current, selectedIds);
+        if (dup) addNodes(dup.nodes, dup.label);
         return;
       }
 
+      if (selectedIds.size === 0) return;
+      e.preventDefault();
       setClipboard(snapshotSelection(current, selectedIds));
       if (key === "x") {
         onNodesChange([...selectedIds].map((id) => ({ type: "remove" as const, id })));

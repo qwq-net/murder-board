@@ -52,10 +52,8 @@ export function KeywordNode({ id, data, selected }: NodeProps<KeywordNodeType>) 
   const removeRow = (entryId: string) =>
     updateNodeData(id, "keyword", { entries: data.entries.filter((e) => e.id !== entryId) });
 
-  const moveRow = (from: number, to: number) => {
-    if (from === to) return;
+  const moveRow = (from: number, to: number) =>
     updateNodeData(id, "keyword", { entries: moveItem(data.entries, from, to) });
-  };
 
   return (
     <PanelNodeShell

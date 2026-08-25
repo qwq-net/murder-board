@@ -1,7 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { ArrowRight, CircleHelp } from "lucide-react";
 import { nanoid } from "nanoid";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AddRowButton, CommitInput, NodeRow } from "@/components/nodes/CommitInput";
 import { PanelNodeShell } from "@/components/nodes/PanelNodeShell";
@@ -132,6 +132,8 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
   const updateNodeData = useBoardStore((s) => s.updateNodeData);
   const choices = useCharacterChoices();
   const [picking, setPicking] = useState<Picking>(null);
+  // 行 id は複製ノードと重複しうるため、チップの探索を自ノードの subtree に閉じる起点
+  const rowsRef = useRef<HTMLDivElement>(null);
   // Enter 連鎖で挿入した行だけメモをマウント時から編集で始めるための印。
   // 追加ボタンの行はチップ選択を先に想定するため編集では始めない
   const [newRowId, setNewRowId] = useState<string | null>(null);
@@ -177,10 +179,8 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
   const removeRow = (entryId: string) =>
     updateNodeData(id, "actionlog", { entries: data.entries.filter((e) => e.id !== entryId) });
 
-  const moveRow = (from: number, to: number) => {
-    if (from === to) return;
+  const moveRow = (from: number, to: number) =>
     updateNodeData(id, "actionlog", { entries: moveItem(data.entries, from, to) });
-  };
 
   const colorOf = (name: string) => choices.find((c) => c.name === name)?.color;
 
@@ -207,7 +207,7 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
     if (picking === null) return;
     commitEntry(picking.rowId, picking.side === "from" ? { from: name } : { to: name });
     if (picking.side === "from") {
-      const toChip = document.querySelector(
+      const toChip = rowsRef.current?.querySelector(
         `[data-chip-row="${picking.rowId}"][data-chip-side="to"]`,
       );
       if (toChip) {
@@ -230,7 +230,7 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
       onTitleCommit={(title) => updateNodeData(id, "actionlog", { title })}
       onColorPick={(color) => updateNodeData(id, "actionlog", { color })}
     >
-      <div className="p-1">
+      <div ref={rowsRef} className="p-1">
         {data.entries.map((entry, i) => (
           <NodeRow
             key={entry.id}

@@ -51,10 +51,8 @@ export function ListNode({ id, data, selected }: NodeProps<ListNodeType>) {
   const removeRow = (entryId: string) =>
     updateNodeData(id, "list", { entries: data.entries.filter((e) => e.id !== entryId) });
 
-  const moveRow = (from: number, to: number) => {
-    if (from === to) return;
+  const moveRow = (from: number, to: number) =>
     updateNodeData(id, "list", { entries: moveItem(data.entries, from, to) });
-  };
 
   return (
     <PanelNodeShell

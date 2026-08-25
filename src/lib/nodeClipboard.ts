@@ -22,15 +22,26 @@ function strip(n: BoardNode): BoardNode {
 
 // ids のノードをコピー用スナップショットにする。スタックが含まれるときは子も付いてきて、
 // 常に親が子より前に並ぶ。親も ids に含まれる子は親側に含まれるため重複しない。
+// 親を伴わずに選ばれた子は、位置を絶対座標へ直し parentId を落として独立ノードにする。
 // ids が 1 つも実在しなければ空配列。
 // 使われ方: 右クリックメニューのコピーと Ctrl+C/X から呼ばれ、戻り値がそのまま
 // クリップボードとして保持される前提
 export function snapshotSelection(nodes: BoardNode[], ids: ReadonlySet<string>): BoardNode[] {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
   const result: BoardNode[] = [];
   for (const n of nodes) {
     if (!ids.has(n.id)) continue;
     if (n.parentId !== undefined && ids.has(n.parentId)) continue;
-    result.push(strip(n));
+    const copy = strip(n);
+    if (copy.parentId !== undefined) {
+      const parent = byId.get(copy.parentId);
+      delete copy.parentId;
+      copy.position = {
+        x: copy.position.x + (parent?.position.x ?? 0),
+        y: copy.position.y + (parent?.position.y ?? 0),
+      };
+    }
+    result.push(copy);
     if (n.type === "stack") {
       for (const child of nodes) {
         if (child.parentId === n.id) result.push(strip(child));
@@ -43,7 +54,7 @@ export function snapshotSelection(nodes: BoardNode[], ids: ReadonlySet<string>):
 // ids のノード群の盤面上の絶対位置でのバウンディング左上を返す。スタックの子は
 // 親の位置を足して絶対化する。ids が 1 つも実在しなければ null。
 // 「元の位置から少しずらして複製する」ときの配置計算に使う
-export function selectionAnchor(
+function selectionAnchor(
   nodes: BoardNode[],
   ids: ReadonlySet<string>,
 ): { x: number; y: number } | null {
@@ -75,8 +86,9 @@ function snapshotAnchor(snapshot: BoardNode[]): { x: number; y: number } | null 
 
 // スナップショットを貼り付け用の新ノード列にする。トップレベルのノード群の
 // バウンディング左上が position に来るよう相対配置を保って移動し、スタックの子は
-// 親相対の位置のまま新しい親 id へ付け替える。親を伴わない子は独立ノードになる。
-// ノード id はすべて再採番する。行 id は再採番しない。重複しても使われ方に影響しないため。
+// 親相対の位置のまま新しい親 id へ付け替える。
+// ノード id はすべて再採番する。行 id は再採番せず複製元と重複するため、
+// 行 id を DOM から引く処理は自ノードの subtree に閉じている前提。
 // 同じスナップショットで何度呼んでも、そのたびに独立したノード列を返す
 export function materializeNodes(
   snapshot: BoardNode[],
@@ -100,4 +112,20 @@ export function materializeNodes(
       },
     };
   });
+}
+
+// ids のノード群を、元位置から右下へ 24px ずらした複製ノード列と操作ログ文言にして返す。
+// クリップボードには触れない。ids が 1 つも実在しなければ null。
+// 使われ方: 右クリックメニューの複製と Ctrl+D の共通実装。戻り値をそのまま
+// addNodes(nodes, label) へ渡す前提
+export function duplicateSelection(
+  nodes: BoardNode[],
+  ids: ReadonlySet<string>,
+): { nodes: BoardNode[]; label: string } | null {
+  const anchor = selectionAnchor(nodes, ids);
+  if (anchor === null) return null;
+  return {
+    nodes: materializeNodes(snapshotSelection(nodes, ids), { x: anchor.x + 24, y: anchor.y + 24 }),
+    label: `${ids.size}件を複製`,
+  };
 }

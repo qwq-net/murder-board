@@ -1,7 +1,7 @@
 import { useReactFlow } from "@xyflow/react";
 import { ClipboardPaste, Copy, CopyPlus, Trash2, Ungroup, type LucideIcon } from "lucide-react";
 import { KIND_ICONS } from "@/components/nodes/nodeMeta";
-import { materializeNodes, selectionAnchor, snapshotSelection } from "@/lib/nodeClipboard";
+import { duplicateSelection, materializeNodes, snapshotSelection } from "@/lib/nodeClipboard";
 import { useBoardStore } from "@/store";
 import { NODE_KIND_LABELS, type BoardNode, type BoardNodeKind } from "@/types/board";
 
@@ -87,14 +87,8 @@ export function BoardMenu({
   };
 
   const duplicateFromMenu = (ids: string[]) => {
-    const idSet = new Set(ids);
-    const anchor = selectionAnchor(nodes, idSet);
-    if (anchor) {
-      addNodes(
-        materializeNodes(snapshotSelection(nodes, idSet), { x: anchor.x + 24, y: anchor.y + 24 }),
-        ids.length === 1 ? "1件を複製" : `${ids.length}件を複製`,
-      );
-    }
+    const dup = duplicateSelection(nodes, new Set(ids));
+    if (dup) addNodes(dup.nodes, dup.label);
     onClose();
   };
 

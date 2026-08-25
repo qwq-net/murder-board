@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { StackNodeType, StickyNodeType } from "@/types/board";
-import { materializeNodes, snapshotSelection } from "../nodeClipboard";
+import { duplicateSelection, materializeNodes, snapshotSelection } from "../nodeClipboard";
 
 const sticky = (id: string, x: number, y: number, parentId?: string): StickyNodeType => ({
   id,
@@ -31,6 +31,13 @@ describe("snapshotSelection", () => {
     expect(snap[0]).not.toHaveProperty("measured");
     original.data.text = "書き換え";
     expect(snap[0]!.data).toMatchObject({ text: "メモ" });
+  });
+
+  it("親を伴わない子は位置を絶対座標へ直し parentId を落とす", () => {
+    const nodes = [stack("st"), sticky("a", 8, 40, "st")];
+    const snap = snapshotSelection(nodes, new Set(["a"]));
+    expect(snap[0]!.position).toEqual({ x: 108, y: 240 });
+    expect(snap[0]!.parentId).toBeUndefined();
   });
 
   it("スタックは子を含めて親が先の並びで返し、選択済みの子は重複しない", () => {
@@ -77,5 +84,21 @@ describe("materializeNodes", () => {
     const first = materializeNodes(snap, { x: 0, y: 0 });
     const second = materializeNodes(snap, { x: 10, y: 10 });
     expect(first[0]!.id).not.toBe(second[0]!.id);
+  });
+});
+
+describe("duplicateSelection", () => {
+  it("スタックの子とトップレベルを混ぜても盤面上の相対配置を保って右下 24px にずらす", () => {
+    const nodes = [stack("st"), sticky("a", 8, 40, "st"), sticky("b", 0, 0)];
+    const dup = duplicateSelection(nodes, new Set(["a", "b"]));
+    expect(dup!.label).toBe("2件を複製");
+    expect(dup!.nodes.map((n) => n.position)).toEqual([
+      { x: 132, y: 264 },
+      { x: 24, y: 24 },
+    ]);
+  });
+
+  it("実在しない id だけなら null を返す", () => {
+    expect(duplicateSelection([sticky("a", 0, 0)], new Set(["ghost"]))).toBeNull();
   });
 });
