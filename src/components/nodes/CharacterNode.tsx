@@ -5,6 +5,7 @@ import { ColorPalette } from "@/components/nodes/ColorPalette";
 import { AddRowButton, CommitInput, NodeRow } from "@/components/nodes/CommitInput";
 import { PanelNodeShell } from "@/components/nodes/PanelNodeShell";
 import { StyledText } from "@/components/nodes/StyledText";
+import { moveItem } from "@/lib/moveItem";
 import { useBoardStore } from "@/store";
 import {
   DEFAULT_NODE_COLORS,
@@ -80,6 +81,11 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
   const removeRow = (entryId: string) =>
     updateNodeData(id, "character", { entries: data.entries.filter((e) => e.id !== entryId) });
 
+  const moveRow = (from: number, to: number) => {
+    if (from === to) return;
+    updateNodeData(id, "character", { entries: moveItem(data.entries, from, to) });
+  };
+
   return (
     <PanelNodeShell
       kind="character"
@@ -87,12 +93,17 @@ export function CharacterNode({ id, data, selected }: NodeProps<CharacterNodeTyp
       color={data.color}
       title={data.title}
       titleEnterToBody={data.entries.every((e) => e.text === "")}
+      onTitleEnterFallback={addRow}
       onTitleCommit={(title) => updateNodeData(id, "character", { title })}
       onColorPick={(color) => updateNodeData(id, "character", { color })}
     >
       <div className="p-1">
-        {data.entries.map((entry) => (
-          <NodeRow key={entry.id} onRemove={() => removeRow(entry.id)}>
+        {data.entries.map((entry, i) => (
+          <NodeRow
+            key={entry.id}
+            onRemove={() => removeRow(entry.id)}
+            reorder={{ group: id, index: i, onMove: moveRow }}
+          >
             <button
               type="button"
               title="クリックで色を選択"

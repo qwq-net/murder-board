@@ -34,6 +34,7 @@ const nodeTypes: NodeTypes = {
 
 export function Board({ theme }: { theme: Theme }) {
   const nodes = useBoardStore((s) => s.nodes);
+  const loaded = useBoardStore((s) => s.loaded);
   const onNodesChange = useBoardStore((s) => s.onNodesChange);
   const onNodeDragStop = useBoardStore((s) => s.onNodeDragStop);
   const addNode = useBoardStore((s) => s.addNode);
@@ -83,14 +84,17 @@ export function Board({ theme }: { theme: Theme }) {
     setMenu({ x: e.clientX, y: e.clientY });
   };
 
-  // ノードの右クリック。左クリック同様に対象だけを選択状態にしてからメニューを開く
+  // ノードの右クリック。選択済みノードの上なら複数選択を保ってメニューを選択全体に
+  // 効かせ、未選択ノードの上なら左クリック同様に対象だけを選択状態にしてから開く
   const onNodeContextMenu = (e: ReactMouseEvent, node: BoardNode) => {
     e.preventDefault();
-    onNodesChange(
-      nodes
-        .filter((n) => n.selected || n.id === node.id)
-        .map((n) => ({ id: n.id, type: "select" as const, selected: n.id === node.id })),
-    );
+    if (node.selected !== true) {
+      onNodesChange(
+        nodes
+          .filter((n) => n.selected || n.id === node.id)
+          .map((n) => ({ id: n.id, type: "select" as const, selected: n.id === node.id })),
+      );
+    }
     setMenu({ x: e.clientX, y: e.clientY, nodeId: node.id });
   };
 
@@ -129,6 +133,14 @@ export function Board({ theme }: { theme: Theme }) {
         <Background variant={BackgroundVariant.Dots} gap={48} size={2} />
         <BoardControls />
       </ReactFlow>
+      {/* 空盤面の操作案内。操作を邪魔しないよう pointer-events は透過させる */}
+      {loaded && nodes.length === 0 && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="rounded-md border border-border-subtle bg-bg-elevated/80 px-4 py-3 text-sm text-text-muted">
+            右クリックでメモを追加できます。ダブルクリックで付箋を置けます。
+          </div>
+        </div>
+      )}
       <OpsLog />
       {menu && (
         <BoardMenu

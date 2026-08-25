@@ -16,6 +16,7 @@ type PanelKind = Exclude<WidthKind, "sticky">;
 // パレットの既定色スワッチは onColorPick に undefined を渡す。
 // titleEnterToBody はタイトルの Enter で最初の行の編集を始めるか。行に入力済みの
 // ノードでは偽を渡し、タイトルの確定だけにする想定。
+// onTitleEnterFallback は行が 1 つも無いときのタイトル Enter の受け皿で、行の追加を渡す想定。
 // 使われ方: list / timeline / keyword / character / actionlog が body だけを children として渡す前提。
 export function PanelNodeShell({
   kind,
@@ -23,6 +24,7 @@ export function PanelNodeShell({
   color,
   title,
   titleEnterToBody,
+  onTitleEnterFallback,
   onTitleCommit,
   onColorPick,
   children,
@@ -32,6 +34,7 @@ export function PanelNodeShell({
   color: StickyColor | undefined;
   title: string;
   titleEnterToBody: boolean;
+  onTitleEnterFallback?: () => void;
   onTitleCommit: (title: string) => void;
   onColorPick: (color: StickyColor | undefined) => void;
   children: ReactNode;
@@ -47,6 +50,7 @@ export function PanelNodeShell({
       title={title}
       titlePlaceholder={NODE_KIND_LABELS[kind]}
       titleEnterToBody={titleEnterToBody}
+      onTitleEnterFallback={onTitleEnterFallback}
       onTitleCommit={onTitleCommit}
     >
       {selected && (

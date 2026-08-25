@@ -40,6 +40,39 @@ export function snapshotSelection(nodes: BoardNode[], ids: ReadonlySet<string>):
   return result;
 }
 
+// ids のノード群の盤面上の絶対位置でのバウンディング左上を返す。スタックの子は
+// 親の位置を足して絶対化する。ids が 1 つも実在しなければ null。
+// 「元の位置から少しずらして複製する」ときの配置計算に使う
+export function selectionAnchor(
+  nodes: BoardNode[],
+  ids: ReadonlySet<string>,
+): { x: number; y: number } | null {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const points = nodes
+    .filter((n) => ids.has(n.id))
+    .map((n) => {
+      const parent = n.parentId !== undefined ? byId.get(n.parentId) : undefined;
+      return {
+        x: n.position.x + (parent?.position.x ?? 0),
+        y: n.position.y + (parent?.position.y ?? 0),
+      };
+    });
+  if (points.length === 0) return null;
+  return { x: Math.min(...points.map((p) => p.x)), y: Math.min(...points.map((p) => p.y)) };
+}
+
+// スナップショットのトップレベル群のバウンディング左上。materializeNodes が
+// position へ合わせる基準点
+function snapshotAnchor(snapshot: BoardNode[]): { x: number; y: number } | null {
+  const snapIds = new Set(snapshot.map((n) => n.id));
+  const roots = snapshot.filter((n) => n.parentId === undefined || !snapIds.has(n.parentId));
+  if (roots.length === 0) return null;
+  return {
+    x: Math.min(...roots.map((r) => r.position.x)),
+    y: Math.min(...roots.map((r) => r.position.y)),
+  };
+}
+
 // スナップショットを貼り付け用の新ノード列にする。トップレベルのノード群の
 // バウンディング左上が position に来るよう相対配置を保って移動し、スタックの子は
 // 親相対の位置のまま新しい親 id へ付け替える。親を伴わない子は独立ノードになる。
@@ -50,13 +83,8 @@ export function materializeNodes(
   position: { x: number; y: number },
 ): BoardNode[] {
   const snapIds = new Set(snapshot.map((n) => n.id));
-  const isRoot = (n: BoardNode) => n.parentId === undefined || !snapIds.has(n.parentId);
-  const roots = snapshot.filter(isRoot);
-  if (roots.length === 0) return [];
-  const anchor = {
-    x: Math.min(...roots.map((r) => r.position.x)),
-    y: Math.min(...roots.map((r) => r.position.y)),
-  };
+  const anchor = snapshotAnchor(snapshot);
+  if (anchor === null) return [];
   const idMap = new Map(snapshot.map((n) => [n.id, nanoid()]));
   return snapshot.map((n) => {
     const { parentId, ...rest } = strip(n);

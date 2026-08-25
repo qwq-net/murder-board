@@ -2,7 +2,13 @@ import type { NodeProps } from "@xyflow/react";
 import { nanoid } from "nanoid";
 import { useState } from "react";
 import { StyledText } from "@/components/nodes/StyledText";
-import { AddRowButton, CommitInput, NodeRow } from "@/components/nodes/CommitInput";
+import {
+  AddRowButton,
+  CommitInput,
+  NODE_TEXT_SELECTOR,
+  NodeRow,
+  requestTextEdit,
+} from "@/components/nodes/CommitInput";
 import { PanelNodeShell } from "@/components/nodes/PanelNodeShell";
 import { autoCompleteTime, sortTimelineEntries } from "@/lib/timeParser";
 import { useBoardStore } from "@/store";
@@ -10,8 +16,10 @@ import type { TimelineEntry, TimelineNodeType } from "@/types/board";
 
 // タイムライン付箋。行は「時刻 + 出来事」で、時刻の確定時に自動補完・昇順ソートされる。
 // 確定のタイミングは blur。時刻を解釈できない行は末尾に並ぶ。空欄や自由記述がこれにあたる。
+// 時刻の Enter は確定に続けて同じ行の出来事の編集へ移る。
 // 出来事の Enter 確定は末尾に空行を足してその時刻の編集を始め、時刻・出来事とも
 // 空のままフォーカスが行の外へ出た行は自動で消える。
+// 並びは時刻ソートで決まるため、行の手動並び替えは持たない。
 // 配色は --node-accent 変数 1 本で決まり、data.color があれば付箋カラー、
 // 無ければタイムライン既定色になる。
 export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>) {
@@ -59,6 +67,7 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
       color={data.color}
       title={data.title}
       titleEnterToBody={data.entries.every((e) => e.time === "" && e.text === "")}
+      onTitleEnterFallback={addRow}
       onTitleCommit={(title) => updateNodeData(id, "timeline", { title })}
       onColorPick={(color) => updateNodeData(id, "timeline", { color })}
     >
@@ -72,6 +81,17 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
               normalize={autoCompleteTime}
               defaultEditing={entry.id === newRowId}
               onCommit={(time) => commitEntry(entry.id, { time })}
+              onEnter={(time, el) => {
+                // 時刻を確定し、同じ行の出来事の編集へ続ける。ソートで行が動いても
+                // DOM 要素は同一なので、移動後の行にそのまま効く
+                const textEl = el
+                  .closest("[data-node-row]")
+                  ?.querySelectorAll(NODE_TEXT_SELECTOR)[1];
+                if (!textEl) return false;
+                if (time !== entry.time) commitEntry(entry.id, { time });
+                requestTextEdit(textEl);
+                return true;
+              }}
               onEmptyExit={() => {
                 if (entry.text === "") removeRow(entry.id);
               }}

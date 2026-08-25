@@ -4,6 +4,7 @@ import { useState } from "react";
 import { StyledText } from "@/components/nodes/StyledText";
 import { AddRowButton, CommitInput, NodeRow } from "@/components/nodes/CommitInput";
 import { PanelNodeShell } from "@/components/nodes/PanelNodeShell";
+import { moveItem } from "@/lib/moveItem";
 import { useBoardStore } from "@/store";
 import type { ListNodeType } from "@/types/board";
 
@@ -50,6 +51,11 @@ export function ListNode({ id, data, selected }: NodeProps<ListNodeType>) {
   const removeRow = (entryId: string) =>
     updateNodeData(id, "list", { entries: data.entries.filter((e) => e.id !== entryId) });
 
+  const moveRow = (from: number, to: number) => {
+    if (from === to) return;
+    updateNodeData(id, "list", { entries: moveItem(data.entries, from, to) });
+  };
+
   return (
     <PanelNodeShell
       kind="list"
@@ -57,15 +63,17 @@ export function ListNode({ id, data, selected }: NodeProps<ListNodeType>) {
       color={data.color}
       title={data.title}
       titleEnterToBody={data.entries.every((e) => e.text === "")}
+      onTitleEnterFallback={addRow}
       onTitleCommit={(title) => updateNodeData(id, "list", { title })}
       onColorPick={(color) => updateNodeData(id, "list", { color })}
     >
       <div className="p-1">
-        {data.entries.map((entry) => (
+        {data.entries.map((entry, i) => (
           <NodeRow
             key={entry.id}
             className="pl-2 before:absolute before:top-1 before:bottom-1 before:left-0.5 before:w-[3px] before:rounded-sm before:bg-(--node-accent)/45"
             onRemove={() => removeRow(entry.id)}
+            reorder={{ group: id, index: i, onMove: moveRow }}
           >
             <CommitInput
               className="min-w-0 flex-1 bg-transparent text-sm outline-none"

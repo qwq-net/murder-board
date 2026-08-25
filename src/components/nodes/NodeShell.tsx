@@ -9,8 +9,11 @@ import { useBoardStore } from "@/store";
 // 幅や配色は frameClassName / frameStyle / headerClassName / headerStyle で種別ごとに与える。
 // 枠は relative なので、children 内の absolute 配置はこの枠を基準にできる。
 // タイトルは blur で確定し、変更があったときだけ onTitleCommit が呼ばれる。
-// タイトルの Enter は確定に続けて最初の本文テキストの編集を開始する。titleEnterToBody を
-// 偽にするか本文テキストが無ければ、この連鎖は起きず確定だけになる。
+// addNode 直後のノードはタイトルの編集状態で始まる。store の newNodeId との一致で判定し、
+// 貼り付けや複製、セッション読み込みでは始まらない。
+// タイトルの Enter は確定に続けて最初の本文テキストの編集を開始する。本文テキストが
+// 無いときは onTitleEnterFallback があればそれを呼ぶ。行の自動追加用。titleEnterToBody を
+// 偽にすると連鎖もフォールバックも起きず確定だけになる。
 // Tab / Shift+Tab はノード内のテキスト要素だけを巡回し、ノードの外や色パレット等の
 // ボタンへは移らない。
 // 既定で折り返して全文表示し、ヘッダの高さを固定したいノードだけが titleSingleLine で
@@ -30,6 +33,7 @@ export function NodeShell({
   titlePlaceholder,
   titleSingleLine,
   titleEnterToBody = true,
+  onTitleEnterFallback,
   onTitleCommit,
   children,
 }: {
@@ -42,6 +46,7 @@ export function NodeShell({
   titlePlaceholder: string;
   titleSingleLine?: boolean;
   titleEnterToBody?: boolean;
+  onTitleEnterFallback?: () => void;
   onTitleCommit: (title: string) => void;
   children: ReactNode;
 }) {
@@ -52,6 +57,7 @@ export function NodeShell({
   });
   const kind = useBoardStore((s) => s.nodes.find((n) => n.id === id)?.type);
   const Icon = kind !== undefined ? KIND_ICONS[kind] : null;
+  const isNew = useBoardStore((s) => s.newNodeId === id);
   const frameRef = useRef<HTMLDivElement>(null);
 
   // 枠内のテキスト要素を DOM 順で返す。ヘッダが先頭にあるため先頭は常にタイトル
@@ -59,13 +65,15 @@ export function NodeShell({
     Array.from(frameRef.current?.querySelectorAll<HTMLElement>(NODE_TEXT_SELECTOR) ?? []);
 
   // タイトルの Enter で確定値を反映してから最初の本文テキストの編集を開始する。
+  // 本文テキストが無ければ onTitleEnterFallback に委ねる。
   // 連鎖しなかったら false を返し、確定とフォーカスはタイトル側の既定動作に任せる
   const advanceToBody = (committed: string) => {
     if (!titleEnterToBody) return false;
     const target = textTargets()[1];
-    if (!target) return false;
+    if (!target && !onTitleEnterFallback) return false;
     if (committed !== title) onTitleCommit(committed);
-    requestTextEdit(target);
+    if (target) requestTextEdit(target);
+    else onTitleEnterFallback?.();
     return true;
   };
 
@@ -105,6 +113,7 @@ export function NodeShell({
           value={title}
           placeholder={titlePlaceholder}
           singleLine={titleSingleLine}
+          defaultEditing={isNew}
           onCommit={onTitleCommit}
           onEnter={advanceToBody}
         />

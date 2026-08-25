@@ -41,11 +41,12 @@ type Store = UiSlice & {
   onNodesChange: (changes: NodeChange<BoardNode>[]) => void;
   // ドラッグ終了した選択ノード群のスタック所属を applyStackDrops で解決する。変更が無ければ何もしない。
   onNodeDragStop: (dragged: BoardNode[]) => void;
-  // 指定位置に空のノードを追加する。position はフロー座標。sticky は作成直後に編集状態になり、
-  // 行を持つ種別は空行 1 つ付きで作られる。
+  // 指定位置に空のノードを追加する。position はフロー座標。追加したノードは newNodeId に
+  // 記録され、タイトルの編集から始まる。行を持つ種別は空行 1 つ付きで作られる。
   addNode: (kind: BoardNodeKind, position: { x: number; y: number }) => void;
-  // 組み立て済みのノード列を末尾へ追加する。貼り付け用。親子を含むときは親が先に並んでいる前提。
-  addNodes: (added: BoardNode[]) => void;
+  // 組み立て済みのノード列を末尾へ追加する。貼り付け・複製用。親子を含むときは親が先に
+  // 並んでいる前提。opLabel を渡すと操作ログの文言を差し替えられる。
+  addNodes: (added: BoardNode[], opLabel?: string) => void;
   // スタックだけを削除し、子をその場の絶対位置で盤面直下に残す。見た目の位置と順序は
   // 変わらない。id がスタック以外を指すときは何もしない。
   dissolveStack: (id: string) => void;
@@ -226,13 +227,15 @@ export const useBoardStore = create<Store>()(
                           height: STACK_EMPTY_H,
                           data: { title: "" },
                         };
-        set({ nodes: [...get().nodes, node] });
+        set({ nodes: [...get().nodes, node], newNodeId: node.id });
         get().logOp(`${NODE_KIND_LABELS[kind]}を追加`);
       },
 
-      addNodes: (added) => {
+      addNodes: (added, opLabel) => {
         set({ nodes: [...get().nodes, ...added] });
-        get().logOp(added.length === 1 ? "1件を貼り付け" : `${added.length}件を貼り付け`);
+        get().logOp(
+          opLabel ?? (added.length === 1 ? "1件を貼り付け" : `${added.length}件を貼り付け`),
+        );
       },
 
       dissolveStack: (id) => {

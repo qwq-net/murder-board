@@ -1,6 +1,6 @@
 import { useReactFlow } from "@xyflow/react";
 import { useEffect, type RefObject } from "react";
-import { materializeNodes, snapshotSelection } from "@/lib/nodeClipboard";
+import { materializeNodes, selectionAnchor, snapshotSelection } from "@/lib/nodeClipboard";
 import { useBoardStore } from "@/store";
 import type { BoardNode } from "@/types/board";
 
@@ -14,6 +14,7 @@ export const isTypingTarget = (t: EventTarget | null): boolean =>
 // Z は Undo、Shift 併用で Redo。C/X は選択中のノード全部をスナップショットして
 // setClipboard へ渡し、X はさらに削除する。V は clipboard を mousePos の指す
 // 最後のカーソル画面座標へ貼り付ける。clipboard が null なら V は何もしない。
+// D は選択中のノードを元の位置から少し右下へずらして複製する。クリップボードは変えない。
 // 使われ方: Board が 1 回だけ呼ぶ前提。ReactFlowProvider 配下でしか使えない。
 export function useBoardShortcuts(
   clipboard: BoardNode[] | null,
@@ -45,13 +46,13 @@ export function useBoardShortcuts(
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Ctrl/Cmd+C・X・V のコピー・切り取り・貼り付け。
+  // Ctrl/Cmd+C・X・V・D のコピー・切り取り・貼り付け・複製。
   // 切り取りはコピーと同じスナップショットを取ってから削除する
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || isTypingTarget(e.target)) return;
       const key = e.key.toLowerCase();
-      if (key !== "c" && key !== "x" && key !== "v") return;
+      if (key !== "c" && key !== "x" && key !== "v" && key !== "d") return;
 
       if (key === "v") {
         if (!clipboard) return;
@@ -64,6 +65,21 @@ export function useBoardShortcuts(
       const selectedIds = new Set(current.filter((n) => n.selected).map((n) => n.id));
       if (selectedIds.size === 0) return;
       e.preventDefault();
+
+      if (key === "d") {
+        const anchor = selectionAnchor(current, selectedIds);
+        if (anchor) {
+          addNodes(
+            materializeNodes(snapshotSelection(current, selectedIds), {
+              x: anchor.x + 24,
+              y: anchor.y + 24,
+            }),
+            selectedIds.size === 1 ? "1件を複製" : `${selectedIds.size}件を複製`,
+          );
+        }
+        return;
+      }
+
       setClipboard(snapshotSelection(current, selectedIds));
       if (key === "x") {
         onNodesChange([...selectedIds].map((id) => ({ type: "remove" as const, id })));

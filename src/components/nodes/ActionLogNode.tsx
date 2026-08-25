@@ -7,6 +7,7 @@ import { AddRowButton, CommitInput, NodeRow } from "@/components/nodes/CommitInp
 import { PanelNodeShell } from "@/components/nodes/PanelNodeShell";
 import { StyledText } from "@/components/nodes/StyledText";
 import { useCharacterEntries } from "@/components/nodes/useCharacterEntries";
+import { moveItem } from "@/lib/moveItem";
 import { useBoardStore } from "@/store";
 import type { ActionEntry, ActionLogNodeType, StickyColor } from "@/types/board";
 
@@ -25,20 +26,28 @@ const useCharacterChoices = (): CharacterChoice[] => {
 // 登場人物チップ。識別色ドット + 名前の頭 2 文字で、クリックでチップの画面上の
 // 矩形を onClick に渡す。ピッカーの表示位置決めに使う。ラベルは全角 2 文字分の
 // 固定幅で、名前の文字数や未選択に左右されず行のレイアウトが揃う。
-// 未選択は空文字で、疑問符アイコンで示す。登場人物メモに見つからない名前は無彩色ドットで示す
+// 未選択は空文字で、疑問符アイコンで示す。登場人物メモに見つからない名前は無彩色ドットで示す。
+// rowId と side は data 属性として DOM に残り、from 選択後に同じ行の to チップを
+// 探して選択を連鎖させるのに使う
 function CharacterChip({
   name,
   color,
+  rowId,
+  side,
   onClick,
 }: {
   name: string;
   color: StickyColor | undefined;
+  rowId: string;
+  side: "from" | "to";
   onClick: (anchor: DOMRect) => void;
 }) {
   return (
     <button
       type="button"
       title={name === "" ? "登場人物を選択" : name}
+      data-chip-row={rowId}
+      data-chip-side={side}
       className="nodrag flex shrink-0 cursor-pointer items-center gap-1 self-start rounded px-1 hover:bg-bg-active"
       onClick={(e) => {
         // 直後に window へ届くクリックでピッカーが即閉じしないよう、ここで止める
@@ -89,7 +98,12 @@ function CharacterPicker({
           key={c.name}
           type="button"
           className="flex w-full cursor-pointer items-center gap-1.5 px-2.5 py-1 text-left text-sm hover:bg-bg-hover"
-          onClick={() => onPick(c.name)}
+          onClick={(e) => {
+            // window の外側クリック判定に届くと、onPick が続けて開く連鎖先の
+            // ピッカーまで即閉じしてしまうため、ここで止める
+            e.stopPropagation();
+            onPick(c.name);
+          }}
         >
           <span
             className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -108,6 +122,7 @@ type Picking = { rowId: string; side: "from" | "to"; x: number; y: number } | nu
 
 // アクションログ付箋。行は「人物 ▶ 人物 ｜メモ」で、人物は登場人物メモ全体から
 // クリックで選ぶ。素早い記録を想定し、行の追加もチップの選択もクリックだけで完結する。
+// from を選ぶと同じ行の to のピッカーが続けて開く。
 // メモは後からダブルクリックで書ける。メモの Enter 確定は直後に空行を挿入して
 // そのメモの編集を始め、人物もメモも空のままフォーカスが行の外へ出た行は自動で消える。
 // 人物は名前で持つため、登場人物側の改名には追従しない。
@@ -162,6 +177,11 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
   const removeRow = (entryId: string) =>
     updateNodeData(id, "actionlog", { entries: data.entries.filter((e) => e.id !== entryId) });
 
+  const moveRow = (from: number, to: number) => {
+    if (from === to) return;
+    updateNodeData(id, "actionlog", { entries: moveItem(data.entries, from, to) });
+  };
+
   const colorOf = (name: string) => choices.find((c) => c.name === name)?.color;
 
   // チップ。クリックでそのチップの直下にピッカーを開き、開いている側の再クリックは閉じる
@@ -169,6 +189,8 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
     <CharacterChip
       name={entry[side]}
       color={colorOf(entry[side])}
+      rowId={entry.id}
+      side={side}
       onClick={(anchor) =>
         setPicking(
           picking?.rowId === entry.id && picking.side === side
@@ -179,6 +201,24 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
     />
   );
 
+  // ピッカーでの選択を行へ反映する。from を選んだ直後は同じ行の to チップの下へ
+  // ピッカーを開き直し、2 人の選択がクリック 2 回で終わるようにする
+  const pickCharacter = (name: string) => {
+    if (picking === null) return;
+    commitEntry(picking.rowId, picking.side === "from" ? { from: name } : { to: name });
+    if (picking.side === "from") {
+      const toChip = document.querySelector(
+        `[data-chip-row="${picking.rowId}"][data-chip-side="to"]`,
+      );
+      if (toChip) {
+        const rect = toChip.getBoundingClientRect();
+        setPicking({ rowId: picking.rowId, side: "to", x: rect.left, y: rect.bottom + 2 });
+        return;
+      }
+    }
+    setPicking(null);
+  };
+
   return (
     <PanelNodeShell
       kind="actionlog"
@@ -186,12 +226,17 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
       color={data.color}
       title={data.title}
       titleEnterToBody={data.entries.every((e) => e.from === "" && e.to === "" && e.text === "")}
+      onTitleEnterFallback={addRow}
       onTitleCommit={(title) => updateNodeData(id, "actionlog", { title })}
       onColorPick={(color) => updateNodeData(id, "actionlog", { color })}
     >
       <div className="p-1">
-        {data.entries.map((entry) => (
-          <NodeRow key={entry.id} onRemove={() => removeRow(entry.id)}>
+        {data.entries.map((entry, i) => (
+          <NodeRow
+            key={entry.id}
+            onRemove={() => removeRow(entry.id)}
+            reorder={{ group: id, index: i, onMove: moveRow }}
+          >
             {chipSlot(entry, "from")}
             <ArrowRight size={12} className="mt-1 shrink-0 self-start text-text-muted" />
             {chipSlot(entry, "to")}
@@ -213,14 +258,7 @@ export function ActionLogNode({ id, data, selected }: NodeProps<ActionLogNodeTyp
       </div>
       {picking !== null &&
         createPortal(
-          <CharacterPicker
-            choices={choices}
-            position={picking}
-            onPick={(name) => {
-              commitEntry(picking.rowId, picking.side === "from" ? { from: name } : { to: name });
-              setPicking(null);
-            }}
-          />,
+          <CharacterPicker choices={choices} position={picking} onPick={pickCharacter} />,
           document.body,
         )}
     </PanelNodeShell>

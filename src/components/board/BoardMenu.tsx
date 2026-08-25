@@ -1,7 +1,7 @@
 import { useReactFlow } from "@xyflow/react";
-import { ClipboardPaste, Copy, Trash2, Ungroup, type LucideIcon } from "lucide-react";
+import { ClipboardPaste, Copy, CopyPlus, Trash2, Ungroup, type LucideIcon } from "lucide-react";
 import { KIND_ICONS } from "@/components/nodes/nodeMeta";
-import { materializeNodes, snapshotSelection } from "@/lib/nodeClipboard";
+import { materializeNodes, selectionAnchor, snapshotSelection } from "@/lib/nodeClipboard";
 import { useBoardStore } from "@/store";
 import { NODE_KIND_LABELS, type BoardNode, type BoardNodeKind } from "@/types/board";
 
@@ -44,8 +44,11 @@ function MenuItem({
 }
 
 // 盤面の右クリックメニュー。menu.nodeId の有無でペイン用（ノード追加 + 貼り付け）と
-// ノード用（コピー・スタック解除・削除）を出し分ける。項目の実行後は onClose を呼ぶ。
+// ノード用（コピー・複製・スタック解除・削除）を出し分ける。項目の実行後は onClose を呼ぶ。
+// ノード用のコピー・複製・削除は、対象ノードが選択中なら選択ノード全体に効き、
+// ラベルにも件数が付く。Board 側が開く前に選択状態を整えている前提。
 // 貼り付けはメニューを開いた位置へ行い、clipboard が null なら項目自体を出さない。
+// 複製は元の位置から少し右下へずらして置く。
 // nodeId が既に消えたノードを指すときは何も描画しない。
 // 使われ方: Board が menu の開閉状態を持ち、開いているときだけ描画する前提。
 // ReactFlowProvider 配下でしか使えない。
@@ -78,13 +81,25 @@ export function BoardMenu({
     onClose();
   };
 
-  const copyFromMenu = (nodeId: string) => {
-    setClipboard(snapshotSelection(nodes, new Set([nodeId])));
+  const copyFromMenu = (ids: string[]) => {
+    setClipboard(snapshotSelection(nodes, new Set(ids)));
     onClose();
   };
 
-  const deleteFromMenu = (nodeId: string) => {
-    onNodesChange([{ type: "remove", id: nodeId }]);
+  const duplicateFromMenu = (ids: string[]) => {
+    const idSet = new Set(ids);
+    const anchor = selectionAnchor(nodes, idSet);
+    if (anchor) {
+      addNodes(
+        materializeNodes(snapshotSelection(nodes, idSet), { x: anchor.x + 24, y: anchor.y + 24 }),
+        ids.length === 1 ? "1件を複製" : `${ids.length}件を複製`,
+      );
+    }
+    onClose();
+  };
+
+  const deleteFromMenu = (ids: string[]) => {
+    onNodesChange(ids.map((id) => ({ type: "remove" as const, id })));
     onClose();
   };
 
@@ -96,6 +111,17 @@ export function BoardMenu({
   // メニューの対象ノード。nodeId が残っていてもノードが消えていれば null 扱い
   const menuTarget =
     menu.nodeId !== undefined ? nodes.find((n) => n.id === menu.nodeId) : undefined;
+
+  // ノード用メニューが作用する対象。対象ノードが選択中なら選択全体、そうでなければ単体
+  const targetIds =
+    menuTarget?.selected === true
+      ? nodes.filter((n) => n.selected).map((n) => n.id)
+      : menuTarget
+        ? [menuTarget.id]
+        : [];
+  // 件数付きのラベル。単体のときは件数を出さない
+  const countLabel = (action: string) =>
+    targetIds.length > 1 ? `${targetIds.length}件を${action}` : action;
 
   return (
     <div
@@ -127,7 +153,16 @@ export function BoardMenu({
       ) : (
         menuTarget && (
           <>
-            <MenuItem icon={Copy} label="コピー" onClick={() => copyFromMenu(menuTarget.id)} />
+            <MenuItem
+              icon={Copy}
+              label={countLabel("コピー")}
+              onClick={() => copyFromMenu(targetIds)}
+            />
+            <MenuItem
+              icon={CopyPlus}
+              label={countLabel("複製")}
+              onClick={() => duplicateFromMenu(targetIds)}
+            />
             {menuTarget.type === "stack" && (
               <MenuItem
                 icon={Ungroup}
@@ -138,9 +173,9 @@ export function BoardMenu({
             <div className="my-1 border-t border-border-subtle" />
             <MenuItem
               icon={Trash2}
-              label="削除"
+              label={countLabel("削除")}
               danger
-              onClick={() => deleteFromMenu(menuTarget.id)}
+              onClick={() => deleteFromMenu(targetIds)}
             />
           </>
         )

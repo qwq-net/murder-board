@@ -15,18 +15,20 @@ const noteStyle = (c: StickyColor) => ({
   borderColor: `var(--sticky-${c}-border)`,
 });
 
-// 付箋ノード。空テキストで生成された直後は編集状態で始まる。
-// 表示中はダブルクリックかフォーカス中の Enter で編集に入り、タイトルの Enter からも
-// 編集開始の連鎖を受ける。編集中は blur / Escape / Enter で確定し、改行は Shift+Enter。
+// 付箋ノード。作成直後は NodeShell がタイトルの編集で始め、タイトルの Enter で本文へ移る。
+// 表示中はダブルクリックかフォーカス中の Enter で本文の編集に入る。
+// 編集中は blur / Enter で確定し、改行は Shift+Enter。Escape は編集を破棄して表示に戻る。
 // 選択中は色パレットを上部に出す。
 export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
   const updateNodeData = useBoardStore((s) => s.updateNodeData);
-  const [editing, setEditing] = useState(data.text === "");
+  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(data.text);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const displayRef = useRef<HTMLDivElement>(null);
-  // Enter / Escape 確定でだけ立てる印。blur 確定ではフォーカスを奪い返さない
+  // Enter / Escape の終了でだけ立てる印。blur 確定ではフォーカスを奪い返さない
   const refocusRef = useRef(false);
+  // Escape で編集を破棄したとき、blur 側の確定を防ぐ印
+  const skipCommitRef = useRef(false);
 
   // React Flow は計測前のノードを visibility:hidden で描画するため autoFocus が効かない。
   // 表示されてフォーカスが通るまで数フレーム再試行する
@@ -52,6 +54,7 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
   }, [editing]);
 
   const startEditing = () => {
+    skipCommitRef.current = false;
     setDraft(data.text);
     setEditing(true);
   };
@@ -66,6 +69,10 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
   });
 
   const commit = () => {
+    if (skipCommitRef.current) {
+      skipCommitRef.current = false;
+      return;
+    }
     setEditing(false);
     if (draft !== data.text) updateNodeData(id, "sticky", { text: draft });
   };
@@ -95,13 +102,22 @@ export function StickyNode({ id, data, selected }: NodeProps<StickyNodeType>) {
           data-node-text
           className="nodrag block field-sizing-content min-h-24 w-full resize-none bg-transparent p-2 text-sm outline-none"
           value={draft}
-          placeholder="メモを入力..."
+          placeholder="メモを入力… 改行は Shift+Enter"
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
           onKeyDown={(e) => {
-            // IME の変換確定 Enter やキャンセル Escape で本文全体を確定させない
+            // IME の変換確定 Enter やキャンセル Escape に反応しない
             if (e.nativeEvent.isComposing) return;
-            if (e.key === "Escape" || (e.key === "Enter" && !e.shiftKey)) {
+            if (e.key === "Escape") {
+              e.preventDefault();
+              // unmount では blur が発火しない前提の後始末。発火する環境でも
+              // skipCommitRef が確定を防ぎ、フラグは次の編集開始時にリセットされる
+              skipCommitRef.current = true;
+              refocusRef.current = true;
+              setEditing(false);
+              return;
+            }
+            if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               refocusRef.current = true;
               commit();
