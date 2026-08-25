@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 // ノード内で Tab 巡回と編集開始連鎖の対象になるテキスト要素を示すセレクタ。
@@ -168,10 +169,10 @@ export function NodeRow({
       <button
         type="button"
         aria-label="行を削除"
-        className="nodrag invisible absolute top-1/2 right-0.5 -translate-y-1/2 cursor-pointer rounded bg-bg-hover px-1 text-xs text-text-muted group-hover:visible hover:text-danger"
+        className="nodrag invisible absolute top-1/2 right-0.5 -translate-y-1/2 cursor-pointer rounded bg-bg-hover p-1 text-text-muted group-hover:visible hover:text-danger"
         onClick={onRemove}
       >
-        ×
+        <X size={14} />
       </button>
     </div>
   );
