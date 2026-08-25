@@ -17,6 +17,8 @@ import { useBoardStore } from "@/store";
 // 1 行に省略する。
 // 選択リングは親スタックも選択中なら表示しない。スタックごと選んだときにスタックだけを
 // 光らせる見た目上の抑制で、選択状態そのものは変えない。
+// 枠内のテキストがキーボードフォーカスや編集を持つ間も選択リングを消し、
+// フォーカス枠が二重に見えないようにする。こちらも選択状態そのものは変えない。
 // 使われ方: 各ノードコンポーネントが body だけを children として渡す前提。
 export function NodeShell({
   selected,
@@ -89,7 +91,7 @@ export function NodeShell({
       ref={frameRef}
       onKeyDown={cycleTextFocus}
       className={`relative rounded-sm border shadow-md ${frameClassName} ${
-        selected && !parentSelected ? "ring-2 ring-accent" : ""
+        selected && !parentSelected ? "ring-2 ring-accent has-[:focus-visible]:ring-0" : ""
       }`}
       style={frameStyle}
     >

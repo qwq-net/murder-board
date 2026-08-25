@@ -68,7 +68,7 @@ export function TimelineNode({ id, data, selected }: NodeProps<TimelineNodeType>
             <CommitInput
               className="w-12 shrink-0 self-start bg-transparent text-center font-mono text-xs leading-5 text-text-muted outline-none"
               value={entry.time}
-              placeholder="21:00"
+              placeholder="--:--"
               normalize={autoCompleteTime}
               defaultEditing={entry.id === newRowId}
               onCommit={(time) => commitEntry(entry.id, { time })}
