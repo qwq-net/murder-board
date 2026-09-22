@@ -3,7 +3,59 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>murder-memo2</title>
+
+    <!-- Favicon（murder-memo と同一アセット） -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <!-- ダークが既定テーマ（src/index.css の --color-bg-base と揃える） -->
+    <meta name="theme-color" content="#0d0c0a" />
+
+    <!--
+      1 画面構成の SPA なのでページ固有のメタも含めてすべてここに静的記述する。
+      ルーティングが増えたら murder-memo と同様に SSG + <Head> 注入へ移行する。
+    -->
+    <title>マダめもくん2｜マーダーミステリー用メモボード</title>
+    <meta
+      name="description"
+      content="マーダーミステリー中に使うメモボードアプリです。登場人物・キーワード・タイムライン・行動ログの付箋をキャンバスへ自由に配置して情報を整理できます。データはブラウザ内に保存されます。"
+    />
+    <link rel="canonical" href="https://board.qwqb.net/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:site_name" content="マダめもくん2" />
+    <meta property="og:title" content="マダめもくん2｜マーダーミステリー用メモボード" />
+    <meta
+      property="og:description"
+      content="マーダーミステリー中に使うメモボードアプリです。登場人物・キーワード・タイムライン・行動ログの付箋をキャンバスへ自由に配置して情報を整理できます。"
+    />
+    <meta property="og:url" content="https://board.qwqb.net/" />
+    <meta property="og:image" content="https://board.qwqb.net/og-image.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="マダめもくん2｜マーダーミステリー用メモボード" />
+    <meta
+      name="twitter:description"
+      content="マーダーミステリー中に使うメモボードアプリです。付箋をキャンバスへ自由に配置して情報を整理できます。"
+    />
+    <meta name="twitter:image" content="https://board.qwqb.net/og-image.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "マダめもくん2",
+        "description": "マーダーミステリー中に使うメモボードアプリ",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "All",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
+        "inLanguage": "ja",
+        "url": "https://board.qwqb.net/"
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
